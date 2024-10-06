@@ -8,6 +8,7 @@ from openai import OpenAI
 from yt_dlp import YoutubeDL
 from pydantic import BaseModel, Field
 from typing import List, Dict
+import whisper
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -48,23 +49,45 @@ def extract_audio(video_path, audio_path):
     subprocess.run(["ffmpeg", "-i", video_path, "-q:a", "0", "-map", "a", audio_path])
     print("Audio extraction completed")
 
-def transcribe_audio(audio_path):
-    print(f"Transcribing audio from {audio_path}")
-    with open(audio_path, "rb") as audio_file:
-        transcript = client.audio.transcriptions.create(
-            model="whisper-1", 
-            file=audio_file,
-            response_format="verbose_json"
-        )
-    print("Transcription completed")
-    return transcript
-
 def format_timestamp(seconds):
     minutes, seconds = divmod(int(seconds), 60)
     return f"{minutes:02d}:{seconds:02d}"
 
-def identify_pivotal_moments(dialogue_data):
+def transcribe_audio(audio_path):
+    print(f"Transcribing audio from {audio_path}")
+    # Load the Whisper model
+    model = whisper.load_model("base")
+    
+    # Transcribe the audio
+    result = model.transcribe(audio_path)
+    
+    processed_segments = []
+    for segment in result["segments"]:
+        processed_segments.append({
+            "timestamp": format_timestamp(segment["start"]),
+            "text": segment["text"],
+        })
+    
+    # Create a structured output similar to the original format
+    structured_result = {
+        "segments": processed_segments,
+        "text": result["text"]
+    }
+    
+    print("Transcription completed")
+    return structured_result
+
+def identify_pivotal_moments(dialogue_data, is_humorous=False):
     print("Identifying pivotal moments")
+    
+    humor_guidelines = """
+- When appropriate, use a slightly lighter tone to describe certain moments, especially those that are unexpectedly amusing or absurd.
+- For particularly irrational or foolish behavior, use gentle sarcasm or dry wit in the descriptions.
+- Highlight any comically timed statements or actions that contrast with the seriousness of the situation.
+- Use playful language to describe moments of unexpected levity or absurdity, while still maintaining overall professionalism.
+- Aim to include humorous observations in about 25% of the pivotal moments, ensuring the majority maintain a serious tone.
+""" if is_humorous else ""
+
     prompt = f"""Analyze the following dialogue from police body cam footage and identify pivotal moments:
 
 {json.dumps(dialogue_data, indent=2)}
@@ -90,15 +113,18 @@ Guidelines:
 - When identifying bizarre, absurd, or unexpectedly humorous moments, mark them as "Prepare for an unusual response" or "This next bit defies explanation".
 - Highlight instances where the subject is clearly in the wrong or acting particularly foolish or irrational.
 - Pay special attention to dialogue that seems out of place, surprisingly casual, or contrasts sharply with the seriousness of the situation.
-- For moments of heightened tension or potential conflict, note them as "Watch closely" or "Tension rises here".
+- For moments of heightened tension or potential conflict, note them as "Watch closely".
+
+{humor_guidelines}
 
 Remember, this is real police body cam footage. Focus on actual events and dialogues that occur during the police encounter, capturing both the serious nature of the situation and any unexpectedly absurd or humorous elements.
 
 Aim for a comprehensive set of pivotal moments that captures the essence of the body cam footage, providing a framework for engaging commentary."""
+
     completion = client.beta.chat.completions.parse(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "Extract a comprehensive set of pivotal moments from police body cam footage dialogue, ensuring they occur at least every 30-60 seconds and capture all significant events and interactions."},
+            {"role": "system", "content": f"Extract a comprehensive set of pivotal moments from police body cam footage dialogue, ensuring they occur at least every 30-60 seconds and capture all significant events and interactions. {'Incorporate subtle humor where appropriate.' if is_humorous else ''}"},
             {"role": "user", "content": prompt},
         ],
         response_format=PivotalMoments,
@@ -124,31 +150,6 @@ Aim for a comprehensive set of pivotal moments that captures the essence of the 
                 final_moments.append(moment)
                 last_timestamp = current_timestamp
     
-    # If there are large gaps (>60 seconds) between moments, request additional moments for those gaps
-    gaps = []
-    for i in range(len(final_moments) - 1):
-        current_timestamp = int(final_moments[i].timestamp.split(":")[0]) * 60 + int(final_moments[i].timestamp.split(":")[1])
-        next_timestamp = int(final_moments[i+1].timestamp.split(":")[0]) * 60 + int(final_moments[i+1].timestamp.split(":")[1])
-        if next_timestamp - current_timestamp > 60:
-            gaps.append((final_moments[i].timestamp, final_moments[i+1].timestamp))
-    
-    if gaps:
-        gap_prompt = f"Please identify additional pivotal moments for the following time ranges:\n\n"
-        for start, end in gaps:
-            gap_prompt += f"Between {start} and {end}\n"
-        gap_prompt += "\nProvide moments in the same format as before."
-        
-        gap_completion = client.beta.chat.completions.parse(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "Identify additional pivotal moments for the specified time ranges."},
-                {"role": "user", "content": gap_prompt},
-            ],
-            response_format=PivotalMoments,
-        )
-        
-        additional_moments = gap_completion.choices[0].message.parsed.moments
-        final_moments.extend(additional_moments)
         final_moments.sort(key=lambda x: x.timestamp)
     
     print(f"Final number of pivotal moments: {len(final_moments)}")
@@ -213,55 +214,47 @@ Describe what you see in the image that relates to the description and visual cu
     )
     return response.choices[0].message.content.strip()
 
-def generate_commentary(dialogue_data, pivotal_moments, visual_analyses):
+def generate_commentary(dialogue_data, combined_moments, include_humor=False):
     print("Generating commentary")
-    system_prompt = """Create razor-sharp, insightful commentary for a police bodycam video in the style of JCS Criminal Psychology, but with a slightly more critical edge. Your commentary should:
-1. Be brief and incisive (1-2 sentences per timestamp)
-2. Provide definitive psychological insights and behavioral analysis
-3. Use a confident, authoritative tone
-4. Address individuals consistently as "the officer" and "the suspect"
-5. Reflect the perspective of an expert analyzing bodycam footage
-6. Engage the viewer by highlighting subtle but significant details
-7. Maintain a serious, professional tone while acknowledging absurd or humorous moments with deadpan delivery
-8. Avoid speculation and focus on observable behaviors and their implications
-9. Use phrases like "Notice...", "Here we see...", or "This behavior indicates..." to guide the viewer's attention
-10. Highlight manipulative tactics, inconsistencies, or telling psychological patterns
-11. When the subject is clearly in the wrong or acting foolishly, adopt a slightly mocking or critical tone
-12. Use dry humor or sarcasm to emphasize particularly absurd or irrational behavior
-13. For key phrases or important statements, build anticipation with comments like "Pay close attention to what's about to be said" or "This next statement is crucial"
-14. When bizarre or unexpected moments are coming up, tease them with phrases like "You won't believe what's about to happen" or "This next interaction defies explanation"
 
-The commentary should read like expert analysis, offering viewers unique insights they might otherwise miss, while not shying away from pointing out egregious mistakes or foolish actions."""
+    # Build the system prompt
+    base_system_prompt = """Generate concise, razor-sharp, insightful commentary for a police bodycam video in the style of JCS Criminal Psychology. The commentary should:
+    - Be brief and direct (1-2 sentences per timestamp).
+    - Provide definitive psychological insights and behavioral analysis.
+    - Use a confident, authoritative tone.
+    - Address individuals consistently as "the officer" and "the suspect" or other appropriate roles.
+    - Reflect the perspective of an expert concisely analyzing bodycam footage.
+    - Engage the viewer by highlighting subtle but significant details.
+    - Maintain a serious, professional tone while acknowledging absurd or humorous moments with deadpan delivery.
+    - Avoid speculation and focus on observable behaviors and their implications.
+    - Use phrases like "Notice..." or "Here we see..." to guide the viewer's attention.
+    - Highlight manipulative tactics, inconsistencies, or telling psychological patterns.
+    - Build narrative tension through the commentary, tying moments together to show progression.
+    """
 
-    prompt = f"""Based on the following information from a police bodycam video, generate sharp, JCS-style commentary with a critical edge:
+    humor_guidelines = """
+    - When appropriate, use dry humor or sarcasm to emphasize particularly absurd or irrational behavior.
+    - Humor should only be present in situations where it serves to emphasize behavioral patterns, irrationality, or absurdity in the suspect's actions.
+    """
+
+    system_prompt = base_system_prompt + (humor_guidelines if include_humor else "")
+
+    # Construct the prompt with combined moments
+    prompt = f"""Based on the following information from a police bodycam video, generate concise, insightful commentary:
 
     Dialogue: {json.dumps(dialogue_data, indent=2)}
 
-    Pivotal Moments:
-    {json.dumps([moment.model_dump() for moment in pivotal_moments], indent=2)}
+    Key Moments:
+    {json.dumps(combined_moments, indent=2)}
 
-    Visual Analyses:
-    {json.dumps(visual_analyses, indent=2)}
-
-    Provide commentary for EACH pivotal moment. Your response should be a list of commentary entries, where each entry follows this format:
+    Provide commentary for EACH key moment in the format:
     {{
         "timestamp": "MM:SS",
-        "commentary": "Your incisive commentary here"
+        "commentary": "Your concise commentary here"
     }}
+    """
 
-Guidelines for each commentary entry:
-1. Use the exact timestamp from the corresponding pivotal moment.
-2. Keep the commentary concise and impactful (1-2 sentences max).
-3. Offer definitive insights about behavior, psychology, and tactics.
-4. Use phrases like "Notice...", "Here we see...", or "This behavior indicates..." to guide the viewer when appropriate.
-5. Maintain an authoritative tone appropriate for expert analysis of criminal behavior.
-6. For absurd or humorous moments, acknowledge them with a deadpan tone, highlighting the contrast with the serious situation.
-7. When the subject is clearly in the wrong or acting foolishly, use a slightly mocking or critical tone.
-8. Employ dry humor or sarcasm to emphasize particularly irrational or absurd behavior.
-9. For key phrases or important statements, build anticipation with brief comments like "Listen closely to what follows" or "This next statement reveals volumes".
-10. When bizarre or unexpected moments are coming up, tease them with short phrases like "Brace yourself for what's next" or "This defies all logic and reason".
-    Ensure that you provide commentary for every pivotal moment, in the order they appear in the video."""
-
+    # Call the AI model
     completion = client.beta.chat.completions.parse(
         model="gpt-4o-mini",
         messages=[
@@ -274,6 +267,8 @@ Guidelines for each commentary entry:
     commentary = completion.choices[0].message.parsed.comments
     print(f"Commentary generated for {len(commentary)} moments")
     return commentary
+
+
 
 def extract_first_frame(video_path, output_path):
     print(f"Extracting first frame to {output_path}")
@@ -305,7 +300,7 @@ def extract_last_frame(video_path, output_path):
     print(f"Last frame extracted successfully: {output_path}")
     return True
 
-def main(youtube_url):
+def main(youtube_url, is_humorous):
     if os.path.exists("commentary.json"):
         print("commentary.json found. Skipping to audio generation.")
         generate_audio_clips()
@@ -337,19 +332,19 @@ def main(youtube_url):
 
         if dialogue_data is None or video_duration is None:
             transcript = transcribe_audio(audio_path)
-            dialogue_data = [{"timestamp": format_timestamp(segment.start), "dialogue": segment.text} for segment in transcript.segments]
-            video_duration = transcript.segments[-1].end
-            
+            dialogue_data = [{"timestamp": format_timestamp(segment['start']), "dialogue": segment['text']} for segment in transcript['segments']]
+            video_duration = transcript['segments'][-1]['end']
+
             with open("dialogue.json", "w") as f:
                 json.dump({"dialogue": dialogue_data, "duration": video_duration}, f, indent=2)
             print("Dialogue data saved to dialogue.json")
 
-        pivotal_moments = identify_pivotal_moments(dialogue_data)
-        
+        pivotal_moments = identify_pivotal_moments(dialogue_data, is_humorous)
+
         # Extract and analyze first and last frames
         first_frame_path = os.path.join(frames_dir, "first_frame.jpg")
         last_frame_path = os.path.join(frames_dir, "last_frame.jpg")
-        
+
         if extract_first_frame(video_path, first_frame_path):
             first_frame_analysis = analyze_frame(first_frame_path, "Start of the video", "Initial setting and context")
         else:
@@ -361,32 +356,52 @@ def main(youtube_url):
         else:
             print("Failed to extract last frame. Skipping analysis.")
             last_frame_analysis = "Last frame analysis not available due to extraction failure."
-        
-        visual_analyses = []
+
+        combined_moments = []
+
+        # Add first frame analysis as the first combined moment
+        combined_moments.append({
+            "timestamp": "00:00",
+            "description": "Start of video",
+            "visual_cues": "Initial setting and context",
+            "visual_analysis": first_frame_analysis
+        })
+
+        # Process each pivotal moment
         for moment in pivotal_moments:
             frame_path = os.path.join(frames_dir, f"frame_{moment.timestamp.replace(':', '_')}.jpg")
             if extract_frame(video_path, moment.timestamp, frame_path):
-                analysis = analyze_frame(frame_path, moment.description, moment.visual_cues)
-                visual_analyses.append({
-                    "timestamp": moment.timestamp,
-                    "description": moment.description,
-                    "visual_analysis": analysis
-                })
+                visual_analysis = analyze_frame(frame_path, moment.description, moment.visual_cues)
             else:
                 print(f"Skipping analysis for timestamp {moment.timestamp} due to frame extraction failure")
-        
-        visual_analyses.insert(0, {"timestamp": "00:00", "description": "Start of video", "visual_analysis": first_frame_analysis})
-        visual_analyses.append({"timestamp": format_timestamp(video_duration), "description": "End of video", "visual_analysis": last_frame_analysis})
-        
-        with open("visual_analyses.json", "w") as f:
-            json.dump(visual_analyses, f, indent=2)
-        print("Visual analyses saved to visual_analyses.json")
-        
+                visual_analysis = "Visual analysis not available due to frame extraction failure."
+            combined_moment = {
+                "timestamp": moment.timestamp,
+                "description": moment.description,
+                "visual_cues": moment.visual_cues,
+                "visual_analysis": visual_analysis
+            }
+            combined_moments.append(combined_moment)
+
+        # Add last frame analysis as the last combined moment
+        last_timestamp = format_timestamp(video_duration)
+        combined_moments.append({
+            "timestamp": last_timestamp,
+            "description": "End of video",
+            "visual_cues": "Final scene and resolution",
+            "visual_analysis": last_frame_analysis
+        })
+
+        # Save combined_moments to a file if desired
+        with open("combined_moments.json", "w") as f:
+            json.dump(combined_moments, f, indent=2)
+        print("Combined moments saved to combined_moments.json")
+
         # New code: Checkpoint after visual analyses
         print("\nVisual analyses completed. Here's a summary:")
-        for analysis in visual_analyses:
-            print(f"{analysis['timestamp']} - {analysis['description']}")
-        
+        for moment in combined_moments:
+            print(f"{moment['timestamp']} - {moment['description']}")
+
         while True:
             user_input = input("\nDo you want to proceed with generating commentary? (yes/no): ").lower()
             if user_input in ['yes', 'y']:
@@ -396,13 +411,13 @@ def main(youtube_url):
                 exit()
             else:
                 print("Invalid input. Please enter 'yes' or 'no'.")
-        
-        commentary = generate_commentary(dialogue_data, pivotal_moments, visual_analyses)
-        
+
+        commentary = generate_commentary(dialogue_data, combined_moments, is_humorous)
+
         with open("commentary.json", "w") as f:
             json.dump([c.model_dump() for c in commentary], f, indent=2)
         print("Final commentary saved to commentary.json")
-        
+
         # Clean up temporary files
         os.remove(video_path)
         os.remove(audio_path)
@@ -480,6 +495,17 @@ def generate_audio_clips():
     print("Audio generation complete.")
 
 if __name__ == "__main__":
-    # youtube_url = input("Enter YouTube URL: ")
-    url_temp = "https://www.youtube.com/watch?v=iEmDdWZOmo4"
-    main(url_temp)
+    youtube_url = input("Enter YouTube URL: ")
+    
+    while True:
+        commentary_type = input("Do you want humorous commentary? (yes/no): ").lower()
+        if commentary_type in ['yes', 'y']:
+            is_humorous = True
+            break
+        elif commentary_type in ['no', 'n']:
+            is_humorous = False
+            break
+        else:
+            print("Invalid input. Please enter 'yes' or 'no'.")
+    
+    main(youtube_url, is_humorous)
