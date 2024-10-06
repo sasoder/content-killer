@@ -18,21 +18,22 @@ def generate_commentary(description):
 
     # Build the system prompt
     base_system_prompt = """Generate concise, razor-sharp, and psychologically insightful commentary for a police bodycam video in the style of JCS Criminal Psychology. Each commentary point must:
-- Be **authoritative** and **confident**—avoid speculative language such as "could signify" or "possibly."
+    - Be **authoritative** and **confident**—avoid speculative language such as "could signify" or "possibly."
+- Use **clear and direct language**—avoid overly complex or extravagant words.
 - Focus on the **suspect’s and officer’s behavior, intentions, and psychology** (1-2 sentences per moment).
-- Avoid unnecessary descriptions of the scene unless they reveal psychological insight or telltale behavior.
+- Avoid unnecessary descriptions of the scene unless they reveal important psychological insight or clear behavior patterns.
 - Highlight manipulative tactics, inconsistencies, or psychological patterns with **confidence**. 
 - Use phrases like "This reveals...", "This shows...", or "Here we see..." to state **definitive** conclusions about behavior or actions.
 - Engage the viewer by drawing attention to **significant behavioral details**.
 - Focus on **observable behavior** and its psychological implications—eliminate any speculation.
-- Avoid over-commenting—choose only key moments that deserve analysis.
+- Avoid over-commenting—focus on key moments that deserve analysis.
 
 Structure the commentary to:
 - Identify pivotal behavioral shifts—such as changes in tone, cooperation, or physical actions.
-- **Prioritize bizarre, absurd, or humorous lines** from the dialogue (quoted exactly) that reveal important psychological insights. For example, "His comment 'whatever y’all got going on here is pretty damn good' shows complete disconnect from reality, likely a defense mechanism to deflect accountability."
+- **Prioritize bizarre, absurd, or humorous lines** from the dialogue (quoted exactly) that reveal important psychological insights. For example, "His comment 'whatever y’all got going on here is pretty damn good' shows a disconnect from reality, likely an attempt to avoid responsibility."
 - Use dry humor or sarcasm in a **deadpan manner** to highlight irrational or absurd behavior in the suspect's actions or statements.
-- Gradually reveal the layers of complexity in the suspect’s psychology or tactics.
-- Occasionally use rhetorical questions to provoke the viewer’s critical thinking, but do so sparingly and only when it fits the situation.
+- Gradually reveal the layers of complexity in the suspect’s psychology or actions.
+- Occasionally use rhetorical questions to provoke the viewer’s critical thinking, but only when it fits the situation.
 
 **Timestamp Guidelines**:
 - Timestamps must be in the format **MM:SS** (e.g., "01:15").
@@ -43,7 +44,7 @@ Structure the commentary to:
 
 **Quality Over Quantity**:
 - Prioritize **quality** over **quantity**. 
-- For a typical 6-minute video, aim for **6 to 10 key commentary points** that offer significant psychological or behavioral insights.
+- For a typical 6-minute video, aim for **6 to 10 key commentary points** that offer important psychological or behavioral insights.
 - Only provide commentary when there’s something **substantial** to observe or analyze; avoid commenting on mundane or irrelevant moments.
 """
 
