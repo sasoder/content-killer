@@ -1,2 +1,4 @@
 .env
 fine-tuning/*
+gemini/__pycache__
+outputs/*
