@@ -86,14 +86,15 @@ Guidelines:
   - Arrival of additional officers or emergency services
   - Any unexpected or unusual statements by either officers or subjects
 - Include both major events (e.g., use of force, arrest) and smaller, but significant moments (e.g., subject admitting to drinking).
-- Pay special attention to any dialogue that seems absurd, bizarre, or unexpectedly humorous, especially if it contrasts with the serious nature of the police encounter.
-- Look for moments where suspects or officers say something that seems out of place or surprisingly casual given the circumstances.
+- For key phrases or important statements, note them as "Upcoming key phrase" or "Listen closely to what follows".
+- When identifying bizarre, absurd, or unexpectedly humorous moments, mark them as "Prepare for an unusual response" or "This next bit defies explanation".
 - Highlight instances where the subject is clearly in the wrong or acting particularly foolish or irrational.
+- Pay special attention to dialogue that seems out of place, surprisingly casual, or contrasts sharply with the seriousness of the situation.
+- For moments of heightened tension or potential conflict, note them as "Watch closely" or "Tension rises here".
 
-Remember, this is real police body cam footage, not a scripted drama. Focus on the actual events and dialogues that occur during a police encounter, not fictional plot points or character development.
+Remember, this is real police body cam footage. Focus on actual events and dialogues that occur during the police encounter, capturing both the serious nature of the situation and any unexpectedly absurd or humorous elements.
 
-Aim for a comprehensive set of pivotal moments that captures the essence of the body cam footage, including both serious and potentially humorous or absurd aspects."""
-
+Aim for a comprehensive set of pivotal moments that captures the essence of the body cam footage, providing a framework for engaging commentary."""
     completion = client.beta.chat.completions.parse(
         model="gpt-4o-mini",
         messages=[
@@ -168,10 +169,23 @@ Aim for a comprehensive set of pivotal moments that captures the essence of the 
             print("Invalid input. Please enter 'yes' or 'no'.")
 
 def extract_frame(video_path, timestamp, output_path):
-    subprocess.run([
+    print(f"Extracting frame at {timestamp} to {output_path}")
+    result = subprocess.run([
         "ffmpeg", "-ss", timestamp, "-i", video_path,
         "-vframes", "1", "-q:v", "2", output_path
-    ])
+    ], capture_output=True, text=True)
+    
+    if result.returncode != 0:
+        print(f"Error extracting frame at {timestamp}:")
+        print(result.stderr)
+        return False
+    
+    if not os.path.exists(output_path):
+        print(f"Frame extraction failed: {output_path} not created")
+        return False
+    
+    print(f"Frame extracted successfully: {output_path}")
+    return True
 
 def analyze_frame(frame_path, description, visual_cues):
     with open(frame_path, "rb") as image_file:
@@ -202,20 +216,22 @@ Describe what you see in the image that relates to the description and visual cu
 def generate_commentary(dialogue_data, pivotal_moments, visual_analyses):
     print("Generating commentary")
     system_prompt = """Create razor-sharp, insightful commentary for a police bodycam video in the style of JCS Criminal Psychology, but with a slightly more critical edge. Your commentary should:
-    1. Be brief and incisive (1-2 sentences per timestamp)
-    2. Provide definitive psychological insights and behavioral analysis
-    3. Use a confident, authoritative tone
-    4. Address individuals consistently as "the officer" and "the suspect"
-    5. Reflect the perspective of an expert analyzing bodycam footage
-    6. Engage the viewer by highlighting subtle but significant details
-    7. Maintain a serious, professional tone while acknowledging absurd or humorous moments with deadpan delivery
-    8. Avoid speculation and focus on observable behaviors and their implications
-    9. Use phrases like "Notice...", "Here we see...", or "This behavior indicates..." to guide the viewer's attention
-    10. Highlight manipulative tactics, inconsistencies, or telling psychological patterns
-    11. When the subject is clearly in the wrong or acting foolishly, adopt a slightly mocking or critical tone
-    12. Use dry humor or sarcasm to emphasize particularly absurd or irrational behavior
+1. Be brief and incisive (1-2 sentences per timestamp)
+2. Provide definitive psychological insights and behavioral analysis
+3. Use a confident, authoritative tone
+4. Address individuals consistently as "the officer" and "the suspect"
+5. Reflect the perspective of an expert analyzing bodycam footage
+6. Engage the viewer by highlighting subtle but significant details
+7. Maintain a serious, professional tone while acknowledging absurd or humorous moments with deadpan delivery
+8. Avoid speculation and focus on observable behaviors and their implications
+9. Use phrases like "Notice...", "Here we see...", or "This behavior indicates..." to guide the viewer's attention
+10. Highlight manipulative tactics, inconsistencies, or telling psychological patterns
+11. When the subject is clearly in the wrong or acting foolishly, adopt a slightly mocking or critical tone
+12. Use dry humor or sarcasm to emphasize particularly absurd or irrational behavior
+13. For key phrases or important statements, build anticipation with comments like "Pay close attention to what's about to be said" or "This next statement is crucial"
+14. When bizarre or unexpected moments are coming up, tease them with phrases like "You won't believe what's about to happen" or "This next interaction defies explanation"
 
-    The commentary should read like expert analysis, offering viewers unique insights they might otherwise miss, while not shying away from pointing out egregious mistakes or foolish actions."""
+The commentary should read like expert analysis, offering viewers unique insights they might otherwise miss, while not shying away from pointing out egregious mistakes or foolish actions."""
 
     prompt = f"""Based on the following information from a police bodycam video, generate sharp, JCS-style commentary with a critical edge:
 
@@ -233,16 +249,17 @@ def generate_commentary(dialogue_data, pivotal_moments, visual_analyses):
         "commentary": "Your incisive commentary here"
     }}
 
-    Guidelines for each commentary entry:
-    1. Use the exact timestamp from the corresponding pivotal moment.
-    2. Keep the commentary concise and impactful (1-2 sentences max).
-    3. Offer definitive insights about behavior, psychology, and tactics.
-    4. Use phrases like "Notice...", "Here we see...", or "This behavior indicates..." to guide the viewer when appropriate.
-    5. Maintain an authoritative tone appropriate for expert analysis of criminal behavior.
-    6. For absurd or humorous moments, acknowledge them with a deadpan tone, highlighting the contrast with the serious situation.
-    7. When the subject is clearly in the wrong or acting foolishly, use a slightly mocking or critical tone.
-    8. Employ dry humor or sarcasm to emphasize particularly irrational or absurd behavior.
-
+Guidelines for each commentary entry:
+1. Use the exact timestamp from the corresponding pivotal moment.
+2. Keep the commentary concise and impactful (1-2 sentences max).
+3. Offer definitive insights about behavior, psychology, and tactics.
+4. Use phrases like "Notice...", "Here we see...", or "This behavior indicates..." to guide the viewer when appropriate.
+5. Maintain an authoritative tone appropriate for expert analysis of criminal behavior.
+6. For absurd or humorous moments, acknowledge them with a deadpan tone, highlighting the contrast with the serious situation.
+7. When the subject is clearly in the wrong or acting foolishly, use a slightly mocking or critical tone.
+8. Employ dry humor or sarcasm to emphasize particularly irrational or absurd behavior.
+9. For key phrases or important statements, build anticipation with brief comments like "Listen closely to what follows" or "This next statement reveals volumes".
+10. When bizarre or unexpected moments are coming up, tease them with short phrases like "Brace yourself for what's next" or "This defies all logic and reason".
     Ensure that you provide commentary for every pivotal moment, in the order they appear in the video."""
 
     completion = client.beta.chat.completions.parse(
@@ -257,6 +274,36 @@ def generate_commentary(dialogue_data, pivotal_moments, visual_analyses):
     commentary = completion.choices[0].message.parsed.comments
     print(f"Commentary generated for {len(commentary)} moments")
     return commentary
+
+def extract_first_frame(video_path, output_path):
+    print(f"Extracting first frame to {output_path}")
+    result = subprocess.run([
+        "ffmpeg", "-i", video_path,
+        "-vframes", "1", "-q:v", "2", output_path
+    ], capture_output=True, text=True)
+    
+    if result.returncode != 0 or not os.path.exists(output_path):
+        print(f"Error extracting first frame:")
+        print(result.stderr)
+        return False
+    
+    print(f"First frame extracted successfully: {output_path}")
+    return True
+
+def extract_last_frame(video_path, output_path):
+    print(f"Extracting last frame to {output_path}")
+    result = subprocess.run([
+        "ffmpeg", "-sseof", "-3", "-i", video_path,
+        "-update", "1", "-q:v", "2", output_path
+    ], capture_output=True, text=True)
+    
+    if result.returncode != 0 or not os.path.exists(output_path):
+        print(f"Error extracting last frame:")
+        print(result.stderr)
+        return False
+    
+    print(f"Last frame extracted successfully: {output_path}")
+    return True
 
 def main(youtube_url):
     if os.path.exists("commentary.json"):
@@ -300,22 +347,33 @@ def main(youtube_url):
         pivotal_moments = identify_pivotal_moments(dialogue_data)
         
         # Extract and analyze first and last frames
-        extract_frame(video_path, "00:00", os.path.join(frames_dir, "first_frame.jpg"))
-        extract_frame(video_path, format_timestamp(video_duration), os.path.join(frames_dir, "last_frame.jpg"))
+        first_frame_path = os.path.join(frames_dir, "first_frame.jpg")
+        last_frame_path = os.path.join(frames_dir, "last_frame.jpg")
+        
+        if extract_first_frame(video_path, first_frame_path):
+            first_frame_analysis = analyze_frame(first_frame_path, "Start of the video", "Initial setting and context")
+        else:
+            print("Failed to extract first frame. Skipping analysis.")
+            first_frame_analysis = "First frame analysis not available due to extraction failure."
+
+        if extract_last_frame(video_path, last_frame_path):
+            last_frame_analysis = analyze_frame(last_frame_path, "End of the video", "Final scene and resolution")
+        else:
+            print("Failed to extract last frame. Skipping analysis.")
+            last_frame_analysis = "Last frame analysis not available due to extraction failure."
         
         visual_analyses = []
         for moment in pivotal_moments:
-            frame_path = os.path.join(frames_dir, f"frame_{moment.timestamp}.jpg")
-            extract_frame(video_path, moment.timestamp, frame_path)
-            analysis = analyze_frame(frame_path, moment.description, moment.visual_cues)
-            visual_analyses.append({
-                "timestamp": moment.timestamp,
-                "description": moment.description,
-                "visual_analysis": analysis
-            })
-        
-        first_frame_analysis = analyze_frame(os.path.join(frames_dir, "first_frame.jpg"), "Start of the video", "Initial setting and context")
-        last_frame_analysis = analyze_frame(os.path.join(frames_dir, "last_frame.jpg"), "End of the video", "Final scene and resolution")
+            frame_path = os.path.join(frames_dir, f"frame_{moment.timestamp.replace(':', '_')}.jpg")
+            if extract_frame(video_path, moment.timestamp, frame_path):
+                analysis = analyze_frame(frame_path, moment.description, moment.visual_cues)
+                visual_analyses.append({
+                    "timestamp": moment.timestamp,
+                    "description": moment.description,
+                    "visual_analysis": analysis
+                })
+            else:
+                print(f"Skipping analysis for timestamp {moment.timestamp} due to frame extraction failure")
         
         visual_analyses.insert(0, {"timestamp": "00:00", "description": "Start of video", "visual_analysis": first_frame_analysis})
         visual_analyses.append({"timestamp": format_timestamp(video_duration), "description": "End of video", "visual_analysis": last_frame_analysis})
@@ -353,7 +411,16 @@ def main(youtube_url):
         os.rmdir(frames_dir)
         print("Temporary files cleaned up")
 
-        generate_audio_clips()
+        while True:
+            user_input = input("\nDo you want to proceed with generating audio clips? (yes/no): ").lower()
+            if user_input in ['yes', 'y']:
+                generate_audio_clips()
+                break
+            elif user_input in ['no', 'n']:
+                print("Aborting the process. Please run the script again.")
+                exit()
+            else:
+                print("Invalid input. Please enter 'yes' or 'no'.")
 
 # Define constants
 CHUNK_SIZE = 1024
