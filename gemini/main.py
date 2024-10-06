@@ -45,7 +45,7 @@ def generate_new_commentary():
     print(f"Commentary generated, amount of comments: {len(commentary.comments)}")
     print("\n-----Comments-----\n")
     for entry in commentary.comments:
-        print(f"Timestamp: {entry.timestamp}, Commentary: {entry.commentary}\n")
+        print(f"1. {entry.timestamp}: {entry.commentary}\n")
     print("-----End of comments-----")
     
     return commentary

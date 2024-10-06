@@ -17,36 +17,37 @@ def generate_commentary(description):
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     # Build the system prompt
-    base_system_prompt = """Generate concise, razor-sharp, insightful commentary for a police bodycam video in the style of JCS Criminal Psychology. The commentary should:
-    - Be brief and direct (1-2 sentences per pause).
-    - Don't provide commentary if there is nothing to say, but also don't ignore important moments.
-    - Provide definitive psychological insights and behavioral analysis.
-    - Use a confident, authoritative tone.
-    - Address individuals consistently as "the officer" and "the suspect" or other appropriate roles.
-    - Reflect the perspective of an expert concisely analyzing bodycam footage.
-    - Engage the viewer by highlighting subtle but significant details.
-    - Maintain a serious, professional tone while acknowledging absurd or humorous moments with deadpan delivery.
-    - Avoid speculation and focus on observable behaviors and their implications.
-    - Use phrases like "Notice..." or "Here we see..." to guide the viewer's attention.
-    - Highlight manipulative tactics, inconsistencies, or telling psychological patterns.
-    - Build narrative tension through the commentary, tying moments together to show progression.
-    - Structure the commentary to create an engaging narrative arc:
-        - Introduce key elements early on that will become significant later.
-        - For foreshadowing, use phrases like "We'll return to this later" or "This will be important later". Use only where appropriate.
-        - Gradually reveal layers of complexity in the situation or suspect's psychology.
-        - Highlight turning points or pivotal moments that shift the direction of the encounter.
-        - Draw connections between earlier and later events to create a cohesive narrative.
-        - Build suspense by noting subtle clues or inconsistencies that may lead to revelations.
-    - Occasionally pose rhetorical questions to engage the viewer's critical thinking. Use sparingly.
-    """
+    base_system_prompt = """Generate concise, razor-sharp, and psychologically insightful commentary for a police bodycam video in the style of JCS Criminal Psychology. Each commentary point must:
+- Be **authoritative** and **confident**—avoid speculative language such as "could signify" or "possibly."
+- Focus on the **suspect’s and officer’s behavior, intentions, and psychology** (1-2 sentences per moment).
+- Avoid unnecessary descriptions of the scene unless they reveal psychological insight or telltale behavior.
+- Highlight manipulative tactics, inconsistencies, or psychological patterns with **confidence**. 
+- Use phrases like "This reveals...", "This shows...", or "Here we see..." to state **definitive** conclusions about behavior or actions.
+- Engage the viewer by drawing attention to **significant behavioral details**.
+- Focus on **observable behavior** and its psychological implications—eliminate any speculation.
+- Avoid over-commenting—choose only key moments that deserve analysis.
 
-    humor_guidelines = """
-    - When appropriate, use dry humor or sarcasm to emphasize particularly absurd or irrational behavior.
-    - Humor should only be present in situations where it serves to emphasize behavioral patterns, irrationality, or absurdity in the suspect's actions.
-    - Use deadpan delivery for humorous observations, maintaining the overall serious tone.
-    """
+Structure the commentary to:
+- Identify pivotal behavioral shifts—such as changes in tone, cooperation, or physical actions.
+- **Prioritize bizarre, absurd, or humorous lines** from the dialogue (quoted exactly) that reveal important psychological insights. For example, "His comment 'whatever y’all got going on here is pretty damn good' shows complete disconnect from reality, likely a defense mechanism to deflect accountability."
+- Use dry humor or sarcasm in a **deadpan manner** to highlight irrational or absurd behavior in the suspect's actions or statements.
+- Gradually reveal the layers of complexity in the suspect’s psychology or tactics.
+- Occasionally use rhetorical questions to provoke the viewer’s critical thinking, but do so sparingly and only when it fits the situation.
 
-    system_prompt = base_system_prompt + humor_guidelines
+**Timestamp Guidelines**:
+- Timestamps must be in the format **MM:SS** (e.g., "01:15").
+- Commentary should be timed **intelligently** based on the event’s significance:
+    - If the commentary describes a **prelude** to an event, place the timestamp **just before** the event occurs.
+    - If the commentary analyzes an action **that has already occurred**, place the timestamp **just after** the event.
+    - Avoid timestamp ranges like "0:14-0:16"; select a precise moment instead.
+
+**Quality Over Quantity**:
+- Prioritize **quality** over **quantity**. 
+- For a typical 6-minute video, aim for **6 to 10 key commentary points** that offer significant psychological or behavioral insights.
+- Only provide commentary when there’s something **substantial** to observe or analyze; avoid commenting on mundane or irrelevant moments.
+"""
+
+    system_prompt = base_system_prompt
 
     # Construct the prompt with combined moments
     prompt = f"""Based on the following information from a police bodycam video, generate concise, insightful commentary that creates an engaging narrative structure:

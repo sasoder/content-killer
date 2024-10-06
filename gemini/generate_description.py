@@ -4,45 +4,34 @@ import json
 import re
 
 prompt = """
-Provide a detailed description of the video. Include important dialogues, actions, and events. The description should be suitable for generating insightful commentary in the style of JCS Criminal Psychology. 
+Provide a detailed description of the police bodycam video. The description should be comprehensive enough to generate insightful commentary in the style of JCS Criminal Psychology, with a focus on behavioral analysis and psychological insights. 
 
-Guidelines:
-- Identify a pivotal moment at least every 30-60 seconds.
-- Focus on key interactions between officers and subjects, changes in the situation, or important/bizarre/absurd statements.
-- Include ALL important dialogues, exactly as they are.
-- Pay attention to:
- - Initial contact and assessment of the situation
- - Subject's statements or actions that may indicate intoxication, mental state, or cooperation level
- - Officer's commands or questions
- - Any mentions of weapons, injuries, or potential dangers
- - Changes in the subject's behavior or compliance
- - Arrival of additional officers or emergency services
- - Any unexpected or unusual statements by either officers or subjects
-- Include both major events (e.g., use of force, arrest) and smaller, but significant moments (e.g., subject admitting to drinking).
-- For key phrases or important statements, definitely include them. It is important to mention the exact phrases with quotes.
-- When identifying bizarre, absurd, or unexpectedly humorous moments, mark them as "Prepare for an unusual response" or "This next bit defies explanation".
-- Highlight instances where the subject is clearly in the wrong or acting particularly foolish or irrational.
-- Pay special attention to dialogue that seems out of place, surprisingly casual, or contrasts sharply with the seriousness of the situation.
-- For moments of heightened tension or potential conflict, note them as "Watch closely".
-- Could be for even just strange or unusual things that happen, like unexpected movements or irrational behavior.
-- Also include phrases or statements that the officer says, with quotes.
-- Especially important: include key phrases or statements that the subject says, with quotes.
-- Note important details that might play a role later in the video.
-- Note the exact timestamp of when things happen.
+**Guidelines**:
+- **Pivotal Moments**: Identify a pivotal moment at least every 30-60 seconds, focusing on key interactions between the officers and subjects, changes in the situation, or important/bizarre/absurd statements.
+- **Dialogues**: Include **all relevant dialogues** exactly as spoken. Pay attention to tone, delivery, and emotional cues when describing what is said.
+- **Actions & Behavior**: Emphasize subjects' actions or body language that may indicate intoxication, mental state, cooperation level, evasion tactics, or non-verbal cues suggesting psychological distress or manipulation.
+- **Officer Interaction**: Document officer commands or questions, especially when they elicit unusual responses or resistance. Include any mentions of weapons, injuries, or potential dangers.
+- **Behavioral Shifts**: Highlight changes in the subject's behavior or compliance. Pay close attention to moments where the subject becomes evasive, dishonest, or defensive.
+- **Significant Events**: Note the arrival of additional officers, use of force, or any major changes in the situation. 
+- **Absurd or Irrational Moments**: When the subject says or does something absurd, mark them as "Prepare for an unusual response" or "This next bit defies explanation" to signal potentially deadpan commentary moments.
+- **Heightened Tension**: For moments of heightened tension or potential conflict, mark them as "Watch closely" to indicate the need for closer behavioral scrutiny.
+- **Psychological Inconsistencies**: Include moments when the subject's behavior, actions, or statements contradict earlier statements or indicate irrational thinking.
+- **Behavioral Tells**: Note specific body language, micro-expressions, and speech patterns that reveal stress, dishonesty, or manipulation.
+- **Officer Tactics**: When officers employ de-escalation tactics or pressure the subject psychologically, make note of how these actions impact the subject’s behavior.
+- **Key Phrases**: Include any quotes that are unusually casual, strangely delivered, or stand out as inconsistent with the severity of the situation.
+- **Unexpected Humor**: Pay attention to dialogue or actions that seem out of place, absurd, or provide accidental humor in contrast to the situation.
+- **Connections to Future Moments**: Note any behavior or statement that could play a significant role later in the video, tying present actions to future consequences.
 
-Remember, this is real police body cam footage. Focus on actual events and dialogues that occur during the police encounter, capturing both the serious nature of the situation and any unexpectedly absurd or humorous elements.
-
-Aim for a comprehensive set of pivotal moments that captures the essence of the body cam footage, providing a framework for engaging commentary.
-
-Format your response in the format:
-
+**Format**:
     {{
-        timestamp: "mm:ss",
-        speaker: "name of who is speaking (police officer, and which one, or suspect)",
-        description: "description of what happens on the screen, and what is said"
+        timestamp: "MM:SS",
+        speaker: "Who is speaking (e.g., Officer 1, Suspect)",
+        description: "Description of the event, including exact dialogue and context of behavior"
     }}
 
+Focus on **behavioral analysis** and **key dialogues**, capturing pivotal moments that reveal the psychology of the suspect or the tactics of the officers.
 """
+
 
 def generate_description(url):
     vertexai.init(project="bodycam-437820")
