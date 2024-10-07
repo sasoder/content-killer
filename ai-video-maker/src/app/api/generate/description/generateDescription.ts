@@ -1,10 +1,13 @@
-import vertexai
-from vertexai.generative_models import GenerativeModel, Part
-import json
-import re
+import {
+  FileDataPart,
+  GenerateContentRequest,
+  Part,
+  VertexAI,
+} from "@google-cloud/vertexai"
 
-prompt = """
-Provide a detailed description of the police bodycam video. The description should be comprehensive enough to generate insightful commentary in the style of JCS Criminal Psychology, with a focus on behavioral analysis and psychological insights. 
+import { DescriptionList, DescriptionListSchema } from "@/types/types"
+
+const prompt = `Provide a detailed description of the police bodycam video. The description should be comprehensive enough to generate insightful commentary in the style of JCS Criminal Psychology, with a focus on behavioral analysis and psychological insights. 
 
 **Guidelines**:
 - **Pivotal Moments**: Identify a pivotal moment at least every 30-60 seconds, focusing on key interactions between the officers and subjects, changes in the situation, or important/bizarre/absurd statements.
@@ -17,7 +20,7 @@ Provide a detailed description of the police bodycam video. The description shou
 - **Heightened Tension**: For moments of heightened tension or potential conflict, mark them as "Watch closely" to indicate the need for closer behavioral scrutiny.
 - **Psychological Inconsistencies**: Include moments when the subject's behavior, actions, or statements contradict earlier statements or indicate irrational thinking.
 - **Behavioral Tells**: Note specific body language, micro-expressions, and speech patterns that reveal stress, dishonesty, or manipulation.
-- **Officer Tactics**: When officers employ de-escalation tactics or pressure the subject psychologically, make note of how these actions impact the subject’s behavior.
+- **Officer Tactics**: When officers employ de-escalation tactics or pressure the subject psychologically, make note of how these actions impact the subject's behavior.
 - **Key Phrases**: Include any quotes that are unusually casual, strangely delivered, or stand out as inconsistent with the severity of the situation.
 - **Unexpected Humor**: Pay attention to dialogue or actions that seem out of place, absurd, or provide accidental humor in contrast to the situation.
 - **Connections to Future Moments**: Note any behavior or statement that could play a significant role later in the video, tying present actions to future consequences.
@@ -29,21 +32,50 @@ Provide a detailed description of the police bodycam video. The description shou
         description: "Description of the event, including exact dialogue and context of behavior"
     }}
 
-Focus on **behavioral analysis** and **key dialogues**, capturing pivotal moments that reveal the psychology of the suspect or the tactics of the officers.
-"""
+Focus on **behavioral analysis** and **key dialogues**, capturing pivotal moments that reveal the psychology of the suspect or the tactics of the officers.`
 
+export async function generateDescription(
+  url: string
+): Promise<DescriptionList> {
+  const vertexAI = new VertexAI({
+    project: process.env.GEMINI_PROJECT_ID,
+    location: process.env.GEMINI_LOCATION,
+  })
 
-def generate_description(url):
-    vertexai.init(project="bodycam-437820")
+  const model = vertexAI.preview.getGenerativeModel({
+    model: "gemini-1.5-flash-002",
+  })
 
-    model = GenerativeModel("gemini-1.5-flash-002")
+  const filePart: FileDataPart = {
+    fileData: {
+      fileUri: url,
+      mimeType: "video/mp4",
+    },
+  }
 
-    video_file = Part.from_uri(
-        uri=url,
-        mime_type="video/mp4",
-    )
+  const textPart: Part = {
+    text: prompt,
+  }
 
-    contents = [video_file, prompt]
+  const request: GenerateContentRequest = {
+    contents: [
+      {
+        role: "user",
+        parts: [filePart, textPart],
+      },
+    ],
+  }
 
-    response = model.generate_content(contents)
-    return response.text
+  console.log("Request in generateDescription:", request)
+
+  const response = await model.generateContent(request)
+  const result = response.response
+
+  console.log("Response in generateDescription:", result)
+
+  const contentResponse: DescriptionList = DescriptionListSchema.parse(
+    result?.candidates?.[0]?.content
+  )
+
+  return contentResponse
+}
