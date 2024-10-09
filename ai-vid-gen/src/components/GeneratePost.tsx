@@ -3,15 +3,17 @@
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { TimestampDescriptionList } from "@/lib/types";
+import QuickInfo from "@/components/QuickInfo";
 
 interface GeneratePostProps {
-  buttonText: string;
+  dataType: "description" | "commentary";
   apiRoute: string;
-  data: any;
-  setData: React.Dispatch<React.SetStateAction<any>>;
+  data: TimestampDescriptionList | null;
+  setData: React.Dispatch<React.SetStateAction<TimestampDescriptionList | null>>;
 }
 
-function GeneratePost({ buttonText, apiRoute, data, setData }: GeneratePostProps) {
+function GeneratePost({ dataType, apiRoute, data, setData }: GeneratePostProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -55,10 +57,13 @@ function GeneratePost({ buttonText, apiRoute, data, setData }: GeneratePostProps
   };
 
   return (
-    <div className="flex items-center justify-center">
-      <Button onClick={handleSubmit} disabled={isLoading || !data}>
-        {isLoading ? "Generating..." : buttonText}
-      </Button>
+    <div className="flex flex-col justify-between">
+      <QuickInfo data={data} dataType={dataType} />
+      <div className="flex justify-center mt-4">
+        <Button onClick={handleSubmit} disabled={isLoading || !data}>
+          {isLoading ? "Generating..." : `Generate`}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -1,17 +1,8 @@
-export type Commentary = {
+export type TimestampText = {
   timestamp: string;
-  commentary: string;
+  text: string;
 };
 
-export type CommentaryList = {
-  comments: Commentary[];
-};
-
-export type Description = {
-  timestamp: string;
-  description: string;
-};
-
-export type DescriptionList = {
-  descriptions: Description[];
+export type TimestampDescriptionList = {
+  items: TimestampText[];
 };

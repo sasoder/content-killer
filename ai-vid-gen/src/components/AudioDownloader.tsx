@@ -11,7 +11,7 @@ export default function AudioDownloader({ audioFiles }: AudioDownloaderProps) {
 
   return (
     <div>
-      <Button disabled={disabled}>Download Files</Button>
+      <Button disabled={disabled}>Download</Button>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import AudioDownloader from "@/components/AudioDownloader";
 import GenerateDescription from "@/components/GenerateDescription";
 import GeneratePost from "@/components/GeneratePost";
 import JsonEditor from "@/components/JsonEditor";
-import { CommentaryList, DescriptionList } from "@/lib/types";
+import { TimestampDescriptionList } from "@/lib/types";
 import { Icons } from "@/components/icons";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardSkeleton } from "@/components/CardSkeletion";
@@ -27,83 +27,83 @@ const commentaryListSchema = z.array(
 );
 
 export default function GeneratePage() {
-  const [description, setDescription] = useState<DescriptionList | null>(null);
-  const [commentary, setCommentary] = useState<CommentaryList | null>(null);
+  const [description, setDescription] = useState<TimestampDescriptionList | null>(null);
+  const [commentary, setCommentary] = useState<TimestampDescriptionList | null>(null);
   const [audioFiles, setAudioFiles] = useState<string[] | null>(null);
-  const sampleDescription: DescriptionList = useMemo(() => {
+  const sampleDescription: TimestampDescriptionList = useMemo(() => {
     return {
-      descriptions: [
+      items: [
         {
           timestamp: "00:00",
-          description: "Sample description 1",
+          text: "Sample text 1",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
         {
           timestamp: "00:01",
-          description: "Sample description 2",
+          text: "Sample text 2",
         },
       ],
     };
@@ -113,7 +113,7 @@ export default function GeneratePage() {
   }, [sampleDescription]);
   return (
     <main className="container mx-auto space-y-8 p-4">
-      <div className="flex flex-row items-center justify-center gap-4">
+      <div className="flex flex-row items-center justify-center gap-4 pt-2">
         <div className="absolute right-0 top-0 m-4">
           <ModeToggle />
         </div>
@@ -131,50 +131,48 @@ export default function GeneratePage() {
               {description && (
                 <JsonEditor
                   title="Edit Description"
-                  data={description}
-                  onUpdate={(updatedData) => setDescription(updatedData as DescriptionList)}
+                  data={description as TimestampDescriptionList}
+                  onUpdate={(updatedData) => setDescription(updatedData as TimestampDescriptionList)}
                 />
               )}
             </Suspense>
           </CardContent>
         </Card>
 
-        <Card className="w-1/4 h-[500px]">
+        <Card className="w-1/4 h-[500px] flex flex-col">
           <CardHeader>
             <CardTitle>Generate Commentary</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-grow flex flex-col">
             <Suspense fallback={<CardSkeleton />}>
               <GeneratePost
-                title="Generate Commentary"
+                dataType="description"
                 apiRoute="/api/py/generate_commentary"
-                data={description}
+                data={description as TimestampDescriptionList}
                 setData={setCommentary}
-                schema={descriptionListSchema}
               />
               {commentary && (
                 <JsonEditor
                   title="Edit Commentary"
                   data={commentary}
-                  onUpdate={(updatedData) => setCommentary(updatedData as CommentaryList)}
+                  onUpdate={(updatedData) => setCommentary(updatedData as TimestampDescriptionList)}
                 />
               )}
             </Suspense>
           </CardContent>
         </Card>
 
-        <Card className="w-1/4 h-[500px]">
+        <Card className="w-1/4 h-[500px] flex flex-col">
           <CardHeader>
             <CardTitle>Generate Audio</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-grow flex flex-col">
             <Suspense fallback={<CardSkeleton />}>
               <GeneratePost
-                buttonText="Generate Audio"
+                dataType="commentary"
                 apiRoute="/api/py/generate_audio"
-                data={commentary as CommentaryList}
+                data={commentary as TimestampDescriptionList}
                 setData={setAudioFiles}
-                schema={commentaryListSchema}
               />
             </Suspense>
           </CardContent>
@@ -190,6 +188,12 @@ export default function GeneratePage() {
             </Suspense>
           </CardContent>
         </Card>
+      </div>
+      <div>
+        <p className="text-sm text-gray-500">
+          This app uses Gemini 1.5 Pro to generate a description of the provided video. The description is then used to create a commentary
+          at all the pivotal moments in the video with GPT 4o mini. This commentary is sent to Elevenlabs and made into audio files
+        </p>
       </div>
     </main>
   );
