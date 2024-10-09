@@ -58,8 +58,8 @@ export default function GenerateDescription({ setData }: GenerateDescriptionProp
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      <div>
+    <form onSubmit={handleSubmit} className="flex flex-col h-full">
+      <div className="flex-grow">
         <label htmlFor="url" className="block text-sm font-medium text-gray-700">
           URL
         </label>
@@ -74,9 +74,11 @@ export default function GenerateDescription({ setData }: GenerateDescriptionProp
         <p className="mt-2 text-sm text-gray-500">Enter the URL of the content you want to generate video for.</p>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       </div>
-      <Button type="submit" disabled={isLoading}>
-        {isLoading ? "Generating..." : "Generate"}
-      </Button>
+      <div className="mt-4 flex justify-center">
+        <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
+          {isLoading ? "Generating..." : "Generate"}
+        </Button>
+      </div>
     </form>
   );
 }

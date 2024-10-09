@@ -121,11 +121,11 @@ export default function GeneratePage() {
         <Icons.testTubeDiagonal className="h-8 w-8" />
       </div>
       <div className="flex flex-row items-stretch justify-center gap-4">
-        <Card className="w-1/4 h-[500px]">
+        <Card className="w-1/4 h-[500px] flex flex-col">
           <CardHeader>
             <CardTitle>Generate Description</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-grow flex flex-col gap-2">
             <Suspense fallback={<CardSkeleton />}>
               <GenerateDescription setData={setDescription} />
               {description && (

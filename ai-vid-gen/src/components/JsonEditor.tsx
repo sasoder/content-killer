@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { CommentaryList, DescriptionList } from "@/lib/types";
+import { Description } from "@radix-ui/react-dialog";
 
 type EditorData = CommentaryList | DescriptionList;
 
@@ -56,7 +57,11 @@ function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">{title}</Button>
+        <div className="flex justify-center items-center">
+          <Button variant="outline" disabled={rows.length === 0}>
+            {title}
+          </Button>
+        </div>
       </DialogTrigger>
       <DialogContent className="max-w-[90vw] max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="sticky z-10 top-0 bg-background border-b">
