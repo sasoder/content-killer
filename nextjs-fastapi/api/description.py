@@ -1,6 +1,6 @@
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part, GenerationConfig
-from api.schema import DescriptionList
+from api.schema import DescriptionList, Description
 
 prompt = """Provide a detailed description of the police bodycam video. The description should be comprehensive enough to generate insightful commentary in the style of JCS Criminal Psychology, with a focus on behavioral analysis and psychological insights. 
 
@@ -31,7 +31,7 @@ Focus on **behavioral analysis** and **key dialogues**, capturing pivotal moment
 
 
 def generate_description_helper(url: str) -> DescriptionList:
-    print(f"Generating description for {url}1111")
+    print(f"Generating description for {url}")
     vertexai.init(project="bodycam-437820")
 
     model = GenerativeModel("gemini-1.5-flash-002")
@@ -43,5 +43,33 @@ def generate_description_helper(url: str) -> DescriptionList:
 
     contents = [video_file, prompt]
 
-    response = model.generate_content(contents, generation_config=GenerationConfig(response_schema=DescriptionList))
-    return response.text
+    # Convert DescriptionList schema to JSON schema
+    description_list_schema = {
+        "type": "object",
+        "properties": {
+            "descriptions": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "timestamp": {"type": "string"},
+                        "speaker": {"type": "string"},
+                        "description": {"type": "string"}
+                    },
+                    "required": ["timestamp", "speaker", "description"]
+                }
+            }
+        },
+        "required": ["descriptions"]
+    }
+
+    response = model.generate_content(
+        contents,
+        generation_config=GenerationConfig(
+            response_schema=description_list_schema, response_mime_type="application/json"
+        )
+    )
+    
+    # Parse the response text into a DescriptionList object
+    description_list = DescriptionList.model_validate_json(response.text)
+    return description_list
