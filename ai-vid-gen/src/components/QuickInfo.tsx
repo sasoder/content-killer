@@ -39,11 +39,11 @@ export default function QuickInfo({ data, dataType }: QuickInfoProps) {
     }, "")
     .slice(2);
   return (
-    <div>
+    <div className=" h-full overflow-auto">
       <p className="mt-2 text-sm text-gray-500">
         You have {listLength} {dataType} entries consisting of {totalWords} words, with timestamps:
       </p>
-      <div className="text-sm text-gray-500 mt-2 overflow-auto">{allTimestamps}</div>
+      <div className="text-sm text-gray-500 mt-2">{allTimestamps}</div>
     </div>
   );
 }

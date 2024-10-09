@@ -57,9 +57,11 @@ function GeneratePost({ dataType, apiRoute, data, setData }: GeneratePostProps) 
   };
 
   return (
-    <div className="flex flex-col justify-between">
-      <QuickInfo data={data} dataType={dataType} />
-      <div className="flex justify-center mt-4">
+    <div className="flex flex-col max-h-full">
+      <div className="flex-grow">
+        <QuickInfo data={data} dataType={dataType} />
+      </div>
+      <div className="flex justify-center pt-4">
         <Button onClick={handleSubmit} disabled={isLoading || !data}>
           {isLoading ? "Generating..." : `Generate`}
         </Button>
