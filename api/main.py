@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from api.commentary import generate_commentary_helper
 from api.description import generate_description_helper
-from api.schema import CommentaryList, DescriptionList, UrlInput
+from api.schema import TimestampDescriptionList, UrlInput
 from api.audio import generate_audio_clips
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -22,19 +22,19 @@ app.add_middleware(
 
 
 @app.post("/api/generate_commentary")
-def generate_commentary(description: str) -> CommentaryList:
+def generate_commentary(description: TimestampDescriptionList) -> TimestampDescriptionList:
     print(f"Generating commentary for {description}")
     commentary = generate_commentary_helper(description)
     return commentary
 
 @app.post("/api/generate_description")
-async def generate_description(input: UrlInput) -> DescriptionList:
+async def generate_description(input: UrlInput) -> TimestampDescriptionList:
     print(f"Generating description for {input.url}")
     description = generate_description_helper(input.url)
     return description
 
 @app.post("/api/generate_audio")
-def generate_audio(commentary: CommentaryList):
+def generate_audio(commentary: TimestampDescriptionList):
     print(f"Generating audio for {commentary}")
     generate_audio_clips(commentary)
     return {"message": "Audio clips generated successfully"}

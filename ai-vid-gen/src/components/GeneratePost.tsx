@@ -57,7 +57,7 @@ function GeneratePost({ dataType, apiRoute, data, setData }: GeneratePostProps) 
   };
 
   return (
-    <div className="flex flex-col max-h-full">
+    <div className="flex flex-col h-full">
       <div className="flex-grow">
         <QuickInfo data={data} dataType={dataType} />
       </div>

@@ -7,35 +7,14 @@ interface QuickInfoProps {
 
 export default function QuickInfo({ data, dataType }: QuickInfoProps) {
   if (!data || data.items.length === 0) {
-    return null;
+    return <p className="text-sm text-gray-500">No data to display.</p>;
   }
-  // gets the list length
+
   const listLength = data.items.length;
-  console.log(data);
   const totalWords = data.items.reduce((total, item) => total + item.text.split(" ").length, 0);
   const allTimestamps = data.items
     .reduce((acc, item) => {
-      return (
-        acc +
-        ", " +
-        item.timestamp +
-        ", " +
-        item.timestamp +
-        ", " +
-        item.timestamp +
-        ", " +
-        item.timestamp +
-        ", " +
-        item.timestamp +
-        ", " +
-        item.timestamp +
-        ", " +
-        item.timestamp +
-        ", " +
-        item.timestamp +
-        ", " +
-        item.timestamp
-      );
+      return acc + ", " + item.timestamp;
     }, "")
     .slice(2);
   return (

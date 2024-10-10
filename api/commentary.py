@@ -1,7 +1,7 @@
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
-from api.schema import CommentaryList
+from api.schema import TimestampDescriptionList
 
 system_prompt = """Generate concise, sharp, and psychologically insightful commentary for a police bodycam video in the style of JCS Criminal Psychology. Each commentary point must:
 - Be **authoritative** and **confident**—avoid speculative language like "could signify" or "possibly."
@@ -30,7 +30,7 @@ Structure the commentary to:
 - Prioritize **quality** over **quantity**.
 - Avoid commenting on trivial or irrelevant moments. Only provide commentary for moments with significant psychological or behavioral insight."""
 
-def generate_commentary_helper(description: str) -> CommentaryList:
+def generate_commentary_helper(description: TimestampDescriptionList) -> TimestampDescriptionList:
     load_dotenv()
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -53,7 +53,7 @@ def generate_commentary_helper(description: str) -> CommentaryList:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ],
-        response_format=CommentaryList,
+        response_format=TimestampDescriptionList,
     )
 
     # Instead of returning just the comments, return the entire CommentaryList

@@ -1,5 +1,4 @@
 import { Suspense, useState, useEffect, useMemo } from "react";
-import { z } from "zod";
 
 import AudioDownloader from "@/components/AudioDownloader";
 import GenerateDescription from "@/components/GenerateDescription";
@@ -10,21 +9,6 @@ import { Icons } from "@/components/icons";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardSkeleton } from "@/components/CardSkeletion";
 import { ModeToggle } from "@/components/mode-toggle";
-
-// Define Zod schemas for validation
-const descriptionListSchema = z.array(
-  z.object({
-    timestamp: z.string(),
-    description: z.string(),
-  })
-);
-
-const commentaryListSchema = z.array(
-  z.object({
-    timestamp: z.string(),
-    commentary: z.string(),
-  })
-);
 
 export default function GeneratePage() {
   const [description, setDescription] = useState<TimestampDescriptionList | null>(null);
@@ -147,7 +131,7 @@ export default function GeneratePage() {
             <Suspense fallback={<CardSkeleton />}>
               <GeneratePost
                 dataType="description"
-                apiRoute="/api/py/generate_commentary"
+                apiRoute="/api/generate_commentary"
                 data={description as TimestampDescriptionList}
                 setData={setCommentary}
               />
@@ -170,7 +154,7 @@ export default function GeneratePage() {
             <Suspense fallback={<CardSkeleton />}>
               <GeneratePost
                 dataType="commentary"
-                apiRoute="/api/py/generate_audio"
+                apiRoute="/api/generate_audio"
                 data={commentary as TimestampDescriptionList}
                 setData={setAudioFiles}
               />

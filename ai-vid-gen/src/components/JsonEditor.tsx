@@ -48,7 +48,7 @@ function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
               <TableHeader>
                 <TableRow className="border-none hover:bg-transparent">
                   {columns.map((column) => (
-                    <TableHead className="px-6" key={column}>
+                    <TableHead className={`px-6 ${column.toLowerCase() === "timestamp" ? "w-40" : ""}`} key={column}>
                       {column}
                     </TableHead>
                   ))}
@@ -63,7 +63,7 @@ function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
               {editedData.items.map((row, rowIndex) => (
                 <TableRow className="border-none hover:bg-transparent" key={rowIndex}>
                   {columns.map((column) => (
-                    <TableCell key={`${rowIndex}-${column}`}>
+                    <TableCell className={column.toLowerCase() === "timestamp" ? "w-40" : ""} key={`${rowIndex}-${column}`}>
                       <Input
                         value={row[column as keyof typeof row]}
                         onChange={(e) => handleInputChange(rowIndex, column, e.target.value)}
