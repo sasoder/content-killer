@@ -2,7 +2,7 @@ import os
 import requests
 from dotenv import load_dotenv
 
-from api.schema import TimestampDescriptionList
+from api.schema import TimestampTextList
 
 load_dotenv()
 
@@ -48,14 +48,20 @@ def timestamp_to_filename(timestamp):
     # Convert "MM:SS" to "MMSS.mp3"
     return timestamp.replace(":", "") + ".mp3"
 
-def generate_audio_clips(commentary_data: TimestampDescriptionList):
-    # Generate audio for each commentary entry
+def generate_audio_clips(commentary_data: TimestampTextList):
+    generated_files = []
     total_comments = len(commentary_data.items)
     for index, entry in enumerate(commentary_data.items, start=1):
         print(f"Processing comment {index}/{total_comments}")
         print(f"Generating audio for {entry.timestamp}")
         timestamp = entry.timestamp
-        commentary = entry.commentary
+        commentary = entry.text
         output_filename = timestamp_to_filename(timestamp)
         output_path = os.path.join(OUTPUT_DIR, output_filename)
         generate_audio(commentary, output_path)
+        generated_files.append({
+            "timestamp": timestamp,
+            "filename": output_filename,
+            "path": output_path
+        })
+    return generated_files

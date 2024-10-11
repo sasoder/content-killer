@@ -1,6 +1,6 @@
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part, GenerationConfig
-from api.schema import TimestampDescriptionList, TimestampDescription
+from api.schema import TimestampTextList, TimestampDescription
 
 prompt = """Provide a detailed description of the police bodycam video. The description should be comprehensive enough to generate insightful commentary in the style of JCS Criminal Psychology, with a focus on behavioral analysis and psychological insights. 
 
@@ -30,7 +30,7 @@ prompt = """Provide a detailed description of the police bodycam video. The desc
 Focus on **behavioral analysis** and **key dialogues**, capturing pivotal moments that reveal the psychology of the suspect or the tactics of the officers."""
 
 
-def generate_description_helper(url: str) -> TimestampDescriptionList:
+def generate_description_helper(url: str) -> TimestampTextList:
     print(f"Generating description for {url}")
     vertexai.init(project="bodycam-437820")
 
@@ -71,5 +71,5 @@ def generate_description_helper(url: str) -> TimestampDescriptionList:
     )
     
     # Parse the response text into a DescriptionList object
-    description_list = TimestampDescriptionList.model_validate_json(response.text)
+    description_list = TimestampTextList.model_validate_json(response.text)
     return description_list

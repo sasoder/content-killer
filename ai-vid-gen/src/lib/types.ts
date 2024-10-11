@@ -3,6 +3,6 @@ export type TimestampText = {
   text: string;
 };
 
-export type TimestampDescriptionList = {
+export type TimestampTextList = {
   items: TimestampText[];
 };

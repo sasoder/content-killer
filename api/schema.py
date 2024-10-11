@@ -7,6 +7,6 @@ class TimestampDescription(BaseModel):
     timestamp: str
     description: str
 
-class TimestampDescriptionList(BaseModel):
+class TimestampTextList(BaseModel):
     items: List[TimestampDescription]
 
