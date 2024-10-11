@@ -106,25 +106,27 @@ export default function GeneratePage() {
         <Icons.bot className="h-12 w-12" />
       </div>
       <div className="flex flex-row items-stretch justify-center gap-4">
-        <Card className="w-1/4 h-[500px] flex flex-col">
+        <Card className="w-1/4 h-[500px] flex flex-col relative">
           <CardHeader>
             <CardTitle>Generate Description</CardTitle>
           </CardHeader>
           <CardContent className="flex-grow flex flex-col gap-2">
             <Suspense fallback={<CardSkeleton />}>
               <GenerateDescription setData={setDescription} />
-              {description && (
-                <JsonEditor
-                  title="Edit Description"
-                  data={description as TimestampTextList}
-                  onUpdate={(updatedData) => setDescription(updatedData as TimestampTextList)}
-                />
-              )}
             </Suspense>
           </CardContent>
+          {description && (
+            <div className="absolute bottom-6 right-6">
+              <JsonEditor
+                title="Edit Description"
+                data={description as TimestampTextList}
+                onUpdate={(updatedData) => setDescription(updatedData as TimestampTextList)}
+              />
+            </div>
+          )}
         </Card>
 
-        <Card className="w-1/4 h-[500px] flex flex-col">
+        <Card className="w-1/4 h-[500px] flex flex-col relative">
           <CardHeader>
             <CardTitle>Generate Commentary</CardTitle>
           </CardHeader>
@@ -136,15 +138,17 @@ export default function GeneratePage() {
                 data={description as TimestampTextList}
                 setData={setCommentary}
               />
-              {commentary && (
-                <JsonEditor
-                  title="Edit Commentary"
-                  data={commentary}
-                  onUpdate={(updatedData) => setCommentary(updatedData as TimestampTextList)}
-                />
-              )}
             </Suspense>
           </CardContent>
+          {commentary && (
+            <div className="absolute bottom-6 right-6">
+              <JsonEditor
+                title="Edit Commentary"
+                data={commentary}
+                onUpdate={(updatedData) => setCommentary(updatedData as TimestampTextList)}
+              />
+            </div>
+          )}
         </Card>
 
         <Card className="w-1/4 h-[500px] flex flex-col">

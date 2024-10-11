@@ -70,6 +70,5 @@ def generate_description_helper(url: str) -> TimestampTextList:
         )
     )
     
-    # Parse the response text into a DescriptionList object
     description_list = TimestampTextList.model_validate_json(response.text)
     return description_list
