@@ -3,14 +3,15 @@
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { TimestampDescriptionList } from "@/lib/types";
+import { TimestampTextList } from "@/lib/types";
+import { Icons } from "@/components/icons";
 import QuickInfo from "@/components/QuickInfo";
 
 interface GeneratePostProps {
   dataType: "description" | "commentary";
   apiRoute: string;
-  data: TimestampDescriptionList | null;
-  setData: React.Dispatch<React.SetStateAction<TimestampDescriptionList | null>>;
+  data: TimestampTextList | null;
+  setData: React.Dispatch<React.SetStateAction<TimestampTextList | null>>;
 }
 
 function GeneratePost({ dataType, apiRoute, data, setData }: GeneratePostProps) {
@@ -63,7 +64,7 @@ function GeneratePost({ dataType, apiRoute, data, setData }: GeneratePostProps) 
       </div>
       <div className="flex justify-center pt-4">
         <Button onClick={handleSubmit} disabled={isLoading || !data}>
-          {isLoading ? "Generating..." : `Generate`}
+          {isLoading ? <Icons.loader className="h-[1.2rem] w-[1.2rem] animate-spin" /> : `Generate`}
         </Button>
       </div>
     </div>

@@ -4,17 +4,18 @@ import AudioDownloader from "@/components/AudioDownloader";
 import GenerateDescription from "@/components/GenerateDescription";
 import GeneratePost from "@/components/GeneratePost";
 import JsonEditor from "@/components/JsonEditor";
-import { TimestampDescriptionList } from "@/lib/types";
+import { TimestampTextList } from "@/lib/types";
 import { Icons } from "@/components/icons";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardSkeleton } from "@/components/CardSkeletion";
 import { ModeToggle } from "@/components/mode-toggle";
 
 export default function GeneratePage() {
-  const [description, setDescription] = useState<TimestampDescriptionList | null>(null);
-  const [commentary, setCommentary] = useState<TimestampDescriptionList | null>(null);
-  const [audioFiles, setAudioFiles] = useState<string[] | null>(null);
-  const sampleDescription: TimestampDescriptionList = useMemo(() => {
+  const [description, setDescription] = useState<TimestampTextList | null>(null);
+  const [commentary, setCommentary] = useState<TimestampTextList | null>(null);
+  const [audioFiles, setAudioFiles] = useState<Array<{ timestamp: string; filename: string }> | null>(null);
+
+  const sampleDescription: TimestampTextList = useMemo(() => {
     return {
       items: [
         {
@@ -101,7 +102,7 @@ export default function GeneratePage() {
         <div className="absolute right-0 top-0 m-4">
           <ModeToggle />
         </div>
-        <h1 className="flex items-center justify-center text-3xl font-bold">Let&apos;s generate your video!</h1>
+        <h1 className="flex items-center justify-center text-3xl font-bold">Cooking a video</h1>
         <Icons.testTubeDiagonal className="h-8 w-8" />
       </div>
       <div className="flex flex-row items-stretch justify-center gap-4">
@@ -115,8 +116,8 @@ export default function GeneratePage() {
               {description && (
                 <JsonEditor
                   title="Edit Description"
-                  data={description as TimestampDescriptionList}
-                  onUpdate={(updatedData) => setDescription(updatedData as TimestampDescriptionList)}
+                  data={description as TimestampTextList}
+                  onUpdate={(updatedData) => setDescription(updatedData as TimestampTextList)}
                 />
               )}
             </Suspense>
@@ -132,14 +133,14 @@ export default function GeneratePage() {
               <GeneratePost
                 dataType="description"
                 apiRoute="/api/generate_commentary"
-                data={description as TimestampDescriptionList}
+                data={description as TimestampTextList}
                 setData={setCommentary}
               />
               {commentary && (
                 <JsonEditor
                   title="Edit Commentary"
                   data={commentary}
-                  onUpdate={(updatedData) => setCommentary(updatedData as TimestampDescriptionList)}
+                  onUpdate={(updatedData) => setCommentary(updatedData as TimestampTextList)}
                 />
               )}
             </Suspense>
@@ -155,7 +156,7 @@ export default function GeneratePage() {
               <GeneratePost
                 dataType="commentary"
                 apiRoute="/api/generate_audio"
-                data={commentary as TimestampDescriptionList}
+                data={commentary as TimestampTextList}
                 setData={setAudioFiles}
               />
             </Suspense>
@@ -168,7 +169,7 @@ export default function GeneratePage() {
           </CardHeader>
           <CardContent>
             <Suspense fallback={<CardSkeleton />}>
-              <AudioDownloader audioFiles={audioFiles as string[]} />
+              <AudioDownloader audioFiles={audioFiles} />
             </Suspense>
           </CardContent>
         </Card>

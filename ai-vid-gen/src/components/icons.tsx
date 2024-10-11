@@ -1,4 +1,4 @@
-import { Bot, Command, Loader, Moon, SunMedium, Zap, TestTubeDiagonal } from "lucide-react";
+import { Bot, Command, Loader, Moon, SunMedium, Zap, TestTubeDiagonal, Pencil, Minus, Plus } from "lucide-react";
 
 export type IconKeys = keyof typeof icons;
 
@@ -14,6 +14,9 @@ const icons = {
   loader: Loader,
   zap: Zap,
   testTubeDiagonal: TestTubeDiagonal,
+  pencil: Pencil,
+  minus: Minus,
+  plus: Plus,
 };
 
 export const Icons: IconsType = icons;

@@ -1,7 +1,7 @@
-import { TimestampDescriptionList } from "@/lib/types";
+import { TimestampTextList } from "@/lib/types";
 
 interface QuickInfoProps {
-  data: TimestampDescriptionList | null;
+  data: TimestampTextList | null;
   dataType: "description" | "commentary";
 }
 
