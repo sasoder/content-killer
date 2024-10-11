@@ -102,8 +102,8 @@ export default function GeneratePage() {
         <div className="absolute right-0 top-0 m-4">
           <ModeToggle />
         </div>
-        <h1 className="flex items-center justify-center text-3xl font-bold">Cooking a video</h1>
-        <Icons.testTubeDiagonal className="h-8 w-8" />
+        <h1 className="flex items-center justify-center text-3xl font-bold">Content Killer</h1>
+        <Icons.bot className="h-12 w-12" />
       </div>
       <div className="flex flex-row items-stretch justify-center gap-4">
         <Card className="w-1/4 h-[500px] flex flex-col">

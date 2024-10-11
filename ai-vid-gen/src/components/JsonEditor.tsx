@@ -16,7 +16,7 @@ interface JsonEditorProps {
 function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
   const [editedData, setEditedData] = useState<TimestampTextList>(data);
   const [isOpen, setIsOpen] = useState(false);
-  const [newRow, setNewRow] = useState<Record<string, string>>({});
+  const [newRow, setNewRow] = useState<TimestampText>({ timestamp: "", text: "" });
   const { toast } = useToast();
 
   const validateTimestamp = (timestamp: string): boolean => {
@@ -24,13 +24,13 @@ function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
     return regex.test(timestamp);
   };
 
-  const handleInputChange = (rowIndex: number, key: string, value: string) => {
+  const handleInputChange = (rowIndex: number, key: keyof TimestampText, value: string) => {
     const newData = { ...editedData };
     newData.items[rowIndex] = { ...newData.items[rowIndex], [key]: value };
     setEditedData(newData);
   };
 
-  const handleNewRowInputChange = (key: string, value: string) => {
+  const handleNewRowInputChange = (key: keyof TimestampText, value: string) => {
     setNewRow({ ...newRow, [key]: value });
   };
 
@@ -55,10 +55,10 @@ function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
   };
 
   const handleAdd = () => {
-    if (Object.values(newRow).some((value) => value === "")) {
+    if (newRow.timestamp === "" || newRow.text === "") {
       toast({
         title: "Incomplete Data",
-        description: "Please fill in all fields before adding a new row.",
+        description: "Please fill in both timestamp and text fields before adding a new row.",
         variant: "destructive",
       });
       return;
@@ -74,21 +74,19 @@ function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
     }
 
     const newData = { ...editedData };
-    const newItem = newRow as TimestampText;
-
-    const insertIndex = newData.items.findIndex((item) => item.timestamp > newItem.timestamp);
+    const insertIndex = newData.items.findIndex((item) => item.timestamp > newRow.timestamp);
 
     if (insertIndex === -1) {
-      newData.items.push(newItem);
+      newData.items.push(newRow);
     } else {
-      newData.items.splice(insertIndex, 0, newItem);
+      newData.items.splice(insertIndex, 0, newRow);
     }
 
     setEditedData(newData);
-    setNewRow({});
+    setNewRow({ timestamp: "", text: "" });
   };
 
-  const columns = Object.keys(editedData.items[0] || {});
+  const columns: (keyof TimestampText)[] = ["timestamp", "text"];
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -110,7 +108,7 @@ function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
               <TableHeader>
                 <TableRow className="border-none hover:bg-transparent">
                   {columns.map((column) => (
-                    <TableHead className={`px-6 ${column.toLowerCase() === "timestamp" ? "w-40" : ""}`} key={column}>
+                    <TableHead className={`px-6 ${column === "timestamp" ? "w-40" : ""}`} key={column}>
                       {column}
                     </TableHead>
                   ))}
@@ -125,11 +123,11 @@ function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
             <TableBody>
               <TableRow className="border-none hover:bg-transparent">
                 {columns.map((column) => (
-                  <TableCell className={column.toLowerCase() === "timestamp" ? "w-40" : ""} key={`new-${column}`}>
+                  <TableCell className={column === "timestamp" ? "w-40" : ""} key={`new-${column}`}>
                     <Input
-                      value={newRow[column] || ""}
+                      value={newRow[column]}
                       onChange={(e) => handleNewRowInputChange(column, e.target.value)}
-                      placeholder={column.toLowerCase() === "timestamp" ? "MM:SS" : `New ${column}`}
+                      placeholder={column === "timestamp" ? "MM:SS" : `New ${column}`}
                     />
                   </TableCell>
                 ))}
@@ -142,11 +140,8 @@ function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
               {editedData.items.map((row, rowIndex) => (
                 <TableRow className="border-none hover:bg-transparent" key={rowIndex}>
                   {columns.map((column) => (
-                    <TableCell className={column.toLowerCase() === "timestamp" ? "w-40" : ""} key={`${rowIndex}-${column}`}>
-                      <Input
-                        value={row[column as keyof typeof row]}
-                        onChange={(e) => handleInputChange(rowIndex, column, e.target.value)}
-                      />
+                    <TableCell className={column === "timestamp" ? "w-40" : ""} key={`${rowIndex}-${column}`}>
+                      <Input value={row[column]} onChange={(e) => handleInputChange(rowIndex, column, e.target.value)} />
                     </TableCell>
                   ))}
                   <TableCell className="w-16">
