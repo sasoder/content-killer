@@ -9,7 +9,7 @@ type StepCardProps = {
 
 function StepCard({ title, content, info }: StepCardProps) {
   return (
-    <Card className="w-1/4 h-[500px] flex flex-col shadow-xl shadow-black/20 hover:bg-accent">
+    <Card className="w-1/4 h-[500px] flex flex-col shadow-xl shadow-black/20 hover:bg-accent transition-colors duration-300">
       <CardHeader>
         <CardTitle className="flex flex-row items-center justify-between">
           {title}

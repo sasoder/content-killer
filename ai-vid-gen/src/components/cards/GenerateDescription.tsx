@@ -74,7 +74,7 @@ export default function GenerateDescription({ setData }: GenerateDescriptionProp
           onChange={(e) => setUrl(e.target.value)}
           className="mt-1"
         />
-        <p className="mt-2 text-sm text-gray-500">Enter the URL of the YouTube video you want to generate a video for.</p>
+        <p className="mt-2 text-sm text-gray-500">Enter the URL of the YouTube video you want to generate a description for.</p>
       </div>
       <div className="mt-4 flex justify-center">
         <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
@@ -84,7 +84,7 @@ export default function GenerateDescription({ setData }: GenerateDescriptionProp
               Generating...
             </>
           ) : (
-            "Generate"
+            "Generate description"
           )}
         </Button>
       </div>

@@ -2,11 +2,10 @@ from fastapi import FastAPI, HTTPException
 from api.commentary import generate_commentary_helper
 from api.description import generate_description_helper
 from api.schema import (
-    GenerateCommentaryInput,
     GenerateDescriptionInput,
-    GenerateAudioInput,
     TimestampTextList,
-    AudioFile,
+    DescriptionOptions,
+    CommentaryOptions,
 )
 from api.audio import generate_audio_clips, OUTPUT_DIR
 from fastapi.middleware.cors import CORSMiddleware
@@ -35,7 +34,7 @@ async def generate_description(input: GenerateDescriptionInput) -> TimestampText
     return description
 
 @app.post("/api/generate_commentary", response_model=TimestampTextList)
-def generate_commentary(input: GenerateCommentaryInput) -> TimestampTextList:
+def generate_commentary(input: CommentaryOptions) -> TimestampTextList:
     print(f"Generating commentary with description: {input.description} and options: {input.options}")
     commentary = generate_commentary_helper(input.description, input.options)
     return commentary

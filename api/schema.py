@@ -1,25 +1,8 @@
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 
-class UrlInput(BaseModel):
-    url: str
 
-class DescriptionOptions(BaseModel):
-    # Define your description-related options here
-    example_option: Optional[str] = None
-
-class CommentaryOptions(BaseModel):
-    intro: bool = True
-    outro: bool = True
-    temperature: float = 0.7
-
-class AudioOptions(BaseModel):
-    speed: float = 1.0
-
-class GenerateDescriptionInput(BaseModel):
-    url: str
-    options: Optional[DescriptionOptions] = None
-
+# General
 class TimestampText(BaseModel):
     timestamp: str
     text: str
@@ -27,15 +10,28 @@ class TimestampText(BaseModel):
 class TimestampTextList(BaseModel):
     items: List[TimestampText]
 
+# Description
+class DescriptionOptions(BaseModel):
+    example_option: Optional[str] = None
+
+class GenerateDescriptionInput(BaseModel):
+    url: str
+    options: Optional[DescriptionOptions] = None
+
+# Commentary
+class CommentaryOptions(BaseModel):
+    intro: bool = True
+    outro: bool = True
+    temperature: float = 0.7
+
 class GenerateCommentaryInput(BaseModel):
     description: TimestampTextList
     options: Optional[CommentaryOptions] = None
 
-class GenerateAudioInput(BaseModel):
-    commentary: TimestampTextList
-    options: Optional[AudioOptions] = None
-
-
+# Audio
 class AudioFile(BaseModel):
     timestamp: str
     filename: str
+    
+class AudioOptions(BaseModel):
+    speed: float = 1.0

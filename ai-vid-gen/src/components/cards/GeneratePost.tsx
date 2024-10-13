@@ -11,7 +11,7 @@ import StepOptions from "@/components/cards/StepOptions";
 import { generateCommentary, generateAudio } from "@/api/apiHelper";
 
 interface GeneratePostProps {
-  dataType: "description" | "commentary";
+  dataType: "commentary" | "audio";
   data: TimestampTextList | null;
   setData: React.Dispatch<React.SetStateAction<TimestampTextList | null>>;
   options?: GenerateOptions;
@@ -50,10 +50,10 @@ function GeneratePost({ dataType, data, setData, options }: GeneratePostProps) {
     setIsLoading(true);
     setError(null);
     try {
-      if (dataType === "description") {
+      if (dataType === "commentary") {
         const commentaryData = await generateCommentary(data as TimestampTextList, optionValues);
         setData(commentaryData);
-      } else if (dataType === "commentary") {
+      } else if (dataType === "audio") {
         const audioFiles = await generateAudio(data as TimestampTextList, optionValues);
         setData(audioFiles);
       }
@@ -77,7 +77,7 @@ function GeneratePost({ dataType, data, setData, options }: GeneratePostProps) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex-grow">
-        <QuickInfo data={data} dataType={dataType} />
+        <QuickInfo data={data} />
       </div>
       <div className="text-sm font-medium text-muted-foreground">Options</div>
       <Separator className="mb-4 mt-3" />

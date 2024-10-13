@@ -85,7 +85,7 @@ export default function GeneratePage() {
 
       <div className="flex flex-row items-stretch justify-center gap-4">
         <StepCard
-          title="Generate Description"
+          title="Description"
           content={
             <Suspense fallback={<CardSkeleton />}>
               <GenerateDescription setData={setDescription} />
@@ -101,12 +101,11 @@ export default function GeneratePage() {
         />
 
         <StepCard
-          title="Generate Commentary"
+          title="Commentary"
           content={
             <Suspense fallback={<CardSkeleton />}>
               <GeneratePost
-                dataType="description"
-                apiRoute="/api/generate_commentary"
+                dataType="commentary"
                 data={description as TimestampTextList}
                 setData={setCommentary}
                 options={commentaryOptions}
@@ -123,16 +122,10 @@ export default function GeneratePage() {
         />
 
         <StepCard
-          title="Generate Audio"
+          title="Audio"
           content={
             <Suspense fallback={<CardSkeleton />}>
-              <GeneratePost
-                dataType="commentary"
-                apiRoute="/api/generate_audio"
-                data={commentary as TimestampTextList}
-                setData={setAudioFiles}
-                options={audioOptions}
-              />
+              <GeneratePost dataType="audio" data={commentary as TimestampTextList} setData={setAudioFiles} options={audioOptions} />
             </Suspense>
           }
           info="This step generates audio files for the commentary at all the pivotal moments in the video."
@@ -141,7 +134,7 @@ export default function GeneratePage() {
         <StepTransition data={audioFiles} onUpdate={(updatedData) => setAudioFiles(updatedData)} />
 
         <StepCard
-          title="Download Audio"
+          title="Files"
           content={
             <Suspense fallback={<CardSkeleton />}>
               <AudioDownloader audioFiles={audioFiles} />
