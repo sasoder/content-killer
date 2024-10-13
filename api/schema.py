@@ -12,7 +12,7 @@ class TimestampTextList(BaseModel):
 
 # Description
 class DescriptionOptions(BaseModel):
-    example_option: Optional[str] = None
+    sample: bool = False
 
 class GenerateDescriptionInput(BaseModel):
     url: str
@@ -25,13 +25,13 @@ class CommentaryOptions(BaseModel):
     temperature: float = 0.7
 
 class GenerateCommentaryInput(BaseModel):
-    description: TimestampTextList
+    items: List[TimestampText]
     options: Optional[CommentaryOptions] = None
 
 # Audio
 class AudioFile(BaseModel):
     timestamp: str
     filename: str
-    
+
 class AudioOptions(BaseModel):
     speed: float = 1.0

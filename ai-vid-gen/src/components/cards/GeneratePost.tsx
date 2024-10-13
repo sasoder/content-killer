@@ -83,7 +83,7 @@ function GeneratePost({ dataType, data, setData, options }: GeneratePostProps) {
       <Separator className="mb-4 mt-3" />
       {options && <StepOptions options={options} optionValues={optionValues} onOptionChange={handleOptionChange} />}
       <div className="flex justify-center pt-4">
-        <Button onClick={handleGenerate} disabled={isLoading || !data}>
+        <Button onClick={handleGenerate} disabled={isLoading || !data} className="font-bold">
           {isLoading ? (
             <>
               <Icons.loader className="h-[1.2rem] w-[1.2rem] animate-spin mr-2" />

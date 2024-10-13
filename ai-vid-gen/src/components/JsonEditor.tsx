@@ -98,7 +98,7 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 
   const handleSubmitNewRow = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    handleAdd();
+    handleSave(true);
   };
 
   return (
@@ -110,7 +110,7 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
           </Button>
         </div>
       </DialogTrigger>
-      <DialogContent className="max-w-[90vw] max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="max-w-[70vw] max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="sticky z-10 top-0 bg-background border-b">
           <div className="flex flex-col">
             <div className="flex flex-row justify-between items-center p-6">

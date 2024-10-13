@@ -9,8 +9,8 @@ export default function Home() {
     <main className="flex h-screen items-center justify-center">
       <div className="container flex max-w-[64rem] flex-col items-center gap-4 text-center">
         <div className="flex flex-row items-center justify-center gap-4">
-          <h1 className="text-3xl font-bold">Content Killer</h1>
-          <Icons.bot className="h-12 w-12" />
+          <h1 className="text-3xl">Content Killer</h1>
+          <Icons.skull className="h-12 w-12" />
         </div>
 
         <div className="flex gap-2">

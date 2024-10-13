@@ -42,7 +42,7 @@ export default function GenerateDescription({ setData }: GenerateDescriptionProp
     setIsLoading(true);
     try {
       console.log("Submitting form with URL:", url);
-      const descriptionData = await generateDescription(url, {});
+      const descriptionData = await generateDescription(url, { sample: true });
       setData(descriptionData);
       toast({
         title: "Success",

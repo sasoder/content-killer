@@ -1,7 +1,7 @@
 import {
   Bot,
   Command,
-  Loader,
+  Skull,
   Moon,
   SunMedium,
   Zap,
@@ -35,6 +35,7 @@ const icons = {
   moveRight: MoveRight,
   info: Info,
   chevronLeft: ChevronLeft,
+  skull: Skull,
 };
 
 export const Icons: IconsType = icons;

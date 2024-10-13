@@ -1,7 +1,7 @@
 import { TimestampTextList } from "@/lib/types";
 
 interface GenerateDescriptionOptions {
-  exampleOption?: string;
+  sample?: boolean;
 }
 
 interface GenerateCommentaryOptions {

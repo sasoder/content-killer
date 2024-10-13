@@ -16,19 +16,19 @@ export default function GeneratePage() {
   const [commentary, setCommentary] = useState<TimestampTextList | null>(null);
   const [audioFiles, setAudioFiles] = useState<Array<{ timestamp: string; filename: string }> | null>(null);
 
-  const sampleDescription: TimestampTextList = useMemo(() => {
-    return {
-      items: [
-        {
-          timestamp: "00:00",
-          text: "Sample text 1",
-        },
-      ],
-    };
-  }, []);
-  useEffect(() => {
-    setDescription(sampleDescription);
-  }, [sampleDescription]);
+  // const sampleDescription: TimestampTextList = useMemo(() => {
+  //   return {
+  //     items: [
+  //       {
+  //         timestamp: "00:00",
+  //         text: "Sample text 1",
+  //       },
+  //     ],
+  //   };
+  // }, []);
+  // useEffect(() => {
+  //   setDescription(sampleDescription);
+  // }, [sampleDescription]);
 
   const commentaryOptions: GenerateOptions = {
     intro: {
@@ -49,7 +49,7 @@ export default function GeneratePage() {
       key: "temperature",
       default: 0.7,
       min: 0,
-      max: 1,
+      max: 2,
       step: 0.01,
     },
   };
@@ -72,15 +72,15 @@ export default function GeneratePage() {
         <div className="absolute left-0 top-0 m-4">
           <Link to="/">
             <Button variant="ghost" size="icon">
-              <Icons.chevronLeft className="w-[1.5rem] h-[1.5rem]" />
+              <Icons.chevronLeft className="w-[1.5rem] h-[1.5rem] -translate-x-[0.075rem]" />
             </Button>
           </Link>
         </div>
         <div className="absolute right-0 top-0 m-4">
           <ModeToggle />
         </div>
-        <h1 className="flex items-center justify-center text-3xl font-bold">Content Killer</h1>
-        <Icons.bot className="h-12 w-12" />
+        <h1 className="flex items-center justify-center text-3xl">Content Killer</h1>
+        <Icons.skull className="h-12 w-12" />
       </div>
 
       <div className="flex flex-row items-stretch justify-center gap-4">
@@ -128,7 +128,7 @@ export default function GeneratePage() {
               <GeneratePost dataType="audio" data={commentary as TimestampTextList} setData={setAudioFiles} options={audioOptions} />
             </Suspense>
           }
-          info="This step generates audio files for the commentary at all the pivotal moments in the video."
+          info="This step generates audio files for the commentary at all pivotal moments in the video."
         />
 
         <StepTransition data={audioFiles} onUpdate={(updatedData) => setAudioFiles(updatedData)} />
@@ -147,7 +147,7 @@ export default function GeneratePage() {
       <div>
         <p className="text-sm text-gray-500">
           This app uses Gemini 1.5 Pro to generate a description of the provided video. The description is then used to create a commentary
-          at all the pivotal moments in the video with GPT 4o mini. This commentary is sent to Elevenlabs and made into audio files
+          at all pivotal moments in the video with GPT 4o mini. This commentary is sent to Elevenlabs and made into audio files
         </p>
       </div>
     </main>

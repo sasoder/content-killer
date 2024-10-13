@@ -5,6 +5,7 @@ import App from "@/App.tsx";
 import Generate from "@/pages/Generate.tsx";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
+import "@fontsource/nunito";
 import "./index.css";
 
 const router = createBrowserRouter([

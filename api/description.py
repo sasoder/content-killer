@@ -1,6 +1,10 @@
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part, GenerationConfig
-from api.schema import TimestampTextList, DescriptionOptions
+from api.schema import TimestampTextList, DescriptionOptions, TimestampText
+import os
+import dotenv
+
+dotenv.load_dotenv()
 
 prompt = """Provide a detailed description of the police bodycam video. The description should be comprehensive enough to generate insightful commentary in the style of JCS Criminal Psychology, with a focus on behavioral analysis and psychological insights. 
 
@@ -23,8 +27,7 @@ prompt = """Provide a detailed description of the police bodycam video. The desc
 **Format**:
     {{
         timestamp: "MM:SS",
-        speaker: "Who is speaking (e.g., Officer 1, Suspect)",
-        description: "Description of the event, including exact dialogue and context of behavior"
+        text: "Description of the event, including exact dialogue and context of behavior"
     }}
 
 Focus on **behavioral analysis** and **key dialogues**, capturing pivotal moments that reveal the psychology of the suspect or the tactics of the officers."""
@@ -32,7 +35,9 @@ Focus on **behavioral analysis** and **key dialogues**, capturing pivotal moment
 
 def generate_description_helper(url: str, options: DescriptionOptions) -> TimestampTextList:
     print(f"Generating description for {url} with options: {options}")
-    vertexai.init(project="bodycam-437820")
+    if options.sample:
+        return sample_response()
+    vertexai.init(project=os.getenv("VERTEXAI_PROJECT_ID"))
 
     model = GenerativeModel("gemini-1.5-flash-002")
 
@@ -47,20 +52,19 @@ def generate_description_helper(url: str, options: DescriptionOptions) -> Timest
     description_list_schema = {
         "type": "object",
         "properties": {
-            "descriptions": {
+            "items": {
                 "type": "array",
                 "items": {
                     "type": "object",
                     "properties": {
                         "timestamp": {"type": "string"},
-                        "speaker": {"type": "string"},
-                        "description": {"type": "string"}
+                        "text": {"type": "string"}
                     },
-                    "required": ["timestamp", "speaker", "description"]
+                    "required": ["timestamp", "text"]
                 }
             }
         },
-        "required": ["descriptions"]
+        "required": ["items"]
     }
 
     response = model.generate_content(
@@ -72,3 +76,21 @@ def generate_description_helper(url: str, options: DescriptionOptions) -> Timest
     
     description_list = TimestampTextList.model_validate_json(response.text)
     return description_list
+
+def sample_response():
+    return TimestampTextList(
+        items=[
+            TimestampText(
+                timestamp="00:00",
+                text="Officer 1: Description of the event"
+            ), 
+            TimestampText(
+                timestamp="00:05",
+                text="Suspect: Description of the event"
+            ),
+            TimestampText(
+                timestamp="00:10",
+                text="Officer 1: Description of the event"
+            ),
+        ],
+    )
