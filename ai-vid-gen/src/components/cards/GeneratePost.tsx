@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { TimestampTextList, CommentaryOptions, AudioOptions, AudioResponse } from "@/lib/schema";
+import { TimestampTextList, CommentaryOptions, AudioOptions, AudioResponse, TimestampText } from "@/lib/schema";
 import { GenerateOptions } from "@/lib/types";
 import { Icons } from "@/components/icons";
 import QuickInfo from "@/components/QuickInfo";
@@ -11,12 +11,12 @@ import { generateCommentary, generateAudio } from "@/api/apiHelper";
 
 interface GeneratePostProps {
   dataType: "commentary" | "audio";
-  data: TimestampTextList | null;
-  setData: React.Dispatch<React.SetStateAction<TimestampTextList | AudioResponse | null>>;
+  data: TimestampTextList | AudioResponse | null;
+  mutate: (newData: TimestampTextList | AudioResponse) => void;
   options?: GenerateOptions;
 }
 
-function GeneratePost({ dataType, data, setData, options }: GeneratePostProps) {
+function GeneratePost({ dataType, data, mutate, options }: GeneratePostProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [optionValues, setOptionValues] = useState<Record<string, boolean | number>>({});
   const { toast } = useToast();
@@ -37,7 +37,7 @@ function GeneratePost({ dataType, data, setData, options }: GeneratePostProps) {
   };
 
   const handleGenerate = async () => {
-    if (!data) {
+    if (!data || data.items.length === 0) {
       toast({
         title: "Error",
         description: "No data available to generate post.",
@@ -47,18 +47,18 @@ function GeneratePost({ dataType, data, setData, options }: GeneratePostProps) {
     }
     setIsLoading(true);
     try {
+      let newData;
       if (dataType === "commentary") {
-        const commentaryData = await generateCommentary(data.items, optionValues as CommentaryOptions);
-        setData(commentaryData);
+        newData = await generateCommentary(data.items as TimestampText[], optionValues as CommentaryOptions);
       } else if (dataType === "audio") {
         const audioOptions = { ...(optionValues as AudioOptions) };
         if ("stability" in audioOptions) {
           // Translating between emotion and stability
           audioOptions.stability = 100 - audioOptions.stability;
         }
-        const audioResponse = await generateAudio(data.items, audioOptions);
-        setData(audioResponse);
+        newData = await generateAudio(data.items as TimestampText[], audioOptions as AudioOptions);
       }
+      mutate(newData as TimestampTextList | AudioResponse);
       toast({
         title: "Success",
         description: `${dataType} generated successfully.`,
@@ -78,13 +78,13 @@ function GeneratePost({ dataType, data, setData, options }: GeneratePostProps) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex-grow">
-        <QuickInfo data={data} />
+        <QuickInfo data={data as TimestampTextList} />
       </div>
       <div className="text-sm font-medium text-muted-foreground">Options</div>
-      <Separator className="mb-4 mt-3" />
+      <Separator className="mb-3 mt-3" />
       {options && <StepOptions options={options} optionValues={optionValues} onOptionChange={handleOptionChange} />}
       <div className="flex justify-center pt-4">
-        <Button onClick={handleGenerate} disabled={isLoading || !data} className="font-bold">
+        <Button onClick={handleGenerate} disabled={isLoading || !data || data.items.length === 0} className="font-bold">
           {isLoading ? (
             <>
               <Icons.loader className="h-[1.2rem] w-[1.2rem] animate-spin mr-2" />

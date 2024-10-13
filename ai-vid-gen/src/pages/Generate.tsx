@@ -1,5 +1,5 @@
-import { Suspense, useState, useEffect, useMemo } from "react";
-
+import { Suspense, useState, useEffect, useCallback } from "react";
+import { fetchExistingData } from "@/api/apiHelper";
 import AudioDownloader from "@/components/cards/AudioDownloader";
 import GenerateDescription from "@/components/cards/GenerateDescription";
 import GeneratePost from "@/components/cards/GeneratePost";
@@ -12,10 +12,46 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { GenerateOptions } from "../lib/types";
+
 export default function GeneratePage() {
   const [description, setDescription] = useState<TimestampTextList | null>(null);
   const [commentary, setCommentary] = useState<TimestampTextList | null>(null);
   const [audioFiles, setAudioFiles] = useState<AudioResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchAllData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [descriptionData, commentaryData, audioData] = await Promise.all([
+        fetchExistingData("description"),
+        fetchExistingData("commentary"),
+        fetchExistingData("audio"),
+      ]);
+      setDescription(descriptionData);
+      setCommentary(commentaryData);
+      setAudioFiles(audioData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
+
+  const updateDescription = useCallback((newData: TimestampTextList) => {
+    setDescription(newData);
+  }, []);
+
+  const updateCommentary = useCallback((newData: TimestampTextList) => {
+    setCommentary(newData);
+  }, []);
+
+  const updateAudio = useCallback((newData: AudioResponse) => {
+    setAudioFiles(newData);
+  }, []);
 
   const commentaryOptions: GenerateOptions = {
     intro: {
@@ -53,6 +89,10 @@ export default function GeneratePage() {
     },
   };
 
+  if (isLoading) {
+    return <div>Loading...</div>; // Or a more sophisticated loading component
+  }
+
   return (
     <main className="container mx-auto space-y-8 p-4">
       <div className="flex flex-row items-center justify-center gap-4 pt-2">
@@ -75,49 +115,31 @@ export default function GeneratePage() {
           title="Description"
           content={
             <Suspense fallback={<CardSkeleton />}>
-              <GenerateDescription setData={setDescription} />
+              <GenerateDescription mutate={updateDescription} />
             </Suspense>
           }
           info="This step generates a comprehensive description of the video, with timestamps for all the pivotal moments in the video."
         />
 
-        <StepTransition
-          data={description as TimestampTextList}
-          jsonEditorTitle="Edit Description Data"
-          onUpdate={(updatedData) => setDescription(updatedData as TimestampTextList)}
-        />
+        <StepTransition data={description} jsonEditorTitle="Edit Description Data" onUpdate={updateDescription} />
 
         <StepCard
           title="Commentary"
           content={
             <Suspense fallback={<CardSkeleton />}>
-              <GeneratePost
-                dataType="commentary"
-                data={description as TimestampTextList}
-                setData={setCommentary as React.Dispatch<React.SetStateAction<TimestampTextList | AudioResponse | null>>}
-                options={commentaryOptions}
-              />
+              <GeneratePost dataType="commentary" data={description} mutate={updateCommentary} options={commentaryOptions} />
             </Suspense>
           }
           info="This step generates a commentary for the video at all the pivotal moments in the video."
         />
 
-        <StepTransition
-          data={commentary as TimestampTextList}
-          jsonEditorTitle="Edit Commentary Data"
-          onUpdate={(updatedData) => setCommentary(updatedData as TimestampTextList)}
-        />
+        <StepTransition data={commentary} jsonEditorTitle="Edit Commentary Data" onUpdate={updateCommentary} />
 
         <StepCard
           title="Audio"
           content={
             <Suspense fallback={<CardSkeleton />}>
-              <GeneratePost
-                dataType="audio"
-                data={commentary as TimestampTextList}
-                setData={setAudioFiles as React.Dispatch<React.SetStateAction<TimestampTextList | AudioResponse | null>>}
-                options={audioOptions}
-              />
+              <GeneratePost dataType="audio" data={commentary} mutate={updateAudio} options={audioOptions} />
             </Suspense>
           }
           info="This step generates audio files for the commentary at all pivotal moments in the video."
@@ -129,7 +151,7 @@ export default function GeneratePage() {
           title="Files"
           content={
             <Suspense fallback={<CardSkeleton />}>
-              <AudioDownloader audioFiles={audioFiles as AudioResponse} />
+              <AudioDownloader audioFiles={audioFiles} />
             </Suspense>
           }
           info="This step downloads the audio files generated in the previous step."

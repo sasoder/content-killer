@@ -21,3 +21,5 @@ export type GenerateOption = CheckboxOption | SliderOption;
 export type GenerateOptions = {
   [key: string]: GenerateOption;
 };
+
+export type GeneratedDataType = "description" | "commentary" | "audio";

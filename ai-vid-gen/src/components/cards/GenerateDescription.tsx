@@ -1,17 +1,16 @@
 import { useState, FormEvent } from "react";
 import { useToast } from "@/hooks/use-toast";
-
-import { TimestampTextList } from "@/lib/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { generateDescription } from "@/api/apiHelper";
 import { Icons } from "@/components/icons";
+import { TimestampTextList } from "@/lib/schema";
 
 interface GenerateDescriptionProps {
-  setData: (data: TimestampTextList) => void;
+  mutate: (newData: TimestampTextList) => void;
 }
 
-export default function GenerateDescription({ setData }: GenerateDescriptionProps) {
+export default function GenerateDescription({ mutate }: GenerateDescriptionProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [url, setUrl] = useState("");
   const { toast } = useToast();
@@ -39,9 +38,8 @@ export default function GenerateDescription({ setData }: GenerateDescriptionProp
 
     setIsLoading(true);
     try {
-      console.log("Submitting form with URL:", url);
-      const descriptionData = await generateDescription(url, { sample: true });
-      setData(descriptionData);
+      const newData = await generateDescription(url, { sample: true });
+      mutate(newData);
       toast({
         title: "Success",
         description: "Description generated successfully.",

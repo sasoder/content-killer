@@ -12,7 +12,7 @@ function StepTransition({ data, jsonEditorTitle, onUpdate }: StepTransitionProps
   return (
     <div className="flex flex-col items-center justify-center">
       <Icons.moveRight className="h-8 w-8" strokeWidth={0.8} color="gray" />
-      {data && (
+      {data && data.items.length > 0 && (
         <div className="absolute pt-24 ">
           <JsonEditor title={jsonEditorTitle as string} data={data} onUpdate={onUpdate as (updatedData: TimestampTextList) => void} />
         </div>

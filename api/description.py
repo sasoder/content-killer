@@ -4,7 +4,6 @@ from api.schema import TimestampTextList, DescriptionOptions, TimestampText
 import os
 import dotenv
 import json
-
 dotenv.load_dotenv()
 
 prompt = """Provide a detailed description of the police bodycam video. The description should be comprehensive enough to generate insightful commentary in the style of JCS Criminal Psychology, with a focus on behavioral analysis and psychological insights. 
@@ -37,6 +36,12 @@ Focus on **behavioral analysis** and **key dialogues**, capturing pivotal moment
 def generate_description_helper(url: str, options: DescriptionOptions) -> TimestampTextList:
     print(f"Generating description for {url} with options: {options}")
     if options.sample:
+        data_dir = os.path.join(os.path.dirname(__file__), "data")
+        os.makedirs(data_dir, exist_ok=True)
+        description_path = os.path.join(data_dir, "description.json")
+
+        with open(description_path, "w") as f:
+            json.dump(TimestampTextList.model_dump(sample_response(), mode="json"), f)
         return sample_response()
     vertexai.init(project=os.getenv("VERTEXAI_PROJECT_ID"))
 
@@ -78,11 +83,11 @@ def generate_description_helper(url: str, options: DescriptionOptions) -> Timest
     description_list = TimestampTextList.model_validate_json(response.text)
 
     # Save description to ./data/description.json
-    data_dir = os.path.join(os.path.dirname(__file__), "../data")
+    data_dir = os.path.join(os.path.dirname(__file__), "data")
     os.makedirs(data_dir, exist_ok=True)
     description_path = os.path.join(data_dir, "description.json")
     with open(description_path, "w") as f:
-        TimestampTextList.model_dump(description_list, f, indent=4)
+        json.dump(TimestampTextList.model_dump(description_list, mode="json"), f)
     print(f"Description saved to {description_path}")
 
     return description_list

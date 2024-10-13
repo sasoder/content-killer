@@ -109,13 +109,17 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <div>
-          <Button variant="outline" size="icon" disabled={editedData.items.length === 0}>
+      {editedData.items.length > 0 ? (
+        <DialogTrigger asChild>
+          <Button variant="outline" size="icon">
             <Icons.pencil className="h-[1.1rem] w-[1.1rem]" />
           </Button>
-        </div>
-      </DialogTrigger>
+        </DialogTrigger>
+      ) : (
+        <Button variant="outline" size="icon" disabled>
+          <Icons.pencil className="h-[1.1rem] w-[1.1rem]" />
+        </Button>
+      )}
       <DialogContent className="max-w-[70vw] max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="sticky z-10 top-0 bg-background border-b">
           <div className="flex flex-col">

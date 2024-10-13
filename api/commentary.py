@@ -65,7 +65,7 @@ def generate_commentary_helper(items: TimestampTextList, options: CommentaryOpti
 
     commentary_list = completion.choices[0].message.parsed
 
-    data_dir = os.path.join(os.path.dirname(__file__), "../data")
+    data_dir = os.path.join(os.path.dirname(__file__), "./data")
     os.makedirs(data_dir, exist_ok=True)
     commentary_path = os.path.join(data_dir, "commentary.json")
     with open(commentary_path, "w") as f:

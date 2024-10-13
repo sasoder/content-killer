@@ -6,7 +6,7 @@ interface QuickInfoProps {
 
 export default function QuickInfo({ data }: QuickInfoProps) {
   if (!data || data.items.length === 0) {
-    return <p className="text-sm text-gray-500">No data to display.</p>;
+    return <p className="text-sm text-gray-500">No data to display. Generate it first.</p>;
   }
 
   const listLength = data.items.length;
