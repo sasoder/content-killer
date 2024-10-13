@@ -1,15 +1,16 @@
 import { Suspense, useState, useEffect, useMemo } from "react";
 
-import AudioDownloader from "@/components/AudioDownloader";
-import GenerateDescription from "@/components/GenerateDescription";
-import GeneratePost from "@/components/GeneratePost";
-import JsonEditor from "@/components/JsonEditor";
-import { TimestampTextList } from "@/lib/types";
+import AudioDownloader from "@/components/cards/AudioDownloader";
+import GenerateDescription from "@/components/cards/GenerateDescription";
+import GeneratePost from "@/components/cards/GeneratePost";
+import StepTransition from "@/components/cards/StepTransition";
+import StepCard from "@/components/cards/StepCard";
+import { TimestampTextList, GenerateOptions } from "@/lib/types";
 import { Icons } from "@/components/icons";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CardSkeleton } from "@/components/CardSkeletion";
+import { CardSkeleton } from "@/components/skeletons/CardSkeletion";
 import { ModeToggle } from "@/components/mode-toggle";
-
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 export default function GeneratePage() {
   const [description, setDescription] = useState<TimestampTextList | null>(null);
   const [commentary, setCommentary] = useState<TimestampTextList | null>(null);
@@ -22,162 +23,134 @@ export default function GeneratePage() {
           timestamp: "00:00",
           text: "Sample text 1",
         },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
-        {
-          timestamp: "00:01",
-          text: "Sample text 2",
-        },
       ],
     };
   }, []);
   useEffect(() => {
     setDescription(sampleDescription);
   }, [sampleDescription]);
+
+  const commentaryOptions: GenerateOptions = {
+    intro: {
+      type: "checkbox",
+      label: "Include Intro",
+      key: "intro",
+      default: true,
+    },
+    outro: {
+      type: "checkbox",
+      label: "Include Outro",
+      key: "outro",
+      default: true,
+    },
+    temperature: {
+      type: "slider",
+      label: "Temperature",
+      key: "temperature",
+      default: 0.7,
+      min: 0,
+      max: 1,
+      step: 0.01,
+    },
+  };
+
+  const audioOptions: GenerateOptions = {
+    speed: {
+      type: "slider",
+      label: "Speech Speed",
+      key: "speed",
+      default: 1,
+      min: 0.5,
+      max: 2,
+      step: 0.1,
+    },
+  };
+
   return (
     <main className="container mx-auto space-y-8 p-4">
       <div className="flex flex-row items-center justify-center gap-4 pt-2">
+        <div className="absolute left-0 top-0 m-4">
+          <Link to="/">
+            <Button variant="ghost" size="icon">
+              <Icons.chevronLeft className="w-[1.5rem] h-[1.5rem]" />
+            </Button>
+          </Link>
+        </div>
         <div className="absolute right-0 top-0 m-4">
           <ModeToggle />
         </div>
         <h1 className="flex items-center justify-center text-3xl font-bold">Content Killer</h1>
         <Icons.bot className="h-12 w-12" />
       </div>
+
       <div className="flex flex-row items-stretch justify-center gap-4">
-        <Card className="w-1/4 h-[500px] flex flex-col relative">
-          <CardHeader>
-            <CardTitle>Generate Description</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-grow flex flex-col gap-2">
+        <StepCard
+          title="Generate Description"
+          content={
             <Suspense fallback={<CardSkeleton />}>
               <GenerateDescription setData={setDescription} />
             </Suspense>
-          </CardContent>
-          {description && (
-            <div className="absolute bottom-6 right-6">
-              <JsonEditor
-                title="Edit Description"
-                data={description as TimestampTextList}
-                onUpdate={(updatedData) => setDescription(updatedData as TimestampTextList)}
-              />
-            </div>
-          )}
-        </Card>
+          }
+          info="This step generates a comprehensive description of the video, with timestamps for all the pivotal moments in the video."
+        />
 
-        <Card className="w-1/4 h-[500px] flex flex-col relative">
-          <CardHeader>
-            <CardTitle>Generate Commentary</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-grow flex flex-col">
+        <StepTransition
+          data={description as TimestampTextList}
+          jsonEditorTitle="Edit Description"
+          onUpdate={(updatedData) => setDescription(updatedData as TimestampTextList)}
+        />
+
+        <StepCard
+          title="Generate Commentary"
+          content={
             <Suspense fallback={<CardSkeleton />}>
               <GeneratePost
                 dataType="description"
                 apiRoute="/api/generate_commentary"
                 data={description as TimestampTextList}
                 setData={setCommentary}
+                options={commentaryOptions}
               />
             </Suspense>
-          </CardContent>
-          {commentary && (
-            <div className="absolute bottom-6 right-6">
-              <JsonEditor
-                title="Edit Commentary"
-                data={commentary}
-                onUpdate={(updatedData) => setCommentary(updatedData as TimestampTextList)}
-              />
-            </div>
-          )}
-        </Card>
+          }
+          info="This step generates a commentary for the video at all the pivotal moments in the video."
+        />
 
-        <Card className="w-1/4 h-[500px] flex flex-col">
-          <CardHeader>
-            <CardTitle>Generate Audio</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-grow flex flex-col">
+        <StepTransition
+          data={commentary}
+          jsonEditorTitle="Edit Commentary"
+          onUpdate={(updatedData) => setCommentary(updatedData as TimestampTextList)}
+        />
+
+        <StepCard
+          title="Generate Audio"
+          content={
             <Suspense fallback={<CardSkeleton />}>
               <GeneratePost
                 dataType="commentary"
                 apiRoute="/api/generate_audio"
                 data={commentary as TimestampTextList}
                 setData={setAudioFiles}
+                options={audioOptions}
               />
             </Suspense>
-          </CardContent>
-        </Card>
+          }
+          info="This step generates audio files for the commentary at all the pivotal moments in the video."
+        />
 
-        <Card className="w-1/4 h-[500px]">
-          <CardHeader>
-            <CardTitle>Download Audio</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <StepTransition data={audioFiles} onUpdate={(updatedData) => setAudioFiles(updatedData)} />
+
+        <StepCard
+          title="Download Audio"
+          content={
             <Suspense fallback={<CardSkeleton />}>
               <AudioDownloader audioFiles={audioFiles} />
             </Suspense>
-          </CardContent>
-        </Card>
+          }
+          info="This step downloads the audio files generated in the previous step."
+        />
       </div>
+
       <div>
         <p className="text-sm text-gray-500">
           This app uses Gemini 1.5 Pro to generate a description of the provided video. The description is then used to create a commentary

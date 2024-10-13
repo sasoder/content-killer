@@ -3,6 +3,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Link } from "react-router-dom";
+
 export default function Home() {
   return (
     <main className="flex h-screen items-center justify-center">
@@ -18,6 +19,15 @@ export default function Home() {
           </Link>
           <ModeToggle />
         </div>
+
+        <Link
+          to="https://github.com/sasoder"
+          className={cn(buttonVariants({ variant: "link" }), "text-muted-foreground")}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          @sasoder
+        </Link>
       </div>
     </main>
   );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,7 +13,7 @@ interface JsonEditorProps {
   title: string;
 }
 
-function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
+export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
   const [editedData, setEditedData] = useState<TimestampTextList>(data);
   const [isOpen, setIsOpen] = useState(false);
   const [newRow, setNewRow] = useState<TimestampText>({ timestamp: "", text: "" });
@@ -88,6 +88,11 @@ function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 
   const columns: (keyof TimestampText)[] = ["timestamp", "text"];
 
+  const handleSubmitNewRow = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    handleAdd();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -104,47 +109,54 @@ function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
               <DialogTitle>{title}</DialogTitle>
               <Button onClick={handleSave}>Save Changes</Button>
             </div>
-            <Table>
-              <TableHeader>
-                <TableRow className="border-none hover:bg-transparent">
-                  {columns.map((column) => (
-                    <TableHead className={`px-6 ${column === "timestamp" ? "w-40" : ""}`} key={column}>
-                      {column}
-                    </TableHead>
-                  ))}
-                  <TableHead className="px-6 w-20">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-            </Table>
+            <form onSubmit={handleSubmitNewRow}>
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-none hover:bg-transparent">
+                    {columns.map((column) => (
+                      <TableHead className={`px-6 ${column === "timestamp" ? "w-40" : "w-full"}`} key={column}>
+                        {column}
+                      </TableHead>
+                    ))}
+                    <TableHead className="px-6 w-20">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+              </Table>
+            </form>
           </div>
         </DialogHeader>
-        <div className="flex-grow overflow-auto p-0">
+        <div className="flex-grow overflow-auto p-4 pb-8">
           <Table>
             <TableBody>
+              {/* Add Row */}
               <TableRow className="border-none hover:bg-transparent">
                 {columns.map((column) => (
-                  <TableCell className={column === "timestamp" ? "w-40" : ""} key={`new-${column}`}>
+                  <TableCell className={column === "timestamp" ? "w-40" : "w-full"} key={`new-${column}`}>
                     <Input
                       value={newRow[column]}
                       onChange={(e) => handleNewRowInputChange(column, e.target.value)}
                       placeholder={column === "timestamp" ? "MM:SS" : `New ${column}`}
+                      className={column === "timestamp" ? "w-40" : "w-full"}
                     />
                   </TableCell>
                 ))}
-                <TableCell className="w-16">
-                  <Button variant="ghost" size="icon" onClick={handleAdd}>
+                {/* Actions Cell for Add Row */}
+                <TableCell className="w-20">
+                  <Button type="submit" variant="ghost" size="icon" onClick={handleAdd}>
                     <Icons.plus className="h-4 w-4" />
                   </Button>
                 </TableCell>
               </TableRow>
+
+              {/* Existing Data Rows */}
               {editedData.items.map((row, rowIndex) => (
                 <TableRow className="border-none hover:bg-transparent" key={rowIndex}>
                   {columns.map((column) => (
-                    <TableCell className={column === "timestamp" ? "w-40" : ""} key={`${rowIndex}-${column}`}>
+                    <TableCell className={column === "timestamp" ? "w-40" : "w-full"} key={`${rowIndex}-${column}`}>
                       <Input value={row[column]} onChange={(e) => handleInputChange(rowIndex, column, e.target.value)} />
                     </TableCell>
                   ))}
-                  <TableCell className="w-16">
+                  <TableCell className="w-20">
                     <Button variant="ghost" size="icon" onClick={() => handleDelete(rowIndex)}>
                       <Icons.minus className="h-4 w-4" />
                     </Button>
@@ -158,5 +170,3 @@ function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
     </Dialog>
   );
 }
-
-export default JsonEditor;

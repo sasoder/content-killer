@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
 
 import { DescriptionList } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+const FASTAPI_URL = import.meta.env.VITE_FASTAPI_URL;
 interface GenerateDescriptionProps {
   setData: (data: DescriptionList) => void;
 }
@@ -15,7 +15,6 @@ export default function GenerateDescription({ setData }: GenerateDescriptionProp
   const [isLoading, setIsLoading] = useState(false);
   const [url, setUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   const validateUrl = (input: string): boolean => {
     try {
@@ -38,7 +37,7 @@ export default function GenerateDescription({ setData }: GenerateDescriptionProp
     setIsLoading(true);
     try {
       console.log("Submitting form with URL:", url);
-      const response = await fetch("/api/py/generate_description", {
+      const response = await fetch(FASTAPI_URL + "/api/generate_description", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -48,9 +47,8 @@ export default function GenerateDescription({ setData }: GenerateDescriptionProp
       if (!response.ok) {
         throw new Error("Failed to generate description");
       }
-      const data = await response.json();
-      setData(data as DescriptionList);
-      router.refresh();
+      const descriptionData = await response.json();
+      setData(descriptionData as DescriptionList);
     } catch (error) {
       console.error("Error generating content:", error);
       setError("Failed to generate description. Please try again.");
@@ -60,8 +58,8 @@ export default function GenerateDescription({ setData }: GenerateDescriptionProp
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      <div>
+    <form onSubmit={handleSubmit} className="flex flex-col h-full">
+      <div className="flex-grow">
         <label htmlFor="url" className="block text-sm font-medium text-gray-700">
           URL
         </label>
@@ -73,12 +71,14 @@ export default function GenerateDescription({ setData }: GenerateDescriptionProp
           onChange={(e) => setUrl(e.target.value)}
           className="mt-1"
         />
-        <p className="mt-2 text-sm text-gray-500">Enter the URL of the content you want to generate video for.</p>
+        <p className="mt-2 text-sm text-gray-500">Enter the URL of the YouTube video you want to generate a video for.</p>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       </div>
-      <Button type="submit" disabled={isLoading}>
-        {isLoading ? "Generating..." : "Generate"}
-      </Button>
+      <div className="mt-4 flex justify-center">
+        <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
+          {isLoading ? "Generating..." : "Generate"}
+        </Button>
+      </div>
     </form>
   );
 }
