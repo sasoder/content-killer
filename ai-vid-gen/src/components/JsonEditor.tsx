@@ -1,9 +1,9 @@
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, KeyboardEvent } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { TimestampTextList, TimestampText } from "@/lib/types";
+import { Textarea } from "@/components/ui/textarea";
+import { TimestampTextList, TimestampText } from "@/lib/schema";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/hooks/use-toast";
 
@@ -36,9 +36,9 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
     handleSave(true);
   };
 
-  const handleSave = (remainOpen: boolean = false) => {
+  const handleSave = (remainOpen: boolean = false, newData: TimestampTextList = editedData) => {
     console.log("Saving changes...");
-    const invalidTimestamps = editedData.items.filter((item) => !validateTimestamp(item.timestamp));
+    const invalidTimestamps = newData.items.filter((item) => !validateTimestamp(item.timestamp));
     if (invalidTimestamps.length > 0) {
       toast({
         title: "Invalid Timestamps",
@@ -47,8 +47,15 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
       });
       return;
     }
-    onUpdate(editedData);
+    onUpdate(newData);
     setIsOpen(remainOpen);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleAdd();
+    }
   };
 
   const handleDelete = (rowIndex: number) => {
@@ -74,7 +81,7 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
     if (!validateTimestamp(newRow.timestamp)) {
       toast({
         title: "Invalid Timestamp",
-        description: "Please use the format MM:SS (e.g., 05:30)",
+        description: "Please use the format mm:ss (e.g., 05:30)",
         variant: "destructive",
       });
       return;
@@ -84,21 +91,20 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
     const insertIndex = newData.items.findIndex((item) => item.timestamp > newRow.timestamp);
 
     if (insertIndex === -1) {
-      newData.items.push(newRow);
+      newData.items.push({ ...newRow });
     } else {
-      newData.items.splice(insertIndex, 0, newRow);
+      newData.items.splice(insertIndex, 0, { ...newRow });
     }
 
-    setEditedData(newData);
+    handleSave(true, newData);
     setNewRow({ timestamp: "", text: "" });
-    handleSave(true);
   };
 
   const columns: (keyof TimestampText)[] = ["timestamp", "text"];
 
   const handleSubmitNewRow = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    handleSave(true);
+    handleAdd();
   };
 
   return (
@@ -121,7 +127,7 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
               <TableHeader>
                 <TableRow className="border-none hover:bg-transparent">
                   {columns.map((column) => (
-                    <TableHead className={`px-6 ${column === "timestamp" ? "w-24" : "w-full"}`} key={column}>
+                    <TableHead className={`px-4 ${column === "timestamp" ? "w-12" : "w-full"}`} key={column}>
                       {column}
                     </TableHead>
                   ))}
@@ -137,12 +143,14 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
                 {/* Add Row */}
                 <TableRow className="border-none hover:bg-transparent">
                   {columns.map((column) => (
-                    <TableCell className={column === "timestamp" ? "w-24" : "w-full"} key={`new-${column}`}>
-                      <Input
+                    <TableCell className={column === "timestamp" ? "w-16" : "w-full"} key={`new-${column}`}>
+                      <Textarea
                         value={newRow[column]}
+                        onKeyDown={handleKeyDown}
                         onChange={(e) => handleNewRowInputChange(column, e.target.value)}
-                        placeholder={column === "timestamp" ? "MM:SS" : `New ${column}`}
-                        className={column === "timestamp" ? "w-24" : "w-full"}
+                        placeholder={column === "timestamp" ? "mm:ss" : `New ${column}`}
+                        className={column === "timestamp" ? "w-16 min-h-[2rem] resize-none text-center px-0" : "w-full h-20 resize-none"}
+                        rows={1}
                       />
                     </TableCell>
                   ))}
@@ -158,8 +166,14 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
                 {editedData.items.map((row, rowIndex) => (
                   <TableRow className="border-none hover:bg-transparent" key={rowIndex}>
                     {columns.map((column) => (
-                      <TableCell className={column === "timestamp" ? "w-40" : "w-full"} key={`${rowIndex}-${column}`}>
-                        <Input value={row[column]} onChange={(e) => handleInputChange(rowIndex, column, e.target.value)} />
+                      <TableCell className={column === "timestamp" ? "w-16" : "w-full"} key={`${rowIndex}-${column}`}>
+                        <Textarea
+                          value={row[column]}
+                          onChange={(e) => handleInputChange(rowIndex, column, e.target.value)}
+                          onKeyDown={handleKeyDown}
+                          className={column === "timestamp" ? "w-16 min-h-[2rem] resize-none text-center px-0" : "w-full h-20 resize-none"}
+                          rows={1}
+                        />
                       </TableCell>
                     ))}
                     <TableCell className="w-20">

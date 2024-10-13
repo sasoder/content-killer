@@ -3,7 +3,7 @@
 import { useState, FormEvent } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-import { TimestampTextList } from "@/lib/types";
+import { TimestampTextList } from "@/lib/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { generateDescription } from "@/api/apiHelper";

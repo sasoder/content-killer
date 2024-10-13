@@ -1,6 +1,6 @@
 import { Icons } from "@/components/icons";
 import JsonEditor from "@/components/JsonEditor";
-import { TimestampTextList } from "@/lib/types";
+import { TimestampTextList } from "@/lib/schema";
 
 type StepTransitionProps = {
   data: TimestampTextList;

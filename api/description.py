@@ -10,6 +10,7 @@ prompt = """Provide a detailed description of the police bodycam video. The desc
 
 **Guidelines**:
 - **Pivotal Moments**: Identify a pivotal moment at least every 30-60 seconds, focusing on key interactions between the officers and subjects, changes in the situation, or important/bizarre/absurd statements.
+- **Intro and Outro**: Include an intro AND outro timestamp in every single response. These have the format {{"timestamp": "MM:SS", "text": "Description of the environment or situation as a whole, with details that are relevant to the video as a whole, including the officers and suspects and the location"}} for the intro, and {{"timestamp": "MM:SS", "text": "Conclusion of the video, with details that are relevant to the video as a whole, including the officers and suspects and the location"}} for the outro.
 - **Dialogues**: Include **all relevant dialogues** exactly as spoken. Pay attention to tone, delivery, and emotional cues when describing what is said.
 - **Actions & Behavior**: Emphasize subjects' actions or body language that may indicate intoxication, mental state, cooperation level, evasion tactics, or non-verbal cues suggesting psychological distress or manipulation.
 - **Officer Interaction**: Document officer commands or questions, especially when they elicit unusual responses or resistance. Include any mentions of weapons, injuries, or potential dangers.

@@ -1,7 +1,7 @@
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
-from api.schema import TimestampTextList
+from api.schema import TimestampTextList, CommentaryOptions
 
 system_prompt = """Generate concise, sharp, and psychologically insightful commentary for a police bodycam video in the style of JCS Criminal Psychology. Each commentary point must:
 - Be **authoritative** and **confident**—avoid speculative language like "could signify" or "possibly."
@@ -30,14 +30,15 @@ Structure the commentary to:
 - Prioritize **quality** over **quantity**.
 - Avoid commenting on trivial or irrelevant moments. Only provide commentary for moments with significant psychological or behavioral insight."""
 
-def generate_commentary_helper(description: TimestampTextList) -> TimestampTextList:
+def generate_commentary_helper(items: TimestampTextList, options: CommentaryOptions) -> TimestampTextList:
     load_dotenv()
+    print(f"API Key: {os.getenv('OPENAI_API_KEY')}")
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
     prompt = f"""Based on the following information from a police bodycam video, generate concise, insightful commentary that creates an engaging narrative structure:
 
-    {description}
+    {items}
 
     Provide the commentary moment in the format:
     {{

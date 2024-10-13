@@ -5,7 +5,7 @@ import GenerateDescription from "@/components/cards/GenerateDescription";
 import GeneratePost from "@/components/cards/GeneratePost";
 import StepTransition from "@/components/cards/StepTransition";
 import StepCard from "@/components/cards/StepCard";
-import { TimestampTextList, GenerateOptions } from "@/lib/types";
+import { TimestampTextList, GenerateOptions } from "@/lib/schema";
 import { Icons } from "@/components/icons";
 import { CardSkeleton } from "@/components/skeletons/CardSkeletion";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -15,20 +15,6 @@ export default function GeneratePage() {
   const [description, setDescription] = useState<TimestampTextList | null>(null);
   const [commentary, setCommentary] = useState<TimestampTextList | null>(null);
   const [audioFiles, setAudioFiles] = useState<Array<{ timestamp: string; filename: string }> | null>(null);
-
-  // const sampleDescription: TimestampTextList = useMemo(() => {
-  //   return {
-  //     items: [
-  //       {
-  //         timestamp: "00:00",
-  //         text: "Sample text 1",
-  //       },
-  //     ],
-  //   };
-  // }, []);
-  // useEffect(() => {
-  //   setDescription(sampleDescription);
-  // }, [sampleDescription]);
 
   const commentaryOptions: GenerateOptions = {
     intro: {
@@ -80,7 +66,7 @@ export default function GeneratePage() {
           <ModeToggle />
         </div>
         <h1 className="flex items-center justify-center text-3xl">Content Killer</h1>
-        <Icons.skull className="h-12 w-12" />
+        <Icons.skull className="h-12 w-12 -translate-y-1" />
       </div>
 
       <div className="flex flex-row items-stretch justify-center gap-4">

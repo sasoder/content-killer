@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { TimestampTextList, GenerateOptions } from "@/lib/types";
+import { TimestampTextList, CommentaryOptions, AudioOptions } from "@/lib/schema";
+import { GenerateOptions } from "@/lib/types";
 import { Icons } from "@/components/icons";
 import QuickInfo from "@/components/QuickInfo";
 import { Separator } from "@/components/ui/separator";
@@ -21,7 +22,6 @@ function GeneratePost({ dataType, data, setData, options }: GeneratePostProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [optionValues, setOptionValues] = useState<Record<string, boolean | number>>({});
   const { toast } = useToast();
-  const [error, setError] = useState<string | null>(null);
 
   // Initialize option values
   useEffect(() => {
@@ -48,13 +48,12 @@ function GeneratePost({ dataType, data, setData, options }: GeneratePostProps) {
       return;
     }
     setIsLoading(true);
-    setError(null);
     try {
       if (dataType === "commentary") {
-        const commentaryData = await generateCommentary(data as TimestampTextList, optionValues);
+        const commentaryData = await generateCommentary(data.items, optionValues as CommentaryOptions);
         setData(commentaryData);
       } else if (dataType === "audio") {
-        const audioFiles = await generateAudio(data as TimestampTextList, optionValues);
+        const audioFiles = await generateAudio(data.items, optionValues as AudioOptions);
         setData(audioFiles);
       }
       toast({
@@ -63,7 +62,6 @@ function GeneratePost({ dataType, data, setData, options }: GeneratePostProps) {
       });
     } catch (err) {
       console.error(`Error generating ${dataType}:`, err);
-      setError(`Failed to generate ${dataType}. Please try again.`);
       toast({
         title: "Error",
         description: `Failed to generate ${dataType}. Please try again.`,
@@ -94,7 +92,6 @@ function GeneratePost({ dataType, data, setData, options }: GeneratePostProps) {
           )}
         </Button>
       </div>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
     </div>
   );
 }

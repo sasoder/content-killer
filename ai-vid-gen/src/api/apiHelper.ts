@@ -1,22 +1,8 @@
-import { TimestampTextList } from "@/lib/types";
-
-interface GenerateDescriptionOptions {
-  sample?: boolean;
-}
-
-interface GenerateCommentaryOptions {
-  intro?: boolean;
-  outro?: boolean;
-  temperature?: number;
-}
-
-interface GenerateAudioOptions {
-  speed?: number;
-}
+import { TimestampTextList, TimestampText, DescriptionOptions, CommentaryOptions, AudioOptions, AudioFile } from "@/lib/schema";
 
 const FASTAPI_URL = import.meta.env.VITE_FASTAPI_URL || "http://localhost:8000";
 
-export const generateDescription = async (url: string, options?: GenerateDescriptionOptions): Promise<TimestampTextList> => {
+export const generateDescription = async (url: string, options?: DescriptionOptions): Promise<TimestampTextList> => {
   const response = await fetch(`${FASTAPI_URL}/api/generate_description`, {
     method: "POST",
     headers: {
@@ -33,16 +19,14 @@ export const generateDescription = async (url: string, options?: GenerateDescrip
   return data as TimestampTextList;
 };
 
-export const generateCommentary = async (
-  description: TimestampTextList,
-  options?: GenerateCommentaryOptions
-): Promise<TimestampTextList> => {
+export const generateCommentary = async (items: TimestampText[], options?: CommentaryOptions): Promise<TimestampTextList> => {
+  console.log(`Generating commentary with options: ${JSON.stringify(options)} and items: ${JSON.stringify(items)}`);
   const response = await fetch(`${FASTAPI_URL}/api/generate_commentary`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ description, options }),
+    body: JSON.stringify({ items, options }),
   });
 
   if (!response.ok) {
@@ -53,13 +37,13 @@ export const generateCommentary = async (
   return data as TimestampTextList;
 };
 
-export const generateAudio = async (commentary: TimestampTextList, options?: GenerateAudioOptions): Promise<AudioFile[]> => {
+export const generateAudio = async (items: TimestampText[], options?: AudioOptions): Promise<AudioFile[]> => {
   const response = await fetch(`${FASTAPI_URL}/api/generate_audio`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ commentary, options }),
+    body: JSON.stringify({ items, options }),
   });
 
   if (!response.ok) {

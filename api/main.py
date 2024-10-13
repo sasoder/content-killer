@@ -37,8 +37,8 @@ async def generate_description(input: GenerateDescriptionInput) -> TimestampText
 
 @app.post("/api/generate_commentary", response_model=TimestampTextList)
 def generate_commentary(input: GenerateCommentaryInput) -> TimestampTextList:
-    print(f"Generating commentary with description: {input.description} and options: {input.options}")
-    commentary = generate_commentary_helper(input.description, input.options)
+    print(f"Generating commentary with items: {input.items} and options: {input.options}")
+    commentary = generate_commentary_helper(input.items, input.options)
     return commentary
 
 # @app.post("/api/generate_audio", response_model=Dict[str, Any])

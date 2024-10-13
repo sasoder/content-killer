@@ -1,4 +1,4 @@
-import { TimestampTextList } from "@/lib/types";
+import { TimestampTextList } from "@/lib/schema";
 
 interface QuickInfoProps {
   data: TimestampTextList | null;
