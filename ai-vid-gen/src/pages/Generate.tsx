@@ -96,7 +96,7 @@ export default function GeneratePage() {
 
         <StepTransition
           data={description as TimestampTextList}
-          jsonEditorTitle="Edit Description"
+          jsonEditorTitle="Edit Description Data"
           onUpdate={(updatedData) => setDescription(updatedData as TimestampTextList)}
         />
 
@@ -117,8 +117,8 @@ export default function GeneratePage() {
         />
 
         <StepTransition
-          data={commentary}
-          jsonEditorTitle="Edit Commentary"
+          data={commentary as TimestampTextList}
+          jsonEditorTitle="Edit Commentary Data"
           onUpdate={(updatedData) => setCommentary(updatedData as TimestampTextList)}
         />
 

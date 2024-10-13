@@ -1,6 +1,6 @@
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part, GenerationConfig
-from api.schema import TimestampTextList, TimestampDescription
+from api.schema import TimestampTextList
 
 prompt = """Provide a detailed description of the police bodycam video. The description should be comprehensive enough to generate insightful commentary in the style of JCS Criminal Psychology, with a focus on behavioral analysis and psychological insights. 
 

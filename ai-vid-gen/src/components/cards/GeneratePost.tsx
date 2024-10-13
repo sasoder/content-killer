@@ -8,19 +8,20 @@ import { Icons } from "@/components/icons";
 import QuickInfo from "@/components/QuickInfo";
 import { Separator } from "@/components/ui/separator";
 import StepOptions from "@/components/cards/StepOptions";
+import { generateCommentary, generateAudio } from "@/api/apiHelper";
 
 interface GeneratePostProps {
   dataType: "description" | "commentary";
-  apiRoute: string;
   data: TimestampTextList | null;
   setData: React.Dispatch<React.SetStateAction<TimestampTextList | null>>;
   options?: GenerateOptions;
 }
 
-function GeneratePost({ dataType, apiRoute, data, setData, options }: GeneratePostProps) {
+function GeneratePost({ dataType, data, setData, options }: GeneratePostProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [optionValues, setOptionValues] = useState<Record<string, boolean | number>>({});
   const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
 
   // Initialize option values
   useEffect(() => {
@@ -37,7 +38,7 @@ function GeneratePost({ dataType, apiRoute, data, setData, options }: GeneratePo
     setOptionValues((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = async () => {
+  const handleGenerate = async () => {
     if (!data) {
       toast({
         title: "Error",
@@ -47,28 +48,25 @@ function GeneratePost({ dataType, apiRoute, data, setData, options }: GeneratePo
       return;
     }
     setIsLoading(true);
+    setError(null);
     try {
-      const response = await fetch(apiRoute, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ data, options: optionValues }),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to generate post");
+      if (dataType === "description") {
+        const commentaryData = await generateCommentary(data as TimestampTextList, optionValues);
+        setData(commentaryData);
+      } else if (dataType === "commentary") {
+        const audioFiles = await generateAudio(data as TimestampTextList, optionValues);
+        setData(audioFiles);
       }
-      const generatedData = await response.json();
-      setData(generatedData);
       toast({
         title: "Success",
-        description: "Post generated successfully.",
+        description: `${dataType} generated successfully.`,
       });
-    } catch (error) {
-      console.error("Error generating post:", error);
+    } catch (err) {
+      console.error(`Error generating ${dataType}:`, err);
+      setError(`Failed to generate ${dataType}. Please try again.`);
       toast({
         title: "Error",
-        description: "Failed to generate post. Please try again.",
+        description: `Failed to generate ${dataType}. Please try again.`,
         variant: "destructive",
       });
     } finally {
@@ -85,10 +83,18 @@ function GeneratePost({ dataType, apiRoute, data, setData, options }: GeneratePo
       <Separator className="mb-4 mt-3" />
       {options && <StepOptions options={options} optionValues={optionValues} onOptionChange={handleOptionChange} />}
       <div className="flex justify-center pt-4">
-        <Button onClick={handleSubmit} disabled={isLoading || !data}>
-          {isLoading ? <Icons.loader className="h-[1.2rem] w-[1.2rem] animate-spin" /> : "Generate"}
+        <Button onClick={handleGenerate} disabled={isLoading || !data}>
+          {isLoading ? (
+            <>
+              <Icons.loader className="h-[1.2rem] w-[1.2rem] animate-spin mr-2" />
+              Generating...
+            </>
+          ) : (
+            `Generate ${dataType}`
+          )}
         </Button>
       </div>
+      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
     </div>
   );
 }

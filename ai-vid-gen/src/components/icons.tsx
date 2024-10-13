@@ -12,6 +12,7 @@ import {
   MoveRight,
   Info,
   ChevronLeft,
+  LoaderCircle,
 } from "lucide-react";
 
 export type IconKeys = keyof typeof icons;
@@ -25,7 +26,7 @@ const icons = {
   sun: SunMedium,
   moon: Moon,
   bot: Bot,
-  loader: Loader,
+  loader: LoaderCircle,
   zap: Zap,
   testTubeDiagonal: TestTubeDiagonal,
   pencil: Pencil,

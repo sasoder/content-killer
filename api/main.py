@@ -1,15 +1,19 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from api.commentary import generate_commentary_helper
 from api.description import generate_description_helper
-from api.schema import TimestampTextList, UrlInput
-from api.audio import generate_audio_clips
+from api.schema import (
+    GenerateCommentaryInput,
+    GenerateDescriptionInput,
+    GenerateAudioInput,
+    TimestampTextList,
+    AudioFile,
+)
+from api.audio import generate_audio_clips, OUTPUT_DIR
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from fastapi import HTTPException
 import os
-from api.audio import OUTPUT_DIR
+from typing import Dict, Any
 
-### Create FastAPI instance with custom docs and openapi url
 app = FastAPI()
 
 origins = [
@@ -24,26 +28,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.post("/api/generate_commentary")
-def generate_commentary(description: TimestampTextList) -> TimestampTextList:
-    print(f"Generating commentary for {description}")
-    commentary = generate_commentary_helper(description)
-    return commentary
-
-@app.post("/api/generate_description")
-async def generate_description(input: UrlInput) -> TimestampTextList:
-    print(f"Generating description for {input.url}")
-    description = generate_description_helper(input.url)
+@app.post("/api/generate_description", response_model=TimestampTextList)
+async def generate_description(input: GenerateDescriptionInput) -> TimestampTextList:
+    print(f"Generating description for {input.url} with options: {input.options}")
+    description = generate_description_helper(input.url, input.options)
     return description
 
-@app.post("/api/generate_audio")
-def generate_audio(commentary: TimestampTextList):
-    print(f"Generating audio for {commentary}")
-    generated_files = generate_audio_clips(commentary)
+@app.post("/api/generate_commentary", response_model=TimestampTextList)
+def generate_commentary(input: GenerateCommentaryInput) -> TimestampTextList:
+    print(f"Generating commentary with description: {input.description} and options: {input.options}")
+    commentary = generate_commentary_helper(input.description, input.options)
+    return commentary
+
+@app.post("/api/generate_audio", response_model=Dict[str, Any])
+def generate_audio(input: GenerateAudioInput):
+    print(f"Generating audio for commentary: {input.commentary} with options: {input.options}")
+    generated_files = generate_audio_clips(input.commentary, input.options)
     return {"message": "Audio clips generated successfully", "files": generated_files}
 
-@app.get("/api/get_audio_clip/{filename}")
+@app.get("/api/get_audio_clip/{filename}", response_class=FileResponse)
 async def get_audio(filename: str):
     file_path = os.path.join(OUTPUT_DIR, filename)
     if os.path.exists(file_path):

@@ -28,10 +28,12 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
     const newData = { ...editedData };
     newData.items[rowIndex] = { ...newData.items[rowIndex], [key]: value };
     setEditedData(newData);
+    handleSave(true);
   };
 
   const handleNewRowInputChange = (key: keyof TimestampText, value: string) => {
     setNewRow({ ...newRow, [key]: value });
+    handleSave(true);
   };
 
   const handleSave = (remainOpen: boolean = false) => {
@@ -119,11 +121,10 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
               <TableHeader>
                 <TableRow className="border-none hover:bg-transparent">
                   {columns.map((column) => (
-                    <TableHead className={`px-6 ${column === "timestamp" ? "w-40" : "w-full"}`} key={column}>
+                    <TableHead className={`px-6 ${column === "timestamp" ? "w-24" : "w-full"}`} key={column}>
                       {column}
                     </TableHead>
                   ))}
-                  <TableHead className="px-6 w-20">Actions</TableHead>
                 </TableRow>
               </TableHeader>
             </Table>
@@ -136,12 +137,12 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
                 {/* Add Row */}
                 <TableRow className="border-none hover:bg-transparent">
                   {columns.map((column) => (
-                    <TableCell className={column === "timestamp" ? "w-40" : "w-full"} key={`new-${column}`}>
+                    <TableCell className={column === "timestamp" ? "w-24" : "w-full"} key={`new-${column}`}>
                       <Input
                         value={newRow[column]}
                         onChange={(e) => handleNewRowInputChange(column, e.target.value)}
                         placeholder={column === "timestamp" ? "MM:SS" : `New ${column}`}
-                        className={column === "timestamp" ? "w-40" : "w-full"}
+                        className={column === "timestamp" ? "w-24" : "w-full"}
                       />
                     </TableCell>
                   ))}

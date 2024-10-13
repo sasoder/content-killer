@@ -9,14 +9,14 @@ type StepCardProps = {
 
 function StepCard({ title, content, info }: StepCardProps) {
   return (
-    <Card className="w-1/4 h-[500px] flex flex-col shadow-xl shadow-black/20">
+    <Card className="w-1/4 h-[500px] flex flex-col shadow-xl shadow-black/20 hover:bg-accent">
       <CardHeader>
         <CardTitle className="flex flex-row items-center justify-between">
           {title}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Icons.info className="w-4 h-4 opacity-70 hover:opacity-100 cursor-pointer transition-opacity duration-300" />
+                <Icons.info className="w-4 h-4 opacity-70 hover:opacity-100 cursor-pointer" />
               </TooltipTrigger>
               <TooltipContent side="top" sideOffset={10}>
                 <p>{info}</p>

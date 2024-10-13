@@ -1,20 +1,22 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import { useToast } from "@/hooks/use-toast";
 
-import { DescriptionList } from "@/lib/types";
+import { TimestampTextList } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { generateDescription } from "@/api/apiHelper";
+import { Icons } from "@/components/icons";
 
-const FASTAPI_URL = import.meta.env.VITE_FASTAPI_URL;
 interface GenerateDescriptionProps {
-  setData: (data: DescriptionList) => void;
+  setData: (data: TimestampTextList) => void;
 }
 
 export default function GenerateDescription({ setData }: GenerateDescriptionProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [url, setUrl] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const validateUrl = (input: string): boolean => {
     try {
@@ -27,31 +29,32 @@ export default function GenerateDescription({ setData }: GenerateDescriptionProp
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
 
     if (!validateUrl(url)) {
-      setError("Please enter a valid URL");
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid URL",
+        variant: "destructive",
+      });
       return;
     }
 
     setIsLoading(true);
     try {
       console.log("Submitting form with URL:", url);
-      const response = await fetch(FASTAPI_URL + "/api/generate_description", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ url }),
+      const descriptionData = await generateDescription(url, {});
+      setData(descriptionData);
+      toast({
+        title: "Success",
+        description: "Description generated successfully.",
       });
-      if (!response.ok) {
-        throw new Error("Failed to generate description");
-      }
-      const descriptionData = await response.json();
-      setData(descriptionData as DescriptionList);
     } catch (error) {
       console.error("Error generating content:", error);
-      setError("Failed to generate description. Please try again.");
+      toast({
+        title: "Error",
+        description: "Failed to generate description. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -61,22 +64,28 @@ export default function GenerateDescription({ setData }: GenerateDescriptionProp
     <form onSubmit={handleSubmit} className="flex flex-col h-full">
       <div className="flex-grow">
         <label htmlFor="url" className="block text-sm font-medium text-gray-700">
-          URL
+          YouTube URL
         </label>
         <Input
           id="url"
           type="text"
-          placeholder="https://example.com"
+          placeholder="https://www.example.com"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           className="mt-1"
         />
         <p className="mt-2 text-sm text-gray-500">Enter the URL of the YouTube video you want to generate a video for.</p>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       </div>
       <div className="mt-4 flex justify-center">
         <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
-          {isLoading ? "Generating..." : "Generate"}
+          {isLoading ? (
+            <>
+              <Icons.loader className="h-[1.2rem] w-[1.2rem] animate-spin mr-2" />
+              Generating...
+            </>
+          ) : (
+            "Generate"
+          )}
         </Button>
       </div>
     </form>
