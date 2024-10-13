@@ -20,7 +20,8 @@ export default function QuickInfo({ data, dataType }: QuickInfoProps) {
   return (
     <div className=" h-full overflow-auto">
       <p className="mt-2 text-sm text-gray-500">
-        You have {listLength} {dataType} entries consisting of {totalWords} words, with timestamps:
+        You have {listLength} {dataType} {listLength === 1 ? "entry" : "entries"} consisting of {totalWords}{" "}
+        {totalWords === 1 ? "word" : "words"}, with {listLength === 1 ? "timestamp" : "timestamps"}:
       </p>
       <div className="text-sm text-gray-500 mt-2">{allTimestamps}</div>
     </div>

@@ -34,7 +34,8 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
     setNewRow({ ...newRow, [key]: value });
   };
 
-  const handleSave = () => {
+  const handleSave = (remainOpen: boolean = false) => {
+    console.log("Saving changes...");
     const invalidTimestamps = editedData.items.filter((item) => !validateTimestamp(item.timestamp));
     if (invalidTimestamps.length > 0) {
       toast({
@@ -45,16 +46,20 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
       return;
     }
     onUpdate(editedData);
-    setIsOpen(false);
+    setIsOpen(remainOpen);
   };
 
   const handleDelete = (rowIndex: number) => {
     const newData = { ...editedData };
     newData.items = newData.items.filter((_, index) => index !== rowIndex);
     setEditedData(newData);
+    handleSave(true);
   };
 
   const handleAdd = () => {
+    if (newRow.timestamp === "" && newRow.text === "") {
+      return;
+    }
     if (newRow.timestamp === "" || newRow.text === "") {
       toast({
         title: "Incomplete Data",
@@ -84,6 +89,7 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 
     setEditedData(newData);
     setNewRow({ timestamp: "", text: "" });
+    handleSave(true);
   };
 
   const columns: (keyof TimestampText)[] = ["timestamp", "text"];
@@ -107,64 +113,64 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
           <div className="flex flex-col">
             <div className="flex flex-row justify-between items-center p-6">
               <DialogTitle>{title}</DialogTitle>
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={() => handleSave(false)}>Save Changes</Button>
             </div>
-            <form onSubmit={handleSubmitNewRow}>
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-none hover:bg-transparent">
-                    {columns.map((column) => (
-                      <TableHead className={`px-6 ${column === "timestamp" ? "w-40" : "w-full"}`} key={column}>
-                        {column}
-                      </TableHead>
-                    ))}
-                    <TableHead className="px-6 w-20">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-              </Table>
-            </form>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-none hover:bg-transparent">
+                  {columns.map((column) => (
+                    <TableHead className={`px-6 ${column === "timestamp" ? "w-40" : "w-full"}`} key={column}>
+                      {column}
+                    </TableHead>
+                  ))}
+                  <TableHead className="px-6 w-20">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+            </Table>
           </div>
         </DialogHeader>
         <div className="flex-grow overflow-auto p-4 pb-8">
-          <Table>
-            <TableBody>
-              {/* Add Row */}
-              <TableRow className="border-none hover:bg-transparent">
-                {columns.map((column) => (
-                  <TableCell className={column === "timestamp" ? "w-40" : "w-full"} key={`new-${column}`}>
-                    <Input
-                      value={newRow[column]}
-                      onChange={(e) => handleNewRowInputChange(column, e.target.value)}
-                      placeholder={column === "timestamp" ? "MM:SS" : `New ${column}`}
-                      className={column === "timestamp" ? "w-40" : "w-full"}
-                    />
-                  </TableCell>
-                ))}
-                {/* Actions Cell for Add Row */}
-                <TableCell className="w-20">
-                  <Button type="submit" variant="ghost" size="icon" onClick={handleAdd}>
-                    <Icons.plus className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-
-              {/* Existing Data Rows */}
-              {editedData.items.map((row, rowIndex) => (
-                <TableRow className="border-none hover:bg-transparent" key={rowIndex}>
+          <form onSubmit={handleSubmitNewRow}>
+            <Table>
+              <TableBody>
+                {/* Add Row */}
+                <TableRow className="border-none hover:bg-transparent">
                   {columns.map((column) => (
-                    <TableCell className={column === "timestamp" ? "w-40" : "w-full"} key={`${rowIndex}-${column}`}>
-                      <Input value={row[column]} onChange={(e) => handleInputChange(rowIndex, column, e.target.value)} />
+                    <TableCell className={column === "timestamp" ? "w-40" : "w-full"} key={`new-${column}`}>
+                      <Input
+                        value={newRow[column]}
+                        onChange={(e) => handleNewRowInputChange(column, e.target.value)}
+                        placeholder={column === "timestamp" ? "MM:SS" : `New ${column}`}
+                        className={column === "timestamp" ? "w-40" : "w-full"}
+                      />
                     </TableCell>
                   ))}
+                  {/* Actions Cell for Add Row */}
                   <TableCell className="w-20">
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(rowIndex)}>
-                      <Icons.minus className="h-4 w-4" />
+                    <Button type="submit" variant="ghost" size="icon" onClick={handleAdd}>
+                      <Icons.plus className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+
+                {/* Existing Data Rows */}
+                {editedData.items.map((row, rowIndex) => (
+                  <TableRow className="border-none hover:bg-transparent" key={rowIndex}>
+                    {columns.map((column) => (
+                      <TableCell className={column === "timestamp" ? "w-40" : "w-full"} key={`${rowIndex}-${column}`}>
+                        <Input value={row[column]} onChange={(e) => handleInputChange(rowIndex, column, e.target.value)} />
+                      </TableCell>
+                    ))}
+                    <TableCell className="w-20">
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(rowIndex)}>
+                        <Icons.minus className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </form>
         </div>
       </DialogContent>
     </Dialog>
