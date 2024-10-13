@@ -74,7 +74,15 @@ function SliderOption({ id, min, max, step, value, onChange, label }: SliderOpti
       </label>
       <div className="flex flex-row items-center justify-between gap-4 w-full">
         <div className="text-sm text-muted-foreground">{min}</div>
-        <Slider id={id} min={min} max={max} step={step} value={[value]} onValueChange={(values) => onChange(values[0])} />
+        <Slider
+          className="cursor-pointer"
+          id={id}
+          min={min}
+          max={max}
+          step={step}
+          value={[value]}
+          onValueChange={(values) => onChange(values[0])}
+        />
         <div className="text-sm text-muted-foreground">{max}</div>
       </div>
     </div>

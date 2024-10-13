@@ -16,7 +16,7 @@ function StepCard({ title, content, info }: StepCardProps) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Icons.info className="w-4 h-4" />
+                <Icons.info className="w-4 h-4 opacity-70 hover:opacity-100 cursor-pointer transition-opacity duration-300" />
               </TooltipTrigger>
               <TooltipContent side="top" sideOffset={10}>
                 <p>{info}</p>
