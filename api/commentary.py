@@ -20,7 +20,7 @@ Structure the commentary to:
 - MAKE SURE THE COMMENTARY IS BALANCED OVER TIME, PROVIDING ANALYSIS THROUGHOUT THE VIDEO RATHER THAN IN CONCENTRATED CLUSTERS.
 
 **Timestamp Guidelines**:
-- Timestamps must be in the format **MM:SS** (e.g., "01:15").
+- Timestamps must be in the format **mm:ss** (e.g., "01:15").
 - Commentary should be timed **intelligently**:
     - Place commentary **before** an event when it sets up the action (prelude).
     - Place commentary **after** an action when analyzing behavior that has already occurred.
@@ -30,11 +30,13 @@ Structure the commentary to:
 - Prioritize **quality** over **quantity**.
 - Avoid commenting on trivial or irrelevant moments. Only provide commentary for moments with significant psychological or behavioral insight."""
 
+intro_prompt = """Also generate an introduction to the commentary that sets the tone for the rest of the video at 00:00. It should be 1-2 sentences but include setting the scene for the video, the key players, and the key events that will be analyzed in the commentary. It should be concise and to the point."""
+outro_prompt = """Also generate an outro to the commentary that wraps up the video at the end. It should be 1-2 sentences but include a summary of the video, the key players, and the key events that will be analyzed in the commentary. It should be concise and to the point."""
+
 def generate_commentary_helper(items: TimestampTextList, options: CommentaryOptions) -> TimestampTextList:
     load_dotenv()
-    print(f"API Key: {os.getenv('OPENAI_API_KEY')}")
+    print(f"Generating commentary with {len(items)} items and options {options}")
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
 
     prompt = f"""Based on the following information from a police bodycam video, generate concise, insightful commentary that creates an engaging narrative structure:
 
@@ -42,9 +44,12 @@ def generate_commentary_helper(items: TimestampTextList, options: CommentaryOpti
 
     Provide the commentary moment in the format:
     {{
-        "timestamp": "MM:SS",
-        "commentary": "Your concise commentary here"
+        "timestamp": "mm:ss",
+        "text": "Your concise commentary here"
     }}
+
+    {options.intro and intro_prompt}
+    {options.outro and outro_prompt}
 
     Remember to structure the commentary to build tension, reveal information strategically, and create an engaging narrative arc throughout the video analysis.
     """
@@ -54,8 +59,17 @@ def generate_commentary_helper(items: TimestampTextList, options: CommentaryOpti
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ],
+        temperature=options.temperature,
         response_format=TimestampTextList,
     )
 
-    # Instead of returning just the comments, return the entire CommentaryList
-    return completion.choices[0].message.parsed
+    commentary_list = completion.choices[0].message.parsed
+
+    data_dir = os.path.join(os.path.dirname(__file__), "../data")
+    os.makedirs(data_dir, exist_ok=True)
+    commentary_path = os.path.join(data_dir, "commentary.json")
+    with open(commentary_path, "w") as f:
+        TimestampTextList.model_dump(commentary_list, mode="json")
+    print(f"Commentary saved to {commentary_path}")
+
+    return commentary_list

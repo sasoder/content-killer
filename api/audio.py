@@ -1,21 +1,21 @@
 import os
 import requests
 from dotenv import load_dotenv
-
-from api.schema import TimestampTextList
+from typing import List
+from api.schema import TimestampTextList, AudioOptions, AudioResponse
 
 load_dotenv()
 
 # Define constants
 CHUNK_SIZE = 1024
 XI_API_KEY = os.getenv("ELEVENLABS_API_KEY")
-VOICE_ID = "nPczCjzI2devNBz1zQrb"
-OUTPUT_DIR = "audio_clips"
+VOICE_ID = os.getenv("VOICE_ID")
+OUTPUT_DIR = os.getenv("OUTPUT_DIR")
 
 # Ensure the output directory exists
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-def generate_audio(text, output_path):
+def generate_audio(text, output_path, options: AudioOptions):
     tts_url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}/stream"
     
     headers = {
@@ -27,10 +27,11 @@ def generate_audio(text, output_path):
         "text": text,
         "model_id": "eleven_turbo_v2",
         "voice_settings": {
-            "stability": 0.5,
+            "stability": options.stability,
             "similarity_boost": 0.8,
             "style": 0.0,
-            "use_speaker_boost": True
+            "use_speaker_boost": True,
+            "speaking_rate": options.speaking_rate
         }
     }
     
@@ -45,11 +46,11 @@ def generate_audio(text, output_path):
         print(f"Error generating audio for {output_path}: {response.text}")
 
 def timestamp_to_filename(timestamp):
-    # Convert "MM:SS" to "MMSS.mp3"
+    # Convert "mm:ss" to "ss.mp3"
     return timestamp.replace(":", "") + ".mp3"
 
-def generate_audio_clips(commentary_data: TimestampTextList):
-    generated_files = []
+def generate_audio_clips(commentary_data: TimestampTextList, options: AudioOptions) -> AudioResponse:
+    generated_files: List[str] = []
     total_comments = len(commentary_data.items)
     for index, entry in enumerate(commentary_data.items, start=1):
         print(f"Processing comment {index}/{total_comments}")
@@ -58,10 +59,6 @@ def generate_audio_clips(commentary_data: TimestampTextList):
         commentary = entry.text
         output_filename = timestamp_to_filename(timestamp)
         output_path = os.path.join(OUTPUT_DIR, output_filename)
-        generate_audio(commentary, output_path)
-        generated_files.append({
-            "timestamp": timestamp,
-            "filename": output_filename,
-            "path": output_path
-        })
-    return generated_files
+        generate_audio(commentary, output_path, options)
+        generated_files.append(output_filename)
+    return AudioResponse(items=generated_files)

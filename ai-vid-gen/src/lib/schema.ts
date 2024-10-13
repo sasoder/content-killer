@@ -18,5 +18,9 @@ export type CommentaryOptions = {
 };
 
 export type AudioOptions = {
-  speed?: number;
+  stability: number;
+};
+
+export type AudioResponse = {
+  items: string[];
 };

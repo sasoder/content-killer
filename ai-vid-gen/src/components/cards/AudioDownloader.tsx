@@ -1,15 +1,9 @@
-"use client";
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-
-interface AudioFile {
-  timestamp: string;
-  filename: string;
-}
+import { AudioResponse } from "../../lib/schema";
 
 interface AudioDownloaderProps {
-  audioFiles: AudioFile[] | null;
+  audioFiles: AudioResponse | null;
 }
 
 export default function AudioDownloader({ audioFiles }: AudioDownloaderProps) {
@@ -21,7 +15,7 @@ export default function AudioDownloader({ audioFiles }: AudioDownloaderProps) {
     audio.play();
     audio.onended = () => setIsPlaying(null);
   };
-  const noAudioFiles = !audioFiles || audioFiles.length === 0;
+  const noAudioFiles = !audioFiles || audioFiles.items.length === 0;
 
   return (
     <div className="flex flex-col items-center justify-between gap-4">
@@ -30,15 +24,15 @@ export default function AudioDownloader({ audioFiles }: AudioDownloaderProps) {
           <p className="text-sm text-gray-500">No audio files generated yet.</p>
         ) : (
           <>
-            <p>Generated {audioFiles.length} audio files:</p>
+            <p>Generated {audioFiles.items.length} audio files:</p>
           </>
         )}
         <ul>
-          {audioFiles?.map((file) => (
-            <li key={file.filename} className="flex items-center justify-between">
-              <span>{file.timestamp}</span>
-              <Button onClick={() => handlePlay(file.filename)} disabled={isPlaying === file.filename}>
-                {isPlaying === file.filename ? "Playing..." : "Play"}
+          {audioFiles?.items.map((file) => (
+            <li key={file} className="flex items-center justify-between">
+              <span>{file}</span>
+              <Button onClick={() => handlePlay(file)} disabled={isPlaying === file}>
+                {isPlaying === file ? "Playing..." : "Play"}
               </Button>
             </li>
           ))}

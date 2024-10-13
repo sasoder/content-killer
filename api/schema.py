@@ -29,9 +29,8 @@ class GenerateCommentaryInput(BaseModel):
     options: Optional[CommentaryOptions] = None
 
 # Audio
-class AudioFile(BaseModel):
-    timestamp: str
-    filename: str
-
 class AudioOptions(BaseModel):
-    speed: float
+    stability: float
+
+class AudioResponse(BaseModel):
+    items: List[str]

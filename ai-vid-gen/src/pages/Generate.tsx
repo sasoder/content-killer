@@ -5,16 +5,17 @@ import GenerateDescription from "@/components/cards/GenerateDescription";
 import GeneratePost from "@/components/cards/GeneratePost";
 import StepTransition from "@/components/cards/StepTransition";
 import StepCard from "@/components/cards/StepCard";
-import { TimestampTextList, GenerateOptions } from "@/lib/schema";
+import { TimestampTextList, AudioResponse } from "@/lib/schema";
 import { Icons } from "@/components/icons";
 import { CardSkeleton } from "@/components/skeletons/CardSkeletion";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { GenerateOptions } from "../lib/types";
 export default function GeneratePage() {
   const [description, setDescription] = useState<TimestampTextList | null>(null);
   const [commentary, setCommentary] = useState<TimestampTextList | null>(null);
-  const [audioFiles, setAudioFiles] = useState<Array<{ timestamp: string; filename: string }> | null>(null);
+  const [audioFiles, setAudioFiles] = useState<AudioResponse | null>(null);
 
   const commentaryOptions: GenerateOptions = {
     intro: {
@@ -41,14 +42,14 @@ export default function GeneratePage() {
   };
 
   const audioOptions: GenerateOptions = {
-    speed: {
+    stability: {
       type: "slider",
-      label: "Speech Speed",
-      key: "speed",
-      default: 1,
-      min: 0.5,
-      max: 2,
-      step: 0.1,
+      label: "Emotion",
+      key: "stability",
+      default: 70,
+      min: 0,
+      max: 100,
+      step: 1,
     },
   };
 
@@ -93,7 +94,7 @@ export default function GeneratePage() {
               <GeneratePost
                 dataType="commentary"
                 data={description as TimestampTextList}
-                setData={setCommentary}
+                setData={setCommentary as React.Dispatch<React.SetStateAction<TimestampTextList | AudioResponse | null>>}
                 options={commentaryOptions}
               />
             </Suspense>
@@ -111,19 +112,24 @@ export default function GeneratePage() {
           title="Audio"
           content={
             <Suspense fallback={<CardSkeleton />}>
-              <GeneratePost dataType="audio" data={commentary as TimestampTextList} setData={setAudioFiles} options={audioOptions} />
+              <GeneratePost
+                dataType="audio"
+                data={commentary as TimestampTextList}
+                setData={setAudioFiles as React.Dispatch<React.SetStateAction<TimestampTextList | AudioResponse | null>>}
+                options={audioOptions}
+              />
             </Suspense>
           }
           info="This step generates audio files for the commentary at all pivotal moments in the video."
         />
 
-        <StepTransition data={audioFiles} onUpdate={(updatedData) => setAudioFiles(updatedData)} />
+        <StepTransition data={null} jsonEditorTitle={null} onUpdate={null} />
 
         <StepCard
           title="Files"
           content={
             <Suspense fallback={<CardSkeleton />}>
-              <AudioDownloader audioFiles={audioFiles} />
+              <AudioDownloader audioFiles={audioFiles as AudioResponse} />
             </Suspense>
           }
           info="This step downloads the audio files generated in the previous step."

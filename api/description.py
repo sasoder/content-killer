@@ -3,6 +3,7 @@ from vertexai.generative_models import GenerativeModel, Part, GenerationConfig
 from api.schema import TimestampTextList, DescriptionOptions, TimestampText
 import os
 import dotenv
+import json
 
 dotenv.load_dotenv()
 
@@ -32,7 +33,6 @@ prompt = """Provide a detailed description of the police bodycam video. The desc
     }}
 
 Focus on **behavioral analysis** and **key dialogues**, capturing pivotal moments that reveal the psychology of the suspect or the tactics of the officers."""
-
 
 def generate_description_helper(url: str, options: DescriptionOptions) -> TimestampTextList:
     print(f"Generating description for {url} with options: {options}")
@@ -76,6 +76,15 @@ def generate_description_helper(url: str, options: DescriptionOptions) -> Timest
     )
     
     description_list = TimestampTextList.model_validate_json(response.text)
+
+    # Save description to ./data/description.json
+    data_dir = os.path.join(os.path.dirname(__file__), "../data")
+    os.makedirs(data_dir, exist_ok=True)
+    description_path = os.path.join(data_dir, "description.json")
+    with open(description_path, "w") as f:
+        TimestampTextList.model_dump(description_list, f, indent=4)
+    print(f"Description saved to {description_path}")
+
     return description_list
 
 def sample_response():

@@ -4,9 +4,9 @@ from api.description import generate_description_helper
 from api.schema import (
     GenerateDescriptionInput,
     TimestampTextList,
-    DescriptionOptions,
-    CommentaryOptions,
     GenerateCommentaryInput,
+    AudioResponse,
+    AudioOptions,
 )
 from api.audio import generate_audio_clips, OUTPUT_DIR
 from fastapi.middleware.cors import CORSMiddleware
@@ -41,15 +41,15 @@ def generate_commentary(input: GenerateCommentaryInput) -> TimestampTextList:
     commentary = generate_commentary_helper(input.items, input.options)
     return commentary
 
-# @app.post("/api/generate_audio", response_model=Dict[str, Any])
-# def generate_audio(input: GenerateAudioInput):
-#     print(f"Generating audio for commentary: {input.commentary} with options: {input.options}")
-#     generated_files = generate_audio_clips(input.commentary, input.options)
-#     return {"message": "Audio clips generated successfully", "files": generated_files}
+@app.post("/api/generate_audio", response_model=AudioResponse)
+def generate_audio(input: GenerateCommentaryInput, options: AudioOptions):
+    print(f"Generating audio for commentary with {len(input.items)} entries")
+    generated_files = generate_audio_clips(TimestampTextList(items=input.items), options)
+    return generated_files
 
-# @app.get("/api/get_audio_clip/{filename}", response_class=FileResponse)
-# async def get_audio(filename: str):
-#     file_path = os.path.join(OUTPUT_DIR, filename)
-#     if os.path.exists(file_path):
-#         return FileResponse(file_path, media_type="audio/mpeg")
-#     raise HTTPException(status_code=404, detail="Audio file not found")
+@app.get("/api/get_audio_clip/{filename}", response_class=FileResponse)
+async def get_audio(filename: str):
+    file_path = os.path.join(OUTPUT_DIR, filename)
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type="audio/mpeg")
+    raise HTTPException(status_code=404, detail="Audio file not found")

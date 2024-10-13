@@ -1,9 +1,7 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { TimestampTextList, CommentaryOptions, AudioOptions } from "@/lib/schema";
+import { TimestampTextList, CommentaryOptions, AudioOptions, AudioResponse } from "@/lib/schema";
 import { GenerateOptions } from "@/lib/types";
 import { Icons } from "@/components/icons";
 import QuickInfo from "@/components/QuickInfo";
@@ -14,7 +12,7 @@ import { generateCommentary, generateAudio } from "@/api/apiHelper";
 interface GeneratePostProps {
   dataType: "commentary" | "audio";
   data: TimestampTextList | null;
-  setData: React.Dispatch<React.SetStateAction<TimestampTextList | null>>;
+  setData: React.Dispatch<React.SetStateAction<TimestampTextList | AudioResponse | null>>;
   options?: GenerateOptions;
 }
 
@@ -53,8 +51,13 @@ function GeneratePost({ dataType, data, setData, options }: GeneratePostProps) {
         const commentaryData = await generateCommentary(data.items, optionValues as CommentaryOptions);
         setData(commentaryData);
       } else if (dataType === "audio") {
-        const audioFiles = await generateAudio(data.items, optionValues as AudioOptions);
-        setData(audioFiles);
+        const audioOptions = { ...(optionValues as AudioOptions) };
+        if ("stability" in audioOptions) {
+          // Translating between emotion and stability
+          audioOptions.stability = 100 - audioOptions.stability;
+        }
+        const audioResponse = await generateAudio(data.items, audioOptions);
+        setData(audioResponse);
       }
       toast({
         title: "Success",

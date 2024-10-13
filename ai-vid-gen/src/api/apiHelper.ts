@@ -1,4 +1,4 @@
-import { TimestampTextList, TimestampText, DescriptionOptions, CommentaryOptions, AudioOptions, AudioFile } from "@/lib/schema";
+import { TimestampTextList, TimestampText, DescriptionOptions, CommentaryOptions, AudioOptions, AudioResponse } from "@/lib/schema";
 
 const FASTAPI_URL = import.meta.env.VITE_FASTAPI_URL || "http://localhost:8000";
 
@@ -37,7 +37,7 @@ export const generateCommentary = async (items: TimestampText[], options?: Comme
   return data as TimestampTextList;
 };
 
-export const generateAudio = async (items: TimestampText[], options?: AudioOptions): Promise<AudioFile[]> => {
+export const generateAudio = async (items: TimestampText[], options?: AudioOptions): Promise<AudioResponse> => {
   const response = await fetch(`${FASTAPI_URL}/api/generate_audio`, {
     method: "POST",
     headers: {

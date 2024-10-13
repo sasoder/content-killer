@@ -62,7 +62,7 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
     const newData = { ...editedData };
     newData.items = newData.items.filter((_, index) => index !== rowIndex);
     setEditedData(newData);
-    handleSave(true);
+    handleSave(true, newData);
   };
 
   const handleAdd = () => {
