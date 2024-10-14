@@ -1,20 +1,19 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Body
 from api.commentary import generate_commentary_helper
 from api.description import generate_description_helper
 from api.schema import (
-    GenerateDescriptionInput,
     TimestampTextList,
-    GenerateCommentaryInput,
     AudioResponse,
-    AudioOptions,
-    CommentaryOptions,
-    DescriptionOptions
+    DescriptionRequest,
+    CommentaryRequest,
+    AudioRequest,
 )
 from api.audio import generate_audio_clips, OUTPUT_DIR
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 import os
 import json
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -33,15 +32,16 @@ app.add_middleware(
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
+
 @app.post("/api/generate_description")
-async def generate_description(url: str, options: DescriptionOptions):
-    description = generate_description_helper(url, options)
+async def generate_description(request: DescriptionRequest = Body(...)):
+    description = generate_description_helper(request.url, request.options)
     try:
         with open(os.path.join(DATA_DIR, "description.json"), "w") as f:
             json.dump(description.model_dump(), f)
-        return {"status": 200}
+        return description
     except Exception as e:
-        return {"status": 500, "message": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/get_description", response_model=TimestampTextList)
 async def get_description() -> TimestampTextList:
@@ -52,14 +52,14 @@ async def get_description() -> TimestampTextList:
         return TimestampTextList(items=[])
 
 @app.post("/api/generate_commentary")
-async def generate_commentary(items: TimestampTextList, options: CommentaryOptions):
-    commentary = generate_commentary_helper(items, options)
+async def generate_commentary(request: CommentaryRequest = Body(...)):
+    commentary = generate_commentary_helper(request.items, request.options)
     try:
         with open(os.path.join(DATA_DIR, "commentary.json"), "w") as f:
             json.dump(commentary.model_dump(), f)
-        return {"status": 200}
+        return commentary
     except Exception as e:
-        return {"status": 500, "message": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/get_commentary", response_model=TimestampTextList)
 async def get_commentary() -> TimestampTextList:
@@ -68,19 +68,17 @@ async def get_commentary() -> TimestampTextList:
             return TimestampTextList.model_validate(json.load(f))
     except FileNotFoundError:
         return TimestampTextList(items=[])
-    except Exception as e:
-        return {"status": 500, "message": str(e)}
 
 @app.post("/api/generate_audio")
-async def generate_audio(items: TimestampTextList, options: AudioOptions):
-    print(f"Generating audio with items: {items} and options: {options}")
+async def generate_audio(request: AudioRequest = Body(...)):
+    print(f"Generating audio with items: {request.items} and options: {request.options}")
     try:
-        audio_files = generate_audio_clips(items, options)
+        audio_files = generate_audio_clips(request.items, request.options)
         with open(os.path.join(DATA_DIR, "audio.json"), "w") as f:
             json.dump(audio_files.model_dump(), f)
-        return {"status": 200}
+        return audio_files
     except Exception as e:
-        return {"status": 500, "message": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/get_audio", response_model=AudioResponse)
 async def get_audio() -> AudioResponse:
@@ -89,8 +87,6 @@ async def get_audio() -> AudioResponse:
             return AudioResponse.model_validate(json.load(f))
     except FileNotFoundError:
         return AudioResponse(items=[])
-    except Exception as e:
-        return {"status": 500, "message": str(e)}
 
 @app.get("/api/get_audio_clip/{filename}", response_class=FileResponse)
 async def get_audio_clip(filename: str):

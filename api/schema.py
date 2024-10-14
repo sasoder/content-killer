@@ -12,11 +12,11 @@ class TimestampTextList(BaseModel):
 
 # Description
 class DescriptionOptions(BaseModel):
-    sample: bool
+    sample: Optional[bool] = False
 
-class GenerateDescriptionInput(BaseModel):
+class DescriptionRequest(BaseModel):
     url: str
-    options: Optional[DescriptionOptions] = None
+    options: DescriptionOptions
 
 # Commentary
 class CommentaryOptions(BaseModel):
@@ -24,9 +24,9 @@ class CommentaryOptions(BaseModel):
     outro: bool
     temperature: float
 
-class GenerateCommentaryInput(BaseModel):
-    items: List[TimestampText]
-    options: Optional[CommentaryOptions] = None
+class CommentaryRequest(BaseModel):
+    items: TimestampTextList
+    options: CommentaryOptions
 
 # Audio
 class AudioOptions(BaseModel):
@@ -34,3 +34,7 @@ class AudioOptions(BaseModel):
 
 class AudioResponse(BaseModel):
     items: List[str]
+
+class AudioRequest(BaseModel):
+    items: TimestampTextList
+    options: AudioOptions

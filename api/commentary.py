@@ -35,7 +35,6 @@ outro_prompt = """Also generate an outro to the commentary that wraps up the vid
 
 def generate_commentary_helper(items: TimestampTextList, options: CommentaryOptions) -> TimestampTextList:
     load_dotenv()
-    print(f"Generating commentary with {len(items)} items and options {options}")
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     prompt = f"""Based on the following information from a police bodycam video, generate concise, insightful commentary that creates an engaging narrative structure:
