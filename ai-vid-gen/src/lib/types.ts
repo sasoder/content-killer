@@ -22,4 +22,8 @@ export type GenerateOptions = {
 	[key: string]: GenerateOption;
 };
 
-export type GeneratedDataType = 'description' | 'commentary' | 'audio';
+export type GeneratedDataType =
+	| 'description'
+	| 'commentary'
+	| 'audio'
+	| 'video';

@@ -73,16 +73,13 @@ export const generateAudio = async (
 };
 
 // New Video Generation Function
-export const generateVideo = async (
-	items: TimestampTextList,
-	options: VideoOptions,
-): Promise<VideoOptions> => {
+export const generateVideo = async (options: VideoOptions): Promise<string> => {
 	const response = await fetch(`${FASTAPI_URL}/api/generate_video`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify({ items, options }),
+		body: JSON.stringify({ options }),
 	});
 
 	if (!response.ok) {
@@ -90,7 +87,7 @@ export const generateVideo = async (
 	}
 
 	const data = await response.json();
-	return data as VideoOptions;
+	return data as string;
 };
 
 export const fetchExistingData = async (type: GeneratedDataType) => {
@@ -101,13 +98,13 @@ export const fetchExistingData = async (type: GeneratedDataType) => {
 	return response.json();
 };
 
-export const getAudioClip = async (filename: string): Promise<Blob> => {
-	const response = await fetch(
-		`${FASTAPI_URL}/api/get_audio_clip/${filename}`,
-		{
-			method: 'GET',
-		},
-	);
+export const downloadFile = async (
+	filename: string,
+	type: GeneratedDataType,
+): Promise<Blob> => {
+	const response = await fetch(`${FASTAPI_URL}/api/get_${type}/${filename}`, {
+		method: 'GET',
+	});
 
 	if (!response.ok) {
 		throw new Error('Failed to fetch audio clip');
@@ -116,9 +113,12 @@ export const getAudioClip = async (filename: string): Promise<Blob> => {
 	return response.blob();
 };
 
-export const downloadAll = async (files: FileResponse) => {
+export const downloadAll = async (
+	files: FileResponse,
+	type: GeneratedDataType,
+) => {
 	const audioClips = await Promise.all(
-		files.items.map(file => getAudioClip(file)),
+		files.items.map(file => downloadFile(file, type)),
 	);
 	const zip = new JSZip();
 	audioClips.forEach((clip, index) => {
