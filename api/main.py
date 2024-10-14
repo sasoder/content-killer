@@ -93,8 +93,8 @@ async def get_audio() -> AudioResponse:
     except FileNotFoundError:
         return AudioResponse(items=[])
 
-@app.get("/api/get_file/{filename}", response_class=FileResponse)
-async def get_file(filename: str):
+@app.get("/api/get_{type}/{filename}", response_class=FileResponse)
+async def get_file(type: str, filename: str):
     file_path = os.path.join(OUTPUT_DIR, filename)
     if os.path.exists(file_path):
         return FileResponse(file_path)
