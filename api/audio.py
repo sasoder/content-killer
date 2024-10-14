@@ -31,7 +31,6 @@ def generate_audio(text, output_path, options: AudioOptions):
             "similarity_boost": 0.8,
             "style": 0.0,
             "use_speaker_boost": True,
-            "speaking_rate": options.speaking_rate
         }
     }
     

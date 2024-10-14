@@ -8,13 +8,13 @@ import { Icons } from "@/components/icons";
 import { useToast } from "@/hooks/use-toast";
 
 interface JsonEditorProps {
-  data: TimestampTextList;
+  data: TimestampTextList | null;
   onUpdate: (updatedData: TimestampTextList) => void;
   title: string;
 }
 
 export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
-  const [editedData, setEditedData] = useState<TimestampTextList>(data);
+  const [editedData, setEditedData] = useState<TimestampTextList>(data as TimestampTextList);
   const [isOpen, setIsOpen] = useState(false);
   const [newRow, setNewRow] = useState<TimestampText>({ timestamp: "", text: "" });
   const { toast } = useToast();
@@ -37,7 +37,6 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
   };
 
   const handleSave = (remainOpen: boolean = false, newData: TimestampTextList = editedData) => {
-    console.log("Saving changes...");
     const invalidTimestamps = newData.items.filter((item) => !validateTimestamp(item.timestamp));
     if (invalidTimestamps.length > 0) {
       toast({
@@ -109,7 +108,7 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      {editedData.items.length > 0 ? (
+      {editedData?.items.length > 0 ? (
         <DialogTrigger asChild>
           <Button variant="outline" size="icon">
             <Icons.pencil className="h-[1.1rem] w-[1.1rem]" />
@@ -146,7 +145,7 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
               <TableBody>
                 {/* Add Row */}
                 <TableRow className="border-none hover:bg-transparent">
-                  {columns.map((column) => (
+                  {columns?.map((column) => (
                     <TableCell className={column === "timestamp" ? "w-16" : "w-full"} key={`new-${column}`}>
                       <Textarea
                         value={newRow[column]}
@@ -167,9 +166,9 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
                 </TableRow>
 
                 {/* Existing Data Rows */}
-                {editedData.items.map((row, rowIndex) => (
+                {editedData?.items.map((row, rowIndex) => (
                   <TableRow className="border-none hover:bg-transparent" key={rowIndex}>
-                    {columns.map((column) => (
+                    {columns?.map((column) => (
                       <TableCell className={column === "timestamp" ? "w-16" : "w-full"} key={`${rowIndex}-${column}`}>
                         <Textarea
                           value={row[column]}

@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import { TimestampTextList, AudioResponse } from "@/lib/schema";
+import { TimestampTextList, FileResponse } from "@/lib/schema";
 import { GeneratedDataType } from "@/lib/types";
 
 const FASTAPI_URL = import.meta.env.VITE_FASTAPI_URL || "http://localhost:8000";
@@ -13,7 +13,7 @@ const fetcher = async (url: string) => {
 };
 
 export function useGeneratedData(type: GeneratedDataType) {
-  const { data, error, mutate } = useSWR<TimestampTextList | AudioResponse>(`${FASTAPI_URL}/api/get_${type}`, fetcher);
+  const { data, error, mutate } = useSWR<TimestampTextList | FileResponse>(`${FASTAPI_URL}/api/get_${type}`, fetcher);
   return {
     data,
     isLoading: !error && !data,

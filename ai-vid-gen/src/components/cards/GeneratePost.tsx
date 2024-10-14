@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { TimestampTextList, CommentaryOptions, AudioOptions, AudioResponse, TimestampText } from "@/lib/schema";
+import { TimestampTextList, CommentaryOptions, AudioOptions, FileResponse } from "@/lib/schema";
 import { GenerateOptions } from "@/lib/types";
 import { Icons } from "@/components/icons";
 import QuickInfo from "@/components/QuickInfo";
@@ -11,8 +11,8 @@ import { generateCommentary, generateAudio } from "@/api/apiHelper";
 
 interface GeneratePostProps {
   dataType: "commentary" | "audio";
-  data: TimestampTextList | AudioResponse | null;
-  mutate: (newData: TimestampTextList | AudioResponse) => void;
+  data: TimestampTextList | FileResponse | null;
+  mutate: (newData: TimestampTextList | FileResponse) => void;
   options?: GenerateOptions;
 }
 
@@ -49,16 +49,16 @@ function GeneratePost({ dataType, data, mutate, options }: GeneratePostProps) {
     try {
       let newData;
       if (dataType === "commentary") {
-        newData = await generateCommentary(data.items as TimestampText[], optionValues as CommentaryOptions);
+        newData = await generateCommentary(data as TimestampTextList, optionValues as CommentaryOptions);
       } else if (dataType === "audio") {
         const audioOptions = { ...(optionValues as AudioOptions) };
         if ("stability" in audioOptions) {
           // Translating between emotion and stability
-          audioOptions.stability = 100 - audioOptions.stability;
+          audioOptions.stability = 1 - audioOptions.stability;
         }
-        newData = await generateAudio(data.items as TimestampText[], audioOptions as AudioOptions);
+        newData = await generateAudio(data as TimestampTextList, audioOptions as AudioOptions);
       }
-      mutate(newData as TimestampTextList | AudioResponse);
+      mutate(newData as TimestampTextList | FileResponse);
       toast({
         title: "Success",
         description: `${dataType} generated successfully.`,

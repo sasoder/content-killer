@@ -21,6 +21,6 @@ export type AudioOptions = {
   stability: number;
 };
 
-export type AudioResponse = {
+export type FileResponse = {
   items: string[];
 };

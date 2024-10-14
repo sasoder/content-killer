@@ -1,4 +1,4 @@
-import { TimestampTextList, TimestampText, DescriptionOptions, CommentaryOptions, AudioOptions, AudioResponse } from "@/lib/schema";
+import { TimestampTextList, DescriptionOptions, CommentaryOptions, AudioOptions, FileResponse } from "@/lib/schema";
 import JSZip from "jszip";
 import saveAs from "file-saver";
 import { GeneratedDataType } from "@/lib/types";
@@ -22,8 +22,7 @@ export const generateDescription = async (url: string, options?: DescriptionOpti
   return data as TimestampTextList;
 };
 
-export const generateCommentary = async (items: TimestampText[], options?: CommentaryOptions): Promise<TimestampTextList> => {
-  console.log(`Generating commentary with options: ${JSON.stringify(options)} and items: ${JSON.stringify(items)}`);
+export const generateCommentary = async (items: TimestampTextList, options?: CommentaryOptions): Promise<TimestampTextList> => {
   const response = await fetch(`${FASTAPI_URL}/api/generate_commentary`, {
     method: "POST",
     headers: {
@@ -40,7 +39,7 @@ export const generateCommentary = async (items: TimestampText[], options?: Comme
   return data as TimestampTextList;
 };
 
-export const generateAudio = async (items: TimestampText[], options?: AudioOptions): Promise<AudioResponse> => {
+export const generateAudio = async (items: TimestampTextList, options?: AudioOptions): Promise<FileResponse> => {
   const response = await fetch(`${FASTAPI_URL}/api/generate_audio`, {
     method: "POST",
     headers: {
@@ -54,7 +53,7 @@ export const generateAudio = async (items: TimestampText[], options?: AudioOptio
   }
 
   const data = await response.json();
-  return data as AudioResponse;
+  return data as FileResponse;
 };
 
 export const fetchExistingData = async (type: GeneratedDataType) => {
@@ -77,8 +76,8 @@ export const getAudioClip = async (filename: string): Promise<Blob> => {
   return response.blob();
 };
 
-export const downloadAllAudio = async (audioFiles: AudioResponse) => {
-  const audioClips = await Promise.all(audioFiles.items.map((file) => getAudioClip(file)));
+export const downloadAll = async (files: FileResponse) => {
+  const audioClips = await Promise.all(files.items.map((file) => getAudioClip(file)));
   const zip = new JSZip();
   audioClips.forEach((clip, index) => {
     zip.file(`audio_${index}.mp3`, clip);

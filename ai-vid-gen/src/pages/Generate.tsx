@@ -1,11 +1,11 @@
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { fetchExistingData } from "@/api/apiHelper";
-import AudioDownloader from "@/components/cards/AudioDownloader";
+import FileDownloader from "@/components/cards/FileDownloader";
 import GenerateDescription from "@/components/cards/GenerateDescription";
 import GeneratePost from "@/components/cards/GeneratePost";
 import StepTransition from "@/components/cards/StepTransition";
 import StepCard from "@/components/cards/StepCard";
-import { TimestampTextList, AudioResponse } from "@/lib/schema";
+import { TimestampTextList, FileResponse } from "@/lib/schema";
 import { Icons } from "@/components/icons";
 import { CardSkeleton } from "@/components/skeletons/CardSkeletion";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -16,7 +16,7 @@ import { GenerateOptions } from "../lib/types";
 export default function GeneratePage() {
   const [description, setDescription] = useState<TimestampTextList | null>(null);
   const [commentary, setCommentary] = useState<TimestampTextList | null>(null);
-  const [audioFiles, setAudioFiles] = useState<AudioResponse | null>(null);
+  const [audioFiles, setAudioFiles] = useState<FileResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchAllData = useCallback(async () => {
@@ -49,7 +49,7 @@ export default function GeneratePage() {
     setCommentary(newData);
   }, []);
 
-  const updateAudio = useCallback((newData: AudioResponse) => {
+  const updateAudio = useCallback((newData: FileResponse) => {
     setAudioFiles(newData);
   }, []);
 
@@ -82,16 +82,12 @@ export default function GeneratePage() {
       type: "slider",
       label: "Emotion",
       key: "stability",
-      default: 70,
+      default: 0.7,
       min: 0,
-      max: 100,
-      step: 1,
+      max: 1,
+      step: 0.01,
     },
   };
-
-  if (isLoading) {
-    return <div>Loading...</div>; // Or a more sophisticated loading component
-  }
 
   return (
     <main className="container mx-auto space-y-8 p-4">
@@ -121,25 +117,35 @@ export default function GeneratePage() {
           info="This step generates a comprehensive description of the video, with timestamps for all the pivotal moments in the video."
         />
 
-        <StepTransition data={description} jsonEditorTitle="Edit Description Data" onUpdate={updateDescription} />
+        <StepTransition data={description as TimestampTextList} jsonEditorTitle="Edit Description Data" onUpdate={updateDescription} />
 
         <StepCard
           title="Commentary"
           content={
             <Suspense fallback={<CardSkeleton />}>
-              <GeneratePost dataType="commentary" data={description} mutate={updateCommentary} options={commentaryOptions} />
+              <GeneratePost
+                dataType="commentary"
+                data={description as TimestampTextList}
+                mutate={(newData: TimestampTextList | FileResponse) => updateCommentary(newData as TimestampTextList)}
+                options={commentaryOptions}
+              />
             </Suspense>
           }
           info="This step generates a commentary for the video at all the pivotal moments in the video."
         />
 
-        <StepTransition data={commentary} jsonEditorTitle="Edit Commentary Data" onUpdate={updateCommentary} />
+        <StepTransition data={commentary as TimestampTextList} jsonEditorTitle="Edit Commentary Data" onUpdate={updateCommentary} />
 
         <StepCard
           title="Audio"
           content={
             <Suspense fallback={<CardSkeleton />}>
-              <GeneratePost dataType="audio" data={commentary} mutate={updateAudio} options={audioOptions} />
+              <GeneratePost
+                dataType="audio"
+                data={commentary as TimestampTextList}
+                mutate={(newData: TimestampTextList | FileResponse) => updateAudio(newData as FileResponse)}
+                options={audioOptions}
+              />
             </Suspense>
           }
           info="This step generates audio files for the commentary at all pivotal moments in the video."
@@ -151,7 +157,7 @@ export default function GeneratePage() {
           title="Files"
           content={
             <Suspense fallback={<CardSkeleton />}>
-              <AudioDownloader audioFiles={audioFiles} />
+              <FileDownloader files={audioFiles as FileResponse} />
             </Suspense>
           }
           info="This step downloads the audio files generated in the previous step."

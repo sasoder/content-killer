@@ -7,6 +7,8 @@ from api.schema import (
     GenerateCommentaryInput,
     AudioResponse,
     AudioOptions,
+    CommentaryOptions,
+    DescriptionOptions
 )
 from api.audio import generate_audio_clips, OUTPUT_DIR
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,11 +34,14 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
 @app.post("/api/generate_description")
-async def generate_description(input: GenerateDescriptionInput):
-    description = generate_description_helper(input.url, input.options)
-    with open(os.path.join(DATA_DIR, "description.json"), "w") as f:
-        json.dump(description.model_dump(), f)
-    return {"message": "Description generated successfully"}
+async def generate_description(url: str, options: DescriptionOptions):
+    description = generate_description_helper(url, options)
+    try:
+        with open(os.path.join(DATA_DIR, "description.json"), "w") as f:
+            json.dump(description.model_dump(), f)
+        return {"status": 200}
+    except Exception as e:
+        return {"status": 500, "message": str(e)}
 
 @app.get("/api/get_description", response_model=TimestampTextList)
 async def get_description() -> TimestampTextList:
@@ -47,11 +52,14 @@ async def get_description() -> TimestampTextList:
         return TimestampTextList(items=[])
 
 @app.post("/api/generate_commentary")
-async def generate_commentary(input: GenerateCommentaryInput):
-    commentary = generate_commentary_helper(input.items, input.options)
-    with open(os.path.join(DATA_DIR, "commentary.json"), "w") as f:
-        json.dump(commentary.model_dump(), f)
-    return {"message": "Commentary generated successfully"}
+async def generate_commentary(items: TimestampTextList, options: CommentaryOptions):
+    commentary = generate_commentary_helper(items, options)
+    try:
+        with open(os.path.join(DATA_DIR, "commentary.json"), "w") as f:
+            json.dump(commentary.model_dump(), f)
+        return {"status": 200}
+    except Exception as e:
+        return {"status": 500, "message": str(e)}
 
 @app.get("/api/get_commentary", response_model=TimestampTextList)
 async def get_commentary() -> TimestampTextList:
@@ -60,13 +68,19 @@ async def get_commentary() -> TimestampTextList:
             return TimestampTextList.model_validate(json.load(f))
     except FileNotFoundError:
         return TimestampTextList(items=[])
+    except Exception as e:
+        return {"status": 500, "message": str(e)}
 
 @app.post("/api/generate_audio")
-async def generate_audio(input: GenerateCommentaryInput, options: AudioOptions):
-    audio_files = generate_audio_clips(TimestampTextList(items=input.items), options)
-    with open(os.path.join(DATA_DIR, "audio.json"), "w") as f:
-        json.dump(audio_files.model_dump(), f)
-    return {"message": "Audio generated successfully"}
+async def generate_audio(items: TimestampTextList, options: AudioOptions):
+    print(f"Generating audio with items: {items} and options: {options}")
+    try:
+        audio_files = generate_audio_clips(items, options)
+        with open(os.path.join(DATA_DIR, "audio.json"), "w") as f:
+            json.dump(audio_files.model_dump(), f)
+        return {"status": 200}
+    except Exception as e:
+        return {"status": 500, "message": str(e)}
 
 @app.get("/api/get_audio", response_model=AudioResponse)
 async def get_audio() -> AudioResponse:
@@ -75,6 +89,8 @@ async def get_audio() -> AudioResponse:
             return AudioResponse.model_validate(json.load(f))
     except FileNotFoundError:
         return AudioResponse(items=[])
+    except Exception as e:
+        return {"status": 500, "message": str(e)}
 
 @app.get("/api/get_audio_clip/{filename}", response_class=FileResponse)
 async def get_audio_clip(filename: str):
