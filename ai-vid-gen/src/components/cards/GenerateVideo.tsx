@@ -90,7 +90,8 @@ export default function GenerateVideo({
 		<div className='flex h-full flex-col'>
 			<div className='flex-grow'>
 				<p className='text-sm text-gray-500'>
-					You have {commentaryData.items.length} commentary timestamps, and{' '}
+					You have {commentaryData.items.length} commentary{' '}
+					{commentaryData.items.length === 1 ? 'timestamp' : 'timestamps'}, and{' '}
 					{audioData.items.length} audio{' '}
 					{audioData.items.length === 1 ? 'file' : 'files'} ready for video
 					generation. These should match in amount.

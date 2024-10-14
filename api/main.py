@@ -11,7 +11,7 @@ from api.schema import (
     VideoResponse,
 )
 from api.audio import generate_audio_clips, OUTPUT_DIR
-from api.video import generate_video_helper  # Assume you have this helper
+from api.video import generate_video_helper
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 import os
@@ -102,8 +102,9 @@ async def get_file(filename: str):
 
 # Video Endpoints
 @app.post("/api/generate_video")
-async def generate_video(request: VideoRequest = Body(...)):
-    video = generate_video_helper(request.items, request.options)
+async def generate_video(request: VideoRequest = Body(...)) -> VideoResponse:
+    print(f"Generating video with options: {request.options}")
+    video = generate_video_helper(request.options)
     try:
         with open(os.path.join(DATA_DIR, "video.json"), "w") as f:
             json.dump(video.model_dump(), f)

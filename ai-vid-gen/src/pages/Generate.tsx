@@ -128,7 +128,7 @@ export default function GeneratePage() {
 		},
 		subtitlesSize: {
 			type: 'slider',
-			label: 'Subtitles Size',
+			label: 'Subtitle Size',
 			key: 'subtitlesSize',
 			default: 14,
 			min: 1,

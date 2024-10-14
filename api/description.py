@@ -90,6 +90,10 @@ def generate_description_helper(url: str, options: DescriptionOptions) -> Timest
         json.dump(TimestampTextList.model_dump(description_list, mode="json"), f)
     print(f"Description saved to {description_path}")
 
+    # Save url to ./data/url.txt
+    with open(os.path.join(data_dir, "url.txt"), "w") as f:
+        f.write(url)
+
     return description_list
 
 def sample_response():

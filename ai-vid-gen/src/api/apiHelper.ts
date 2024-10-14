@@ -72,7 +72,6 @@ export const generateAudio = async (
 	return data as FileResponse;
 };
 
-// New Video Generation Function
 export const generateVideo = async (options: VideoOptions): Promise<string> => {
 	const response = await fetch(`${FASTAPI_URL}/api/generate_video`, {
 		method: 'POST',
