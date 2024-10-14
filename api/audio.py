@@ -15,6 +15,16 @@ OUTPUT_DIR = os.getenv("OUTPUT_DIR")
 # Ensure the output directory exists
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+def clear_audio_files():
+    for filename in os.listdir(OUTPUT_DIR):
+        if filename.endswith(".mp3"):
+            file_path = os.path.join(OUTPUT_DIR, filename)
+            try:
+                os.remove(file_path)
+                print(f"Deleted: {file_path}")
+            except Exception as e:
+                print(f"Error deleting {file_path}: {e}")
+
 def generate_audio(text, output_path, options: AudioOptions):
     tts_url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}/stream"
     
@@ -49,6 +59,7 @@ def timestamp_to_filename(timestamp):
     return timestamp.replace(":", "") + ".mp3"
 
 def generate_audio_clips(commentary_data: TimestampTextList, options: AudioOptions) -> AudioResponse:
+    clear_audio_files()  # Clear existing audio files before starting
     generated_files: List[str] = []
     total_comments = len(commentary_data.items)
     for index, entry in enumerate(commentary_data.items, start=1):

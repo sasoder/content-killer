@@ -1,26 +1,26 @@
 export type TimestampText = {
-  timestamp: string;
-  text: string;
+	timestamp: string;
+	text: string;
 };
 
 export type TimestampTextList = {
-  items: TimestampText[];
+	items: TimestampText[];
 };
 
 export type DescriptionOptions = {
-  sample?: boolean;
+	sample?: boolean;
 };
 
 export type CommentaryOptions = {
-  intro?: boolean;
-  outro?: boolean;
-  temperature?: number;
+	intro?: boolean;
+	outro?: boolean;
+	temperature?: number;
 };
 
 export type AudioOptions = {
-  stability: number;
+	stability: number;
 };
 
 export type FileResponse = {
-  items: string[];
+	items: string[];
 };

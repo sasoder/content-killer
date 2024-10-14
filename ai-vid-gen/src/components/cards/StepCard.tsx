@@ -1,33 +1,40 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Icons } from "@/components/icons";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Icons } from '@/components/icons';
 type StepCardProps = {
-  title: string;
-  content: React.ReactNode;
-  info: string;
+	title: string;
+	content: React.ReactNode;
+	info: string;
 };
 
 function StepCard({ title, content, info }: StepCardProps) {
-  return (
-    <Card className="w-1/4 h-[500px] flex flex-col shadow-xl shadow-black/20 hover:bg-accent/50 transition-colors duration-300">
-      <CardHeader>
-        <CardTitle className="flex flex-row items-center justify-between">
-          {title}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Icons.info className="w-4 h-4 opacity-70 hover:opacity-100 cursor-pointer transition-opacity duration-300" />
-              </TooltipTrigger>
-              <TooltipContent side="top" sideOffset={10}>
-                <p>{info}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex-grow flex flex-col gap-2">{content}</CardContent>
-    </Card>
-  );
+	return (
+		<Card className="hover:bg-accent/50 flex h-[500px] w-1/4 flex-col shadow-xl shadow-black/20 transition-colors duration-300">
+			<CardHeader>
+				<CardTitle className="flex flex-row items-center justify-between">
+					{title}
+					<TooltipProvider>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Icons.info className="h-4 w-4 cursor-pointer opacity-70 transition-opacity duration-300 hover:opacity-100" />
+							</TooltipTrigger>
+							<TooltipContent side="top" sideOffset={10}>
+								<p>{info}</p>
+							</TooltipContent>
+						</Tooltip>
+					</TooltipProvider>
+				</CardTitle>
+			</CardHeader>
+			<CardContent className="flex flex-grow flex-col gap-2">
+				{content}
+			</CardContent>
+		</Card>
+	);
 }
 
 export default StepCard;
