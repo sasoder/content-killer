@@ -7,8 +7,11 @@ from api.schema import (
     DescriptionRequest,
     CommentaryRequest,
     AudioRequest,
+    VideoRequest,
+    VideoResponse,
 )
 from api.audio import generate_audio_clips, OUTPUT_DIR
+from api.video import generate_video_helper  # Assume you have this helper
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 import os
@@ -30,7 +33,9 @@ app.add_middleware(
 )
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
 os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
 @app.post("/api/generate_description")
@@ -88,9 +93,28 @@ async def get_audio() -> AudioResponse:
     except FileNotFoundError:
         return AudioResponse(items=[])
 
-@app.get("/api/get_audio_clip/{filename}", response_class=FileResponse)
-async def get_audio_clip(filename: str):
+@app.get("/api/get_file/{filename}", response_class=FileResponse)
+async def get_file(filename: str):
     file_path = os.path.join(OUTPUT_DIR, filename)
     if os.path.exists(file_path):
-        return FileResponse(file_path, media_type="audio/mpeg")
-    raise HTTPException(status_code=404, detail="Audio file not found")
+        return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="File not found")
+
+# Video Endpoints
+@app.post("/api/generate_video")
+async def generate_video(request: VideoRequest = Body(...)):
+    video = generate_video_helper(request.items, request.options)
+    try:
+        with open(os.path.join(DATA_DIR, "video.json"), "w") as f:
+            json.dump(video.model_dump(), f)
+        return video
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/get_video", response_model=VideoResponse)
+async def get_video() -> VideoResponse:
+    try:
+        with open(os.path.join(DATA_DIR, "video.json"), "r") as f:
+            return VideoResponse.model_validate(json.load(f))
+    except FileNotFoundError:
+        return VideoResponse(items=[])

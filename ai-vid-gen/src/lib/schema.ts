@@ -24,3 +24,12 @@ export type AudioOptions = {
 export type FileResponse = {
 	items: string[];
 };
+
+// New Video Options
+export type VideoOptions = {
+	bw: boolean;
+	subtitles: {
+		enabled: boolean;
+		size: number;
+	};
+};

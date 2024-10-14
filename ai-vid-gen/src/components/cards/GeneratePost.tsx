@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import StepOptions from '@/components/cards/StepOptions';
 
 interface GeneratePostProps {
-	dataType: 'commentary' | 'audio';
+	dataType: 'commentary' | 'audio' | 'video';
 	data: TimestampTextList | FileResponse | null;
 	mutate: (newData: TimestampTextList | FileResponse) => void;
 	options?: GenerateOptions;
@@ -80,14 +80,12 @@ function GeneratePost({
 	};
 
 	return (
-		<div className="flex h-full flex-col">
-			<div className="flex-grow">
+		<div className='flex h-full flex-col'>
+			<div className='flex-grow'>
 				<QuickInfo data={data as TimestampTextList} />
 			</div>
-			<div className="text-sm font-medium text-muted-foreground">
-				Options
-			</div>
-			<Separator className="mb-3 mt-3" />
+			<div className='text-sm font-medium text-muted-foreground'>Options</div>
+			<Separator className='mb-3 mt-3' />
 			{options && (
 				<StepOptions
 					options={options}
@@ -95,15 +93,15 @@ function GeneratePost({
 					onOptionChange={handleOptionChange}
 				/>
 			)}
-			<div className="flex justify-center pt-4">
+			<div className='flex justify-center pt-4'>
 				<Button
 					onClick={handleGenerate}
 					disabled={isLoading || !data || data.items.length === 0}
-					className="font-bold"
+					className='font-bold'
 				>
 					{isLoading ? (
 						<>
-							<Icons.loader className="mr-2 h-[1.2rem] w-[1.2rem] animate-spin" />
+							<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />
 							Generating...
 						</>
 					) : (

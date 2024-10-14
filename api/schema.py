@@ -38,3 +38,19 @@ class AudioResponse(BaseModel):
 class AudioRequest(BaseModel):
     items: TimestampTextList
     options: AudioOptions
+
+# Video
+class SubtitlesOptions(BaseModel):
+    enabled: bool
+    size: int
+
+class VideoOptions(BaseModel):
+    bw: bool
+    subtitles: SubtitlesOptions
+
+class VideoRequest(BaseModel):
+    items: TimestampTextList
+    options: VideoOptions
+
+class VideoResponse(BaseModel):
+    items: List[str]

@@ -1,13 +1,14 @@
 import { Suspense, useState, useEffect, useCallback } from 'react';
-import { fetchExistingData } from '@/api/apiHelper';
+import { fetchExistingData, generateVideo } from '@/api/apiHelper';
 import FileDownloader from '@/components/cards/FileDownloader';
 import GenerateDescription from '@/components/cards/GenerateDescription';
 import GeneratePost from '@/components/cards/GeneratePost';
+import GenerateVideo from '@/components/cards/GenerateVideo'; // New Import
 import StepTransition from '@/components/cards/StepTransition';
 import StepCard from '@/components/cards/StepCard';
-import { TimestampTextList, FileResponse } from '@/lib/schema';
+import { TimestampTextList, FileResponse, VideoOptions } from '@/lib/schema';
 import { Icons } from '@/components/icons';
-import { CardSkeleton } from '@/components/skeletons/CardSkeletion';
+import { CardSkeleton } from '@/components/skeletons/CardSkeleton';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -25,20 +26,23 @@ export default function GeneratePage() {
 	const [description, setDescription] = useState<DataType>(null);
 	const [commentary, setCommentary] = useState<DataType>(null);
 	const [audioFiles, setAudioFiles] = useState<DataType>(null);
+	const [videoOptions, setVideoOptions] = useState<DataType>(null); // New State
 	const [isLoading, setIsLoading] = useState(true);
 
 	const fetchAllData = useCallback(async () => {
 		setIsLoading(true);
 		try {
-			const [descriptionData, commentaryData, audioData] =
+			const [descriptionData, commentaryData, audioData, videoData] =
 				await Promise.all([
 					fetchExistingData('description'),
 					fetchExistingData('commentary'),
 					fetchExistingData('audio'),
+					fetchExistingData('video'), // Fetch video data
 				]);
 			setDescription(descriptionData);
 			setCommentary(commentaryData);
 			setAudioFiles(audioData);
+			setVideoOptions(videoData);
 		} catch (error) {
 			console.error('Error fetching data:', error);
 		} finally {
@@ -69,6 +73,9 @@ export default function GeneratePage() {
 	const updateAudio = createUpdateFunction<FileResponse>(
 		setAudioFiles as React.Dispatch<React.SetStateAction<FileResponse>>,
 	);
+	const updateVideo = createUpdateFunction<VideoOptions>(
+		setVideoOptions as React.Dispatch<React.SetStateAction<VideoOptions>>,
+	); // New Update Function
 
 	const commentaryOptions: GenerateOptions = {
 		intro: {
@@ -105,6 +112,7 @@ export default function GeneratePage() {
 			step: 0.01,
 		},
 	};
+
 	function isTimestampTextList(data: DataType): data is TimestampTextList {
 		return (
 			data !== null &&
@@ -142,6 +150,14 @@ export default function GeneratePage() {
 			stability: (options.stability as number) ?? 0.7,
 		};
 		return generateAudio(data, audioOptions);
+	};
+
+	// New Video Generate Function
+	const videoGenerateFunction = async (newOptions: VideoOptions) => {
+		// Implement the video generation logic as needed
+		// For example, call the API and update the state
+		// This is handled in the GenerateVideo component
+		await generateVideo(newOptions);
 	};
 
 	return (
@@ -232,6 +248,31 @@ export default function GeneratePage() {
 					onUpdate={null}
 				/>
 
+				{/* New GenerateVideo Step */}
+				<StepCard
+					title="Video"
+					content={
+						<Suspense fallback={<CardSkeleton />}>
+							<GeneratePost
+								dataType="video"
+								data={description as TimestampTextList}
+								mutate={(
+									newData: TimestampTextList | FileResponse,
+								) => updateVideo(newData as VideoOptions)}
+								options={videoOptions}
+								generateFunction={videoGenerateFunction}
+							/>
+						</Suspense>
+					}
+					info="This step generates the final video with the specified options."
+				/>
+
+				<StepTransition
+					data={videoOptions as VideoOptions}
+					jsonEditorTitle="Edit Video Options"
+					onUpdate={updateVideo}
+				/>
+
 				<StepCard
 					title="Files"
 					content={
@@ -243,17 +284,18 @@ export default function GeneratePage() {
 					}
 					info="This step downloads the audio files generated in the previous step."
 				/>
-			</div>
 
-			<div>
-				<p className="text-sm text-gray-500">
-					This app uses Gemini 1.5 Pro to generate a description of
-					the provided video. The description is then used to create a
-					commentary at all pivotal moments in the video with GPT 4o
-					mini. This commentary is sent to Elevenlabs and made into
-					audio files
-				</p>
-			</div>
-		</main>
+				<StepTransition data={null} jsonEditorTitle={null} onUpdate={null} />
+
+				<div>
+					<p className="text-sm text-gray-500">
+						This app uses Gemini 1.5 Pro to generate a description of
+						the provided video. The description is then used to create a
+						commentary at all pivotal moments in the video with GPT 4o
+						mini. This commentary is sent to Elevenlabs and made into
+						audio files
+					</p>
+				</div>
+			</main>
 	);
 }
