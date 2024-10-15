@@ -1,10 +1,19 @@
 import os
 import yt_dlp
-from api.schema import VideoOptions, TimestampTextList
+from api.schema import VideoOptions, TimestampTextList, VideoMetadata
 import whisper
 
 OUTPUT_VIDEO_DIR = os.path.join(os.path.dirname(__file__), "data", "video")
 os.makedirs(OUTPUT_VIDEO_DIR, exist_ok=True)
+ydl_opts = {
+    'format': 'bestaudio/best',
+    'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+        'preferredquality': '192',
+    }],
+    'outtmpl': '%(title)s.%(ext)s'
+}
 
 def generate_video_helper(options: VideoOptions) -> str:
     # Get url from ./data/url.txt
@@ -12,7 +21,8 @@ def generate_video_helper(options: VideoOptions) -> str:
         url = f.read()
       
     # Download the video from the url and save it to ./temp/video.mp4 using yt-dlp
-    yt_dlp.YoutubeDL().download([url], os.path.join(os.path.dirname(__file__), "temp", "video.mp4"))
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
 
     # Load commentary from ./data/commentary.json
     with open(os.path.join(os.path.dirname(__file__), "data", "commentary.json"), "r") as f:
@@ -37,3 +47,9 @@ def generate_video(items: TimestampTextList, options: VideoOptions, file_path: s
 
 def transcribe_audio(file_path: str) -> str:
     pass
+
+def generate_video_metadata_helper(url: str) -> VideoMetadata:
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        print(info)
+    return VideoMetadata(title=info['title'], duration=str(info['duration_string']))

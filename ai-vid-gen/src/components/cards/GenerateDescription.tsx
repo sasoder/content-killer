@@ -2,9 +2,10 @@ import { useState, FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { generateDescription } from '@/api/apiHelper';
+import { generateDescription, generateVideoMetadata } from '@/api/apiHelper';
 import { Icons } from '@/components/icons';
-import { TimestampTextList } from '@/lib/schema';
+import { TimestampTextList, VideoMetadata } from '@/lib/schema';
+import { Separator } from '@/components/ui/separator';
 
 interface GenerateDescriptionProps {
 	mutate: (newData: TimestampTextList) => void;
@@ -15,6 +16,7 @@ export default function GenerateDescription({
 }: GenerateDescriptionProps) {
 	const [isLoading, setIsLoading] = useState(false);
 	const [url, setUrl] = useState('');
+	const [metadata, setMetadata] = useState<VideoMetadata | null>(null);
 	const { toast } = useToast();
 
 	const validateUrl = (input: string): boolean => {
@@ -40,7 +42,9 @@ export default function GenerateDescription({
 
 		setIsLoading(true);
 		try {
-			const newData = await generateDescription(url, { sample: false });
+			const newData = await generateDescription(url, { sample: true });
+			const metadata = await generateVideoMetadata(url);
+			setMetadata(metadata);
 			mutate(newData);
 			toast({
 				title: 'Success',
@@ -79,6 +83,13 @@ export default function GenerateDescription({
 					Enter the URL of the YouTube video you want to generate a description
 					for.
 				</p>
+				{metadata && (
+					<div>
+						<Separator className='my-2' />
+						<p className='text-sm text-gray-500'>{metadata.title}</p>
+						<p className='text-sm text-gray-500'>{metadata.duration}</p>
+					</div>
+				)}
 			</div>
 			<div className='mt-4 flex justify-center'>
 				<Button type='submit' disabled={isLoading} className='w-full md:w-auto'>

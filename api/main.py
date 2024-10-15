@@ -9,9 +9,11 @@ from api.schema import (
     AudioRequest,
     VideoRequest,
     VideoResponse,
+    VideoMetadata,
+    VideoMetadataRequest,
 )
 from api.audio import generate_audio_clips
-from api.video import generate_video_helper
+from api.video import generate_video_helper, generate_video_metadata_helper
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 import os
@@ -48,6 +50,14 @@ async def generate_description(request: DescriptionRequest = Body(...)):
         with open(os.path.join(DATA_DIR, "description.json"), "w") as f:
             json.dump(description.model_dump(), f)
         return description
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/generate_video_metadata")
+async def generate_video_metadata(request: VideoMetadataRequest = Body(...)) -> VideoMetadata:
+    metadata = generate_video_metadata_helper(request.url)
+    try:
+        return metadata
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

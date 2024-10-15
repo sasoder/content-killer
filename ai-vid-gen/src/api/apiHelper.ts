@@ -5,6 +5,7 @@ import {
 	AudioOptions,
 	FileResponse,
 	VideoOptions,
+	VideoMetadata,
 } from '@/lib/schema';
 import JSZip from 'jszip';
 import saveAs from 'file-saver';
@@ -30,6 +31,25 @@ export const generateDescription = async (
 
 	const data = await response.json();
 	return data as TimestampTextList;
+};
+
+export const generateVideoMetadata = async (
+	url: string,
+): Promise<VideoMetadata> => {
+	const response = await fetch(`${FASTAPI_URL}/api/generate_video_metadata`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({ url }),
+	});
+
+	if (!response.ok) {
+		throw new Error('Failed to generate video metadata');
+	}
+
+	const data = await response.json();
+	return data as VideoMetadata;
 };
 
 export const generateCommentary = async (

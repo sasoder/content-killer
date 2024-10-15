@@ -50,3 +50,10 @@ class VideoRequest(BaseModel):
 
 class VideoResponse(BaseModel):
     filename: str
+
+class VideoMetadata(BaseModel):
+	title: str
+	duration: str
+
+class VideoMetadataRequest(BaseModel):
+    url: str

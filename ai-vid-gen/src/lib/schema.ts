@@ -31,3 +31,8 @@ export type VideoOptions = {
 	subtitlesEnabled: boolean;
 	subtitlesSize: number;
 };
+
+export type VideoMetadata = {
+	title: string;
+	duration: string;
+};
