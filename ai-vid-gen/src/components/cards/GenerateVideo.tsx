@@ -13,7 +13,7 @@ interface GenerateVideoProps {
 	commentaryData: TimestampTextList;
 	generateFunction: (options: VideoOptions) => Promise<string>;
 	options?: GenerateOptions;
-	onUpdate: (data: string) => void;
+	mutate: (data: string) => void;
 }
 
 export default function GenerateVideo({
@@ -21,7 +21,7 @@ export default function GenerateVideo({
 	commentaryData,
 	generateFunction,
 	options,
-	onUpdate,
+	mutate,
 }: GenerateVideoProps) {
 	const [isLoading, setIsLoading] = useState(false);
 	const [optionValues, setOptionValues] = useState<
@@ -69,7 +69,7 @@ export default function GenerateVideo({
 			const generatedVideoName = await generateFunction(
 				optionValues as VideoOptions,
 			);
-			onUpdate(generatedVideoName);
+			mutate(generatedVideoName);
 			toast({
 				title: 'Success',
 				description: `Video "${generatedVideoName}" generated successfully.`,
@@ -89,13 +89,15 @@ export default function GenerateVideo({
 	return (
 		<div className='flex h-full flex-col'>
 			<div className='flex-grow'>
-				<p className='text-sm text-gray-500'>
-					You have {commentaryData.items.length} commentary{' '}
-					{commentaryData.items.length === 1 ? 'timestamp' : 'timestamps'}, and{' '}
-					{audioData.items.length} audio{' '}
-					{audioData.items.length === 1 ? 'file' : 'files'} ready for video
-					generation. These should match in amount.
-				</p>
+				{commentaryData && audioData && (
+					<p className='text-sm text-gray-500'>
+						You have {commentaryData.items.length} commentary{' '}
+						{commentaryData.items.length === 1 ? 'timestamp' : 'timestamps'},
+						and {audioData.items.length} audio{' '}
+						{audioData.items.length === 1 ? 'file' : 'files'} ready for video
+						generation. These should match in amount.
+					</p>
+				)}
 			</div>
 			<div className='text-sm font-medium text-muted-foreground'>Options</div>
 			<Separator className='mb-3 mt-3' />

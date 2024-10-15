@@ -10,15 +10,15 @@ load_dotenv()
 CHUNK_SIZE = 1024
 XI_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 VOICE_ID = os.getenv("VOICE_ID")
-OUTPUT_DIR = os.getenv("OUTPUT_DIR")
+AUDIO_DIR = os.path.join(os.path.dirname(__file__), "data", "audio")
 
 # Ensure the output directory exists
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(AUDIO_DIR, exist_ok=True)
 
 def clear_audio_files():
-    for filename in os.listdir(OUTPUT_DIR):
+    for filename in os.listdir(AUDIO_DIR):
         if filename.endswith(".mp3"):
-            file_path = os.path.join(OUTPUT_DIR, filename)
+            file_path = os.path.join(AUDIO_DIR, filename)
             try:
                 os.remove(file_path)
                 print(f"Deleted: {file_path}")
@@ -68,7 +68,7 @@ def generate_audio_clips(commentary_data: TimestampTextList, options: AudioOptio
         timestamp = entry.timestamp
         commentary = entry.text
         output_filename = timestamp_to_filename(timestamp)
-        output_path = os.path.join(OUTPUT_DIR, output_filename)
+        output_path = os.path.join(AUDIO_DIR, output_filename)
         generate_audio(commentary, output_path, options)
         generated_files.append(output_filename)
     return AudioResponse(items=generated_files)

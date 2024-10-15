@@ -42,11 +42,11 @@ class AudioRequest(BaseModel):
 class VideoOptions(BaseModel):
     bw: bool
     playSound: bool
-    subtitles_enabled: bool
-    subtitles_size: int
+    subtitlesEnabled: bool
+    subtitlesSize: int
 
 class VideoRequest(BaseModel):
     options: VideoOptions
 
 class VideoResponse(BaseModel):
-    str
+    filename: str

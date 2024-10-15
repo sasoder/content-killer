@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { FileResponse } from '@/lib/schema';
 import { downloadAll, downloadFile } from '@/api/apiHelper';
 
@@ -13,7 +12,7 @@ export default function FileDownloader({
 	videoFile,
 }: FileDownloaderProps) {
 	const noFiles = !files || files.items.length === 0;
-	const noVideoFile = !videoFile;
+	const noVideoFile = !videoFile || videoFile === '';
 
 	const handleDownload = (fileResponse: FileResponse, videoFile: string) => {
 		downloadAll(fileResponse, 'audio');
@@ -26,13 +25,11 @@ export default function FileDownloader({
 				{noFiles ? (
 					<p className='text-sm text-gray-500'>No files generated yet.</p>
 				) : (
-					<>
-						<p className='text-sm text-gray-500'>
-							{files.items.length} audio{' '}
-							{files.items.length === 1 ? 'file' : 'files'}{' '}
-							{files.items.length === 1 ? 'is' : 'are'} ready for download.
-						</p>
-					</>
+					<p className='text-sm text-gray-500'>
+						{files.items.length} audio{' '}
+						{files.items.length === 1 ? 'file' : 'files'}{' '}
+						{files.items.length === 1 ? 'is' : 'are'} ready for download.
+					</p>
 				)}
 				{noVideoFile ? (
 					<p className='text-sm text-gray-500'>No video file generated yet.</p>
@@ -49,9 +46,7 @@ export default function FileDownloader({
 				<Button
 					className='flex justify-center'
 					disabled={noFiles}
-					onClick={() => {
-						handleDownload(files, videoFile);
-					}}
+					onClick={() => handleDownload(files, videoFile)}
 				>
 					Download All
 				</Button>

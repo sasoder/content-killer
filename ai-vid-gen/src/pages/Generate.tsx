@@ -15,7 +15,11 @@ import { Link } from 'react-router-dom';
 import { GenerateOptions } from '@/lib/types';
 import { CommentaryOptions, AudioOptions } from '@/lib/schema';
 import { generateCommentary, generateAudio } from '@/api/apiHelper';
-
+import {
+	commentaryOptions,
+	audioOptions,
+	videoOptions,
+} from '@/lib/defaultOptions';
 // Define a union type for the different data types
 type DataType = TimestampTextList | FileResponse | string | null;
 
@@ -32,15 +36,18 @@ export default function GeneratePage() {
 	const fetchAllData = useCallback(async () => {
 		setIsLoading(true);
 		try {
-			const [descriptionData, commentaryData, audioData] = await Promise.all([
-				fetchExistingData('description'),
-				fetchExistingData('commentary'),
-				fetchExistingData('audio'),
-				fetchExistingData('video'),
-			]);
+			const [descriptionData, commentaryData, audioData, videoFile] =
+				await Promise.all([
+					fetchExistingData('description'),
+					fetchExistingData('commentary'),
+					fetchExistingData('audio'),
+					fetchExistingData('video'),
+				]);
 			setDescription(descriptionData);
 			setCommentary(commentaryData);
 			setAudioFiles(audioData);
+			console.log(videoFile);
+			setVideoFile(videoFile);
 		} catch (error) {
 			console.error('Error fetching data:', error);
 		} finally {
@@ -70,72 +77,6 @@ export default function GeneratePage() {
 	const updateVideo = createUpdateFunction<string>(
 		setVideoFile as React.Dispatch<React.SetStateAction<string>>,
 	);
-
-	const commentaryOptions: GenerateOptions = {
-		intro: {
-			type: 'checkbox',
-			label: 'Include Intro',
-			key: 'intro',
-			default: true,
-		},
-		outro: {
-			type: 'checkbox',
-			label: 'Include Outro',
-			key: 'outro',
-			default: true,
-		},
-		temperature: {
-			type: 'slider',
-			label: 'Temperature',
-			key: 'temperature',
-			default: 0.7,
-			min: 0,
-			max: 2,
-			step: 0.01,
-		},
-	};
-
-	const audioOptions: GenerateOptions = {
-		stability: {
-			type: 'slider',
-			label: 'Emotion',
-			key: 'stability',
-			default: 0.7,
-			min: 0,
-			max: 1,
-			step: 0.01,
-		},
-	};
-
-	const videoOptions: GenerateOptions = {
-		bw: {
-			type: 'checkbox',
-			label: 'B/W pauses',
-			key: 'bw',
-			default: true,
-		},
-		playSound: {
-			type: 'checkbox',
-			label: 'Play Sound',
-			key: 'playSound',
-			default: true,
-		},
-		subtitlesEnabled: {
-			type: 'checkbox',
-			label: 'Subtitles',
-			key: 'subtitlesEnabled',
-			default: true,
-		},
-		subtitlesSize: {
-			type: 'slider',
-			label: 'Subtitle Size',
-			key: 'subtitlesSize',
-			default: 14,
-			min: 1,
-			max: 30,
-			step: 1,
-		},
-	};
 
 	function isTimestampTextList(data: DataType): data is TimestampTextList {
 		return (
@@ -275,7 +216,7 @@ export default function GeneratePage() {
 								commentaryData={commentary as TimestampTextList}
 								generateFunction={videoGenerateFunction}
 								options={videoOptions}
-								onUpdate={updateVideo}
+								mutate={updateVideo}
 							/>
 						</Suspense>
 					}

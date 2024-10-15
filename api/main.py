@@ -10,7 +10,7 @@ from api.schema import (
     VideoRequest,
     VideoResponse,
 )
-from api.audio import generate_audio_clips, OUTPUT_DIR
+from api.audio import generate_audio_clips
 from api.video import generate_video_helper
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -33,9 +33,12 @@ app.add_middleware(
 )
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
-OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
+VIDEO_DIR = os.path.join(DATA_DIR, "video")
+AUDIO_DIR = os.path.join(DATA_DIR, "audio")
+
 os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(VIDEO_DIR, exist_ok=True)
+os.makedirs(AUDIO_DIR, exist_ok=True)
 
 
 @app.post("/api/generate_description")
@@ -95,27 +98,31 @@ async def get_audio() -> AudioResponse:
 
 @app.get("/api/get_{type}/{filename}", response_class=FileResponse)
 async def get_file(type: str, filename: str):
-    file_path = os.path.join(OUTPUT_DIR, filename)
+    print(f"Getting file: {filename} of type: {type}")
+    if type == "video":
+        file_path = os.path.join(VIDEO_DIR, filename)
+    elif type == "audio":
+        file_path = os.path.join(AUDIO_DIR, filename)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid file type")
     if os.path.exists(file_path):
         return FileResponse(file_path)
     raise HTTPException(status_code=404, detail="File not found")
 
-# Video Endpoints
 @app.post("/api/generate_video")
-async def generate_video(request: VideoRequest = Body(...)) -> VideoResponse:
+async def generate_video(request: VideoRequest = Body(...)) -> str:
     print(f"Generating video with options: {request.options}")
     video = generate_video_helper(request.options)
     try:
-        with open(os.path.join(DATA_DIR, "video.json"), "w") as f:
+        with open(os.path.join(DATA_DIR, VIDEO_DIR, "output.mp4"), "w") as f:
             json.dump(video.model_dump(), f)
-        return video
+        return "output.mp4"
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/get_video", response_model=VideoResponse)
-async def get_video() -> VideoResponse:
-    try:
-        with open(os.path.join(DATA_DIR, "video.json"), "r") as f:
-            return VideoResponse.model_validate(json.load(f))
-    except FileNotFoundError:
-        return VideoResponse(items=[])
+@app.get("/api/get_video")
+async def get_video() -> str:
+    video_path = os.path.join(DATA_DIR, VIDEO_DIR, "output.mp4")
+    if os.path.exists(video_path):
+        return 'output.mp4'
+    return ""

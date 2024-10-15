@@ -3,7 +3,7 @@ import yt_dlp
 from api.schema import VideoOptions, TimestampTextList
 import whisper
 
-OUTPUT_VIDEO_DIR = os.path.join(os.path.dirname(__file__), "output")
+OUTPUT_VIDEO_DIR = os.path.join(os.path.dirname(__file__), "data", "video")
 os.makedirs(OUTPUT_VIDEO_DIR, exist_ok=True)
 
 def generate_video_helper(options: VideoOptions) -> str:
