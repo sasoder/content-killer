@@ -42,7 +42,7 @@ const GenerateCommentary = () => {
 				<div className='flex flex-grow flex-col gap-2'>
 					<StepOptions options={options} onOptionChange={setOptions} optionDefinitions={commentaryOptionDefinitions} />
 					<div className='flex justify-center'>
-						<Button onClick={handleGenerate} disabled={isLoading}>
+						<Button onClick={handleGenerate} disabled={description?.items?.length === 0}>
 							{isLoading ? (
 								<>
 									<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />

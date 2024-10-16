@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 
 const GeneratePageContent = () => {
-	const { description, commentary, updateDescription, updateCommentary } = useVideoGen();
+	const { description, commentary, audioFiles, updateDescription, updateCommentary } = useVideoGen();
 
 	return (
 		<main className='container mx-auto space-y-8 p-4'>
@@ -37,28 +37,41 @@ const GeneratePageContent = () => {
 					info='This step generates a comprehensive description of the video, with timestamps for all the pivotal moments in the video.'
 				/>
 
-				<StepTransition data={description} jsonEditorTitle='Edit Description Data' onUpdate={updateDescription} />
+				{description?.items?.length > 0 && (
+					<>
+						<StepTransition data={description} jsonEditorTitle='Edit Description Data' onUpdate={updateDescription} />
 
-				<StepCard
-					title='Commentary'
-					content={<GenerateCommentary />}
-					info='This step generates a commentary for the video at all the pivotal moments in the video.'
-				/>
+						<StepCard
+							title='Commentary'
+							content={<GenerateCommentary />}
+							info='This step generates a commentary for the video at all the pivotal moments in the video.'
+						/>
+					</>
+				)}
 
-				<StepTransition data={commentary} jsonEditorTitle='Edit Commentary Data' onUpdate={updateCommentary} />
+				{commentary?.items?.length > 0 && (
+					<>
+						<StepTransition data={commentary} jsonEditorTitle='Edit Commentary Data' onUpdate={updateCommentary} />
 
-				<StepCard
-					title='Video'
-					content={<GenerateVideo />}
-					info='This step generates the final video with the specified options and commentary.'
-				/>
-				<StepTransition data={null} jsonEditorTitle={null} onUpdate={null} />
+						<StepCard
+							title='Video'
+							content={<GenerateVideo />}
+							info='This step generates the final video with the specified options and commentary.'
+						/>
+					</>
+				)}
 
-				<StepCard
-					title='Download'
-					content={<FileDownloader />}
-					info='This step downloads the generated video and audio files.'
-				/>
+				{audioFiles?.length > 0 && commentary?.items?.length > 0 && (
+					<>
+						<StepTransition data={null} jsonEditorTitle={null} onUpdate={null} />
+
+						<StepCard
+							title='Download'
+							content={<FileDownloader />}
+							info='This step downloads the generated video and audio files.'
+						/>
+					</>
+				)}
 			</div>
 
 			<div>
