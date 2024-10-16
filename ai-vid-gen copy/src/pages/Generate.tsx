@@ -8,7 +8,7 @@ import StepCard from '@/components/cards/StepCard';
 import { Icons } from '@/components/icons';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 
 const GeneratePageContent = () => {
 	const { description, commentary, updateDescription, updateCommentary } = useVideoGen();
@@ -73,8 +73,12 @@ const GeneratePageContent = () => {
 };
 
 export default function GeneratePage() {
+	const { id } = useParams();
+	const [searchParams] = useSearchParams();
+	const isNew = searchParams.get('new') === 'true';
+
 	return (
-		<VideoGenProvider>
+		<VideoGenProvider id={id as string} isNew={isNew}>
 			<GeneratePageContent />
 		</VideoGenProvider>
 	);

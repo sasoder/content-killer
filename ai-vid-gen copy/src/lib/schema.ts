@@ -20,6 +20,25 @@ export type AudioOptionValues = OptionValues<AudioOptions>;
 export type VideoOptionValues = OptionValues<VideoOptions>;
 
 export type VideoMetadata = {
+	url: string;
 	title: string;
 	duration: string;
+};
+
+export type VideoGenState = {
+	description: TimestampTextList;
+	commentary: TimestampTextList;
+	audioFiles: string[];
+	videoFile: string;
+	metadata: VideoMetadata;
+};
+
+export const VideoGenStateType = {
+	default: (): VideoGenState => ({
+		description: { items: [] },
+		commentary: { items: [] },
+		audioFiles: [],
+		videoFile: '',
+		metadata: { url: '', title: '', duration: '' },
+	}),
 };

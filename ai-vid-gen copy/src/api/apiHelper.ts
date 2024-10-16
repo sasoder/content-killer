@@ -1,4 +1,12 @@
-import { TimestampTextList, VideoOptions, VideoMetadata, DescriptionOptions } from '@/lib/schema';
+import {
+	TimestampTextList,
+	VideoOptions,
+	VideoMetadata,
+	DescriptionOptions,
+	CommentaryOptions,
+	VideoGenState,
+	VideoGenStateType,
+} from '@/lib/schema';
 
 export const generateDescription = async (url: string, options: DescriptionOptions): Promise<TimestampTextList> => {
 	if (!url) {
@@ -17,14 +25,17 @@ export const generateDescription = async (url: string, options: DescriptionOptio
 	return data.description;
 };
 
-export const generateCommentary = async (description: TimestampTextList | null): Promise<TimestampTextList> => {
+export const generateCommentary = async (
+	description: TimestampTextList | null,
+	options: CommentaryOptions,
+): Promise<TimestampTextList> => {
 	if (!description) {
 		throw new Error('No description provided');
 	}
 	const response = await fetch(`/api/generateCommentary`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ description }),
+		body: JSON.stringify({ description, options }),
 	});
 	if (!response.ok) {
 		throw new Error('Failed to generate commentary');
@@ -78,6 +89,32 @@ export const fetchFile = async (id: string): Promise<Blob> => {
 		throw new Error('Failed to fetch file');
 	}
 	return response.blob();
+};
+
+export const fetchVideoGenState = async (id: string | null, isNew: boolean): Promise<VideoGenState> => {
+	if (isNew) {
+		return VideoGenStateType.default();
+	}
+	const response = await fetch(`/api/fetchVideoGenState/${id}`, {
+		method: 'GET',
+		headers: { 'Content-Type': 'application/json' },
+	});
+	if (!response.ok) {
+		throw new Error('Failed to fetch video gen state');
+	}
+	const data = await response.json();
+	return data.videoGenState;
+};
+
+export const fetchVideoIds = async (): Promise<string[]> => {
+	const response = await fetch(`/api/fetchVideoIds`, {
+		method: 'GET',
+		headers: { 'Content-Type': 'application/json' },
+	});
+	if (!response.ok) {
+		throw new Error('Failed to fetch video ids');
+	}
+	return response.json();
 };
 
 export const fetchFiles = async (ids: string[] | null): Promise<Blob[]> => {

@@ -1,32 +1,33 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { TimestampTextList, VideoOptions, VideoMetadata } from '@/lib/schema';
 import { generateVideo } from '@/api/apiHelper';
+import { useFetchVideoGenState } from '@/hooks/useFetchVideoGenState';
 
-type VideoGenState = {
+type VideoGenStateContext = {
 	id: string;
 	metadata: VideoMetadata | null;
 	description: TimestampTextList | null;
 	commentary: TimestampTextList | null;
 	audioFiles: string[] | null;
 	videoFile: string;
-	isLoading: boolean;
+	generateVideoFile: (options: VideoOptions) => Promise<void>;
 	updateDescription: (data: TimestampTextList) => void;
 	updateCommentary: (data: TimestampTextList) => void;
 	updateAudioFiles: (data: string[]) => void;
 	updateVideoFile: (data: string) => void;
-	generateVideoFile: (options: VideoOptions) => Promise<void>;
 	updateMetadata: (data: VideoMetadata) => void;
+	error: string | null;
+	isLoading: boolean;
 };
 
-const VideoGenContext = createContext<VideoGenState | undefined>(undefined);
+const VideoGenContext = createContext<VideoGenStateContext | undefined>(undefined);
 
-export const VideoGenProvider = ({ children }: { children: ReactNode }) => {
-	const [id, setId] = useState<string>(new Date().toISOString());
+export const VideoGenProvider = ({ children, id, isNew }: { children: ReactNode; id: string; isNew: boolean }) => {
+	const { data, isLoading, error } = useFetchVideoGenState(id, isNew);
 	const [description, setDescription] = useState<TimestampTextList | null>(null);
 	const [commentary, setCommentary] = useState<TimestampTextList | null>(null);
 	const [audioFiles, setAudioFiles] = useState<string[] | null>(null);
 	const [videoFile, setVideoFile] = useState<string>('');
-	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [metadata, setMetadata] = useState<VideoMetadata | null>(null);
 	const updateDescription = (data: TimestampTextList) => setDescription(data);
 	const updateCommentary = (data: TimestampTextList) => setCommentary(data);
@@ -34,15 +35,22 @@ export const VideoGenProvider = ({ children }: { children: ReactNode }) => {
 	const updateVideoFile = (data: string) => setVideoFile(data);
 	const updateMetadata = (data: VideoMetadata) => setMetadata(data);
 
+	useEffect(() => {
+		if (data && !isLoading && !error) {
+			setDescription(data.description);
+			setCommentary(data.commentary);
+			setAudioFiles(data.audioFiles);
+			setVideoFile(data.videoFile);
+			setMetadata(data.metadata);
+		}
+	}, [data, isLoading, error]);
+
 	const generateVideoFile = async (options: VideoOptions) => {
 		try {
-			setIsLoading(true);
 			const video = await generateVideo(commentary, audioFiles, options);
 			setVideoFile(video);
 		} catch (error) {
 			console.error('Error generating video:', error);
-		} finally {
-			setIsLoading(false);
 		}
 	};
 
@@ -55,13 +63,14 @@ export const VideoGenProvider = ({ children }: { children: ReactNode }) => {
 				commentary,
 				audioFiles,
 				videoFile,
-				isLoading,
 				updateDescription,
 				updateCommentary,
 				updateAudioFiles,
 				updateVideoFile,
 				generateVideoFile,
 				updateMetadata,
+				error,
+				isLoading,
 			}}
 		>
 			{children}
@@ -69,7 +78,7 @@ export const VideoGenProvider = ({ children }: { children: ReactNode }) => {
 	);
 };
 
-export const useVideoGen = (): VideoGenState => {
+export const useVideoGen = (): VideoGenStateContext => {
 	const context = useContext(VideoGenContext);
 	if (!context) {
 		throw new Error('useVideoGen must be used within a VideoGenProvider');

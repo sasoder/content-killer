@@ -31,7 +31,7 @@ export default function GenerateDescription() {
 		if (!validateUrl(url)) {
 			toast({
 				title: 'Invalid URL',
-				description: 'Please enter a valid URL',
+				description: 'Please enter a valid URL.',
 				variant: 'destructive',
 			});
 			return;
@@ -76,26 +76,30 @@ export default function GenerateDescription() {
 				<p className='mt-2 text-sm text-gray-500'>
 					Enter the URL of the YouTube video you want to generate a description for.
 				</p>
-				{metadata && (
-					<div>
+				{metadata && metadata.title && metadata.duration && (
+					<div className='mt-4'>
 						<Separator />
 						<p className='text-sm text-gray-500'>{metadata.title}</p>
 						<p className='text-sm text-gray-500'>{metadata.duration}</p>
 					</div>
 				)}
 			</div>
-			<div className='mt-4 flex justify-center'>
-				<StepOptions options={options} onOptionChange={setOptions} />
-				<Button type='submit' disabled={isLoading} className='w-full md:w-auto'>
-					{isLoading ? (
-						<>
-							<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />
-							Generating...
-						</>
-					) : (
-						'Generate description'
-					)}
-				</Button>
+			<div className='flex justify-center'>
+				<div className='flex flex-grow flex-col gap-4'>
+					<StepOptions options={options} onOptionChange={setOptions} />
+					<div className='flex justify-center'>
+						<Button type='submit' disabled={isLoading}>
+							{isLoading ? (
+								<>
+									<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />
+									Generating...
+								</>
+							) : (
+								'Generate description'
+							)}
+						</Button>
+					</div>
+				</div>
 			</div>
 		</form>
 	);

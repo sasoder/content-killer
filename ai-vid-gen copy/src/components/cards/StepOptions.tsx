@@ -1,15 +1,18 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { GenerateOptions } from '@/lib/types';
-
+import { Separator } from '@/components/ui/separator';
 type StepOptionsProps<T extends GenerateOptions> = {
 	options: T;
 	onOptionChange: React.Dispatch<React.SetStateAction<T>>;
 };
 
 function StepOptions<T extends GenerateOptions>({ options, onOptionChange }: StepOptionsProps<T>) {
+	console.log(options);
 	return (
 		<div className='mb-4 space-y-4'>
+			<p className='text-sm text-muted-foreground'>Options</p>
+			<Separator />
 			{Object.entries(options).map(([key, option]) => (
 				<div key={key} className='flex items-center space-x-2'>
 					{option.type === 'checkbox' && (
