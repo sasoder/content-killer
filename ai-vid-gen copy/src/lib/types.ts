@@ -1,25 +1,19 @@
-export type OptionBase = {
+type OptionType = 'checkbox' | 'slider';
+
+interface BaseOption {
 	label: string;
-	key: string;
-};
+	type: OptionType;
+}
 
-export type CheckboxOption = OptionBase & {
+interface CheckboxOption extends BaseOption {
 	type: 'checkbox';
-	default: boolean;
-};
+}
 
-export type SliderOption = OptionBase & {
+interface SliderOption extends BaseOption {
 	type: 'slider';
-	default: number;
 	min: number;
 	max: number;
 	step: number;
-};
+}
 
-export type GenerateOption = CheckboxOption | SliderOption;
-
-export type GenerateOptions = Record<string, GenerateOption>;
-
-export type OptionValues<T extends GenerateOptions> = {
-	[K in keyof T]: T[K]['type'] extends 'checkbox' ? boolean : number;
-};
+export type Option = CheckboxOption | SliderOption;

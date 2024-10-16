@@ -8,3 +8,12 @@ export function cn(...inputs: ClassValue[]) {
 export function generateProjectId(): string {
 	return new Date().toISOString().replace(/[-:TZ.]/g, '');
 }
+
+export function validateUrl(input: string): boolean {
+	try {
+		new URL(input);
+		return true;
+	} catch {
+		return false;
+	}
+}

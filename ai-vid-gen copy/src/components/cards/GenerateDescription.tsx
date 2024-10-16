@@ -6,24 +6,17 @@ import { generateDescription, generateVideoMetadata } from '@/api/apiHelper';
 import { Icons } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
 import { useVideoGen } from '@/context/VideoGenContext';
-import { defaultDescriptionOptions } from '@/lib/defaultOptions';
 import StepOptions from '@/components/cards/StepOptions';
-import { DescriptionOptions } from '@/lib/schema';
+import { defaultDescriptionOptions } from '@/lib/options/defaultOptions';
+import { descriptionOptionDefinitions } from '@/lib/options/optionDefinitions';
+import { validateUrl } from '@/lib/utils';
+
 export default function GenerateDescription() {
 	const { toast } = useToast();
 	const [url, setUrl] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const { updateDescription, updateMetadata, metadata } = useVideoGen();
-	const [options, setOptions] = useState<DescriptionOptions>(defaultDescriptionOptions);
-
-	const validateUrl = (input: string): boolean => {
-		try {
-			new URL(input);
-			return true;
-		} catch {
-			return false;
-		}
-	};
+	const [options, setOptions] = useState(defaultDescriptionOptions);
 
 	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -85,8 +78,8 @@ export default function GenerateDescription() {
 				)}
 			</div>
 			<div className='flex justify-center'>
-				<div className='flex flex-grow flex-col gap-4'>
-					<StepOptions options={options} onOptionChange={setOptions} />
+				<div className='flex flex-grow flex-col gap-2'>
+					<StepOptions options={options} onOptionChange={setOptions} optionDefinitions={descriptionOptionDefinitions} />
 					<div className='flex justify-center'>
 						<Button type='submit' disabled={isLoading}>
 							{isLoading ? (

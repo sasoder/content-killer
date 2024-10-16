@@ -1,45 +1,52 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
-import { GenerateOptions } from '@/lib/types';
+import { Option } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
-type StepOptionsProps<T extends GenerateOptions> = {
+
+type StepOptionsProps<T> = {
 	options: T;
+	optionDefinitions: { [K in keyof T]: Option };
 	onOptionChange: React.Dispatch<React.SetStateAction<T>>;
 };
 
-function StepOptions<T extends GenerateOptions>({ options, onOptionChange }: StepOptionsProps<T>) {
-	console.log(options);
+function StepOptions<T>({ options, optionDefinitions, onOptionChange }: StepOptionsProps<T>) {
 	return (
-		<div className='mb-4 space-y-4'>
+		<div className='flex flex-col gap-4 py-4'>
 			<p className='text-sm text-muted-foreground'>Options</p>
 			<Separator />
-			{Object.entries(options).map(([key, option]) => (
-				<div key={key} className='flex items-center space-x-2'>
-					{option.type === 'checkbox' && (
+			{(Object.keys(options) as Array<keyof T>).map(key => {
+				const definition = optionDefinitions[key];
+				const value = options[key];
+				if (definition.type === 'checkbox' && typeof value === 'boolean') {
+					return (
 						<CheckboxOption
-							id={key}
-							checked={option[key] as boolean}
+							id={key as string}
+							checked={value}
 							onChange={checked => onOptionChange({ ...options, [key]: checked })}
-							label={option.label}
+							label={definition.label}
 						/>
-					)}
-					{option.type === 'slider' && (
+					);
+				}
+
+				if (definition.type === 'slider' && typeof value === 'number') {
+					return (
 						<SliderOption
-							id={key}
-							min={option.min}
-							max={option.max}
-							step={option.step}
-							value={option[key] as number}
-							onChange={value => onOptionChange({ ...options, [key]: value })}
-							label={option.label}
+							id={key as string}
+							value={value}
+							onChange={newValue => onOptionChange({ ...options, [key]: newValue })}
+							min={definition.min}
+							max={definition.max}
+							step={definition.step}
+							label={definition.label}
 						/>
-					)}
-				</div>
-			))}
+					);
+				}
+
+				return null;
+			})}
 		</div>
 	);
 }
-
 interface CheckboxOptionProps {
 	id: string;
 	checked: boolean;
@@ -49,15 +56,14 @@ interface CheckboxOptionProps {
 
 function CheckboxOption({ id, checked, onChange, label }: CheckboxOptionProps) {
 	return (
-		<>
+		<div className='flex flex-row items-center gap-2'>
 			<Checkbox id={id} checked={checked} onCheckedChange={onChange} />
 			<label className='text-sm text-muted-foreground' htmlFor={id}>
 				{label}
 			</label>
-		</>
+		</div>
 	);
 }
-
 interface SliderOptionProps {
 	id: string;
 	min: number;
