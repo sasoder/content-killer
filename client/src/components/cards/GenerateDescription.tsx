@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,14 +14,18 @@ import { validateUrl } from '@/lib/utils';
 export default function GenerateDescription() {
 	const { toast } = useToast();
 	const { updateDescription, updateMetadata, metadata, id } = useVideoGen();
-	const [url, setUrl] = useState(metadata?.url || '');
+	const [url, setUrl] = useState(metadata?.url);
 	const [isLoading, setIsLoading] = useState(false);
 	const [options, setOptions] = useState(defaultDescriptionOptions);
+
+	useEffect(() => {
+		setUrl(metadata?.url);
+	}, [metadata?.url]);
 
 	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
-		if (!validateUrl(url) && !options.sample) {
+		if (!validateUrl(url!) && !options.sample) {
 			toast({
 				title: 'Invalid URL',
 				description: 'Please enter a valid URL.',
@@ -32,9 +36,9 @@ export default function GenerateDescription() {
 
 		setIsLoading(true);
 		try {
-			const newData = await generateDescription(id, url, options);
+			const newData = await generateDescription(id, url!, options);
 			updateDescription(newData);
-			if (url.length > 0) {
+			if (url && url.length > 0) {
 				const metadata = await generateMetadata(id, url);
 				updateMetadata(metadata);
 			}
@@ -64,7 +68,7 @@ export default function GenerateDescription() {
 					id='url'
 					type='text'
 					placeholder='https://www.example.com'
-					value={metadata?.url || ''}
+					value={url}
 					onChange={e => setUrl(e.target.value)}
 					className='mt-1'
 				/>
