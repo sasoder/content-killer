@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { TimestampTextList, TimestampText } from '@/lib/schema';
+import { TimestampTextList, TimestampText } from '@shared/types/api/schema';
 import { Icons } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
 
@@ -28,6 +28,10 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 	});
 	const { toast } = useToast();
 	const [editedData, setEditedData] = useState<TimestampTextList | null>(data);
+
+	useEffect(() => {
+		setEditedData(data);
+	}, [data]);
 
 	const validateTimestamp = (timestamp: string): boolean => {
 		const regex = /^(\d|[0-5]\d):([0-5]\d)$/;

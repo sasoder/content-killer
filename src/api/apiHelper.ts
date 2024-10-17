@@ -1,14 +1,11 @@
-import { TimestampTextList, VideoMetadata } from '@shared/types/api';
-import { CommentaryOptions, DescriptionOptions } from '@shared/types/options';
+import { TimestampTextList, VideoMetadata } from '@shared/types/api/schema';
+import { CommentaryOptions, DescriptionOptions, VideoOptions } from '@shared/types/options';
 import { hc } from 'hono/client';
 import { AppType } from '@shared/server/index';
 
 const client = hc<AppType>(import.meta.env.VITE_APP_HONO_API_URL);
 
 export const generateDescription = async (url: string, options: DescriptionOptions): Promise<TimestampTextList> => {
-	if (!url) {
-		throw new Error('No URL provided');
-	}
 	const res = await client.api.generate.description.$post({
 		json: { url, options },
 	});
@@ -32,46 +29,33 @@ export const generateMetadata = async (url: string): Promise<VideoMetadata> => {
 };
 
 export const generateCommentary = async (
-	description: TimestampTextList | null,
+	description: TimestampTextList,
 	options: CommentaryOptions,
 ): Promise<TimestampTextList> => {
-	if (!description) {
-		throw new Error('No description provided');
-	}
-	const response = await fetch(`/api/generateCommentary`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ description, options }),
+	const res = await client.api.generate.commentary.$post({
+		json: { description, options },
 	});
-	if (!response.ok) {
-		throw new Error('Failed to generate commentary');
+	if (!res.ok) {
+		throw new Error(`HTTP error! status: ${res.status}`);
 	}
-	const data = await response.json();
-	return data.commentary;
+	return res.json() as Promise<TimestampTextList>;
 };
 
 export const generateVideo = async (
-	commentaryData: TimestampTextList | null,
-	audioData: string[] | null,
+	commentaryData: TimestampTextList,
+	audioData: string[],
 	options: VideoOptions,
 ): Promise<string> => {
 	if (!commentaryData || !audioData) {
 		throw new Error('No commentary or audio data provided');
 	}
-	const response = await fetch(`/api/generateVideo`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			commentaryData,
-			audioData,
-			options,
-		}),
+	const res = await client.api.generate.video.$post({
+		json: { commentaryData, audioData, options },
 	});
-	if (!response.ok) {
-		throw new Error('Failed to generate video');
+	if (!res.ok) {
+		throw new Error(`HTTP error! status: ${res.status}`);
 	}
-	const data = await response.json();
-	return data.videoUrl;
+	return res.json() as Promise<string>;
 };
 
 export const generateVideoMetadata = async (url: string): Promise<VideoMetadata> => {

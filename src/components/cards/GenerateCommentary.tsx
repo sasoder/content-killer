@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useVideoGen } from '@/context/VideoGenContext';
 import { Button } from '@/components/ui/button';
-import { CommentaryOptions, TimestampTextList } from '@/lib/schema';
+import { TimestampTextList } from '@shared/types/api/schema';
+import { CommentaryOptions } from '@shared/types/options';
 import { generateCommentary } from '@/api/apiHelper';
 import StepOptions from '@/components/cards/StepOptions';
 import { defaultCommentaryOptions } from '@/lib/options/defaultOptions';
 import { commentaryOptionDefinitions } from '@/lib/options/optionDefinitions';
 import { Icons } from '@/components/icons';
 import { toast } from '@/hooks/use-toast';
+import QuickInfo from '@/components/QuickInfo';
 
 const GenerateCommentary = () => {
 	const { description, updateCommentary } = useVideoGen();
@@ -17,7 +19,8 @@ const GenerateCommentary = () => {
 	const handleGenerate = async () => {
 		try {
 			setIsLoading(true);
-			const generatedCommentary: TimestampTextList = await generateCommentary(description, options);
+			const generatedCommentary = await generateCommentary(description, options);
+			console.log('generatedCommentary', generatedCommentary);
 			updateCommentary(generatedCommentary);
 			toast({
 				title: 'Success',
@@ -37,7 +40,9 @@ const GenerateCommentary = () => {
 
 	return (
 		<div className='flex h-full flex-col'>
-			<div className='flex-grow'></div>
+			<div className='flex-grow'>
+				<QuickInfo data={description} />
+			</div>
 			<div className='flex justify-center'>
 				<div className='flex flex-grow flex-col gap-2'>
 					<StepOptions options={options} onOptionChange={setOptions} optionDefinitions={commentaryOptionDefinitions} />

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useVideoGen } from '@/context/VideoGenContext';
-import { VideoOptions } from '@/lib/schema';
+import { VideoOptions } from '@shared/types/options';
 import { Icons } from '@/components/icons';
 import { toast } from '@/hooks/use-toast';
 import { defaultVideoOptions } from '@/lib/options/defaultOptions';
 import { videoOptionDefinitions } from '@/lib/options/optionDefinitions';
 import StepOptions from '@/components/cards/StepOptions';
+import QuickInfo from '@/components/QuickInfo';
 const GenerateVideo = () => {
 	const { generateVideoFile, commentary, audioFiles } = useVideoGen();
 	const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +44,9 @@ const GenerateVideo = () => {
 
 	return (
 		<div className='flex h-full flex-col'>
-			<div className='flex-grow'></div>
+			<div className='flex-grow'>
+				<QuickInfo data={commentary} />
+			</div>
 			<div className='flex justify-center'>
 				<div className='flex flex-grow flex-col gap-2'>
 					<StepOptions options={options} onOptionChange={setOptions} optionDefinitions={videoOptionDefinitions} />
