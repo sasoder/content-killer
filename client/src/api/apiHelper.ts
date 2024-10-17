@@ -5,6 +5,16 @@ import { AppType } from '@shared/server/index';
 
 const client = hc<AppType>(import.meta.env.VITE_APP_HONO_API_URL);
 
+export const createProject = async (): Promise<string> => {
+	const res = await client.api.generate.project.$post({
+		json: {},
+	});
+	if (!res.ok) {
+		throw new Error('Failed to create project');
+	}
+	const data = await res.json();
+	return data.id as string;
+};
 export const generateDescription = async (
 	id: string,
 	url: string,

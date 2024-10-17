@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { streamFile } from '@/util/streamFile';
+import { streamFile } from '@/lib/streamFile';
 import { projectStorage } from '@/database/projectStorage';
 
 const fileRouter = new Hono()

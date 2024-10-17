@@ -2,24 +2,32 @@ import React, { useState, useCallback } from 'react';
 import { useFetchVideoIds } from '@/hooks/useFetchVideoIds';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Changed to useNavigate
 import { ModeToggle } from '@/components/mode-toggle';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { generateProjectId } from '@/lib/utils';
+import { createProject } from '@/api/apiHelper'; // Import the new API function
 
 const SelectProject = () => {
 	const { data, isLoading } = useFetchVideoIds();
 	const [selectedId, setSelectedId] = useState<string>('new');
-	console.log(data);
+	const navigate = useNavigate(); // Initialize useNavigate
 	const handleSelectChange = useCallback((value: string) => {
 		setSelectedId(value);
 	}, []);
 
-	const handleGenerate = useCallback(() => {
-		const newId = selectedId === 'new' ? generateProjectId() : selectedId;
-		return `/generate/${newId}`;
-	}, [selectedId]);
+	const handleGenerate = useCallback(async () => {
+		if (selectedId === 'new') {
+			try {
+				const newId = await createProject();
+				navigate(`/generate/${newId}`);
+			} catch (error) {
+				console.error('Error creating project:', error);
+			}
+		} else {
+			navigate(`/generate/${selectedId}`);
+		}
+	}, [selectedId, navigate]);
 
 	return (
 		<main className='container mx-auto space-y-8 p-4'>
@@ -61,11 +69,9 @@ const SelectProject = () => {
 					</SelectContent>
 				</Select>
 
-				<Link to={handleGenerate()}>
-					<Button disabled={isLoading} className='w-fit'>
-						{isLoading ? 'Loading...' : 'Generate'}
-					</Button>
-				</Link>
+				<Button onClick={handleGenerate} disabled={isLoading} className='w-fit'>
+					{isLoading ? 'Loading...' : 'Generate'}
+				</Button>
 			</div>
 		</main>
 	);

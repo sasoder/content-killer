@@ -12,7 +12,6 @@ const fetchRouter = new Hono()
 		if (!project) {
 			return c.json({ message: 'Project not found' }, 404);
 		}
-		console.log('fetched video gen state for', id, project.state);
 		return c.json(project.state);
 	})
 	.post('/:id/:fileName', async c => {

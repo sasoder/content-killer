@@ -3,7 +3,7 @@ import { mkdir, writeFile, readFile } from 'fs/promises';
 import * as fs from 'fs';
 import * as path from 'path';
 import { VideoMetadata, VideoGenState } from '@shared/types/api/schema';
-import { createDefaultVideoGenState } from '@/util/defaultVideoGenState';
+import { createDefaultVideoGenState } from '@/lib/defaultVideoGenState';
 
 const DATA_DIR = './data';
 const DB_PATH = path.join(DATA_DIR, 'projects.db');

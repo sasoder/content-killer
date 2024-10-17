@@ -1,12 +1,13 @@
 import { Hono } from 'hono';
-import { generateDescription } from '@/util/generateDescription';
-import { generateMetadata } from '@/util/generateMetadata';
-import { generateCommentary } from '@/util/generateCommentary';
+import { generateDescription } from '@/lib/generateDescription';
+import { generateMetadata } from '@/lib/generateMetadata';
+import { generateCommentary } from '@/lib/generateCommentary';
 import { DescriptionOptions, CommentaryOptions } from '@shared/types/options';
-import { TimestampTextList, VideoMetadata, VideoGenState } from '@shared/types/api/schema';
+import { TimestampTextList, VideoMetadata } from '@shared/types/api/schema';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { projectStorage } from '@/database/projectStorage';
+import { generateProjectId } from '@/lib/util';
 
 const DescriptionOptionsSchema = z.object({
 	url: z.string(),
@@ -16,10 +17,6 @@ const DescriptionOptionsSchema = z.object({
 const CommentaryOptionsSchema = z.object({
 	description: z.custom<TimestampTextList>(),
 	options: z.custom<CommentaryOptions>(),
-});
-
-const VideoGenStateSchema = z.object({
-	id: z.string(),
 });
 
 const generateRouter = new Hono()
@@ -57,15 +54,15 @@ const generateRouter = new Hono()
 		}
 		return c.json(commentary);
 	})
-	.post('/createVideoGenState/:id', zValidator('json', VideoGenStateSchema), async c => {
-		const { id } = c.req.valid('json');
-		const existingProject = await projectStorage.getProject(id);
-		if (existingProject) {
-			return c.json({ message: 'Project already exists' }, 400);
+	.post('/project', async c => {
+		try {
+			const newId = generateProjectId();
+			await projectStorage.createProject(newId);
+			return c.json({ id: newId });
+		} catch (error) {
+			console.error('Error creating project:', error);
+			return c.json({ message: 'Internal server error' }, 500);
 		}
-		await projectStorage.createProject(id);
-		const newProject = await projectStorage.getProject(id);
-		return c.json(newProject!.state, 201);
 	});
 
 export { generateRouter };

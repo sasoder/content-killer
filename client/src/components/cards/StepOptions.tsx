@@ -21,7 +21,7 @@ function StepOptions<T>({ options, optionDefinitions, onOptionChange }: StepOpti
 					if (definition.type === 'checkbox' && typeof value === 'boolean') {
 						return (
 							<CheckboxOption
-								id={key as string}
+								key={key as string}
 								checked={value}
 								onChange={checked => onOptionChange({ ...options, [key]: checked })}
 								label={definition.label}
@@ -32,7 +32,7 @@ function StepOptions<T>({ options, optionDefinitions, onOptionChange }: StepOpti
 					if (definition.type === 'slider' && typeof value === 'number') {
 						return (
 							<SliderOption
-								id={key as string}
+								key={key as string}
 								value={value}
 								onChange={newValue => onOptionChange({ ...options, [key]: newValue })}
 								min={definition.min}

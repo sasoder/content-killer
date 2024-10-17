@@ -8,17 +8,16 @@ import StepCard from '@/components/cards/StepCard';
 import { Icons } from '@/components/icons';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Button } from '@/components/ui/button';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 const GeneratePageContent = () => {
 	const { description, commentary, audioFiles, updateDescription, updateCommentary, metadata } = useVideoGen();
 
-	console.log(metadata);
 	return (
 		<main className='container mx-auto space-y-8 p-4'>
 			<div className='flex flex-row items-center justify-center gap-4 pt-2'>
 				<div className='absolute left-0 top-0 m-4'>
-					<Link to='/'>
+					<Link to='/new'>
 						<Button variant='ghost' size='icon'>
 							<Icons.chevronLeft className='h-[1.5rem] w-[1.5rem] -translate-x-[0.075rem]' />
 						</Button>
@@ -28,7 +27,6 @@ const GeneratePageContent = () => {
 					<ModeToggle />
 				</div>
 				<h1 className='flex items-center justify-center text-3xl'>{metadata?.title || 'Content Killer'}</h1>
-				<Icons.skull className='h-12 w-12 -translate-y-1' />
 			</div>
 
 			<div className='flex flex-row items-stretch justify-center gap-4'>
