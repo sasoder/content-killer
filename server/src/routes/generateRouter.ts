@@ -2,8 +2,9 @@ import { Hono } from 'hono';
 import { generateDescription } from '@/lib/generateDescription';
 import { generateMetadata } from '@/lib/generateMetadata';
 import { generateCommentary } from '@/lib/generateCommentary';
-import { DescriptionOptions, CommentaryOptions } from '@shared/types/options';
-import { TimestampTextList, VideoMetadata } from '@shared/types/api/schema';
+import { generateVideo } from '@/lib/generateVideo';
+import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/types/options';
+import { TimestampTextList, VideoGenState } from '@shared/types/api/schema';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { projectStorage } from '@/database/projectStorage';
@@ -17,6 +18,11 @@ const DescriptionOptionsSchema = z.object({
 const CommentaryOptionsSchema = z.object({
 	description: z.custom<TimestampTextList>(),
 	options: z.custom<CommentaryOptions>(),
+});
+
+const VideoOptionsSchema = z.object({
+	commentary: z.custom<TimestampTextList>(),
+	options: z.custom<VideoOptions>(),
 });
 
 const generateRouter = new Hono()
@@ -36,7 +42,7 @@ const generateRouter = new Hono()
 		const id = c.req.param('id');
 		const project = await projectStorage.getProject(id);
 		if (project) {
-			const metadata: VideoMetadata = await generateMetadata(url);
+			const metadata: VideoGenState['metadata'] = await generateMetadata(url);
 			project.state.metadata = metadata;
 			await projectStorage.updateProjectState(id, project.state);
 			return c.json(metadata);
@@ -53,6 +59,18 @@ const generateRouter = new Hono()
 			await projectStorage.updateProjectState(id, project.state);
 		}
 		return c.json(commentary);
+	})
+	.post('/video/:id', zValidator('json', VideoOptionsSchema), async c => {
+		const { commentary, options } = c.req.valid('json');
+		const id = c.req.param('id');
+		const { videoId, audioFiles } = await generateVideo(commentary, options);
+		const project = await projectStorage.getProject(id);
+		if (project) {
+			project.state.videoFile = videoId;
+			project.state.audioFiles = audioFiles;
+			await projectStorage.updateProjectState(id, project.state);
+		}
+		return c.json({ videoId, audioFiles });
 	})
 	.post('/project', async c => {
 		try {

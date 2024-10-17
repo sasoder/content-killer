@@ -58,19 +58,20 @@ export const generateCommentary = async (
 
 export const generateVideo = async (
 	id: string,
-	commentaryData: TimestampTextList,
+	commentary: TimestampTextList,
 	options: VideoOptions,
-): Promise<string> => {
-	if (!commentaryData) {
+): Promise<{ videoId: string; audioFiles: string[] }> => {
+	if (!commentary) {
 		throw new Error('No commentary data provided');
 	}
 	const res = await client.api.generate.video[id].$post({
-		json: { commentaryData, options },
+		json: { commentary, options },
 	});
 	if (!res.ok) {
 		throw new Error(`HTTP error! status: ${res.status}`);
 	}
-	return res.json() as Promise<string>;
+	const data = await res.json();
+	return { videoId: data.videoId as string, audioFiles: data.audioFiles as string[] };
 };
 
 export const fetchVideoGenState = async (id: string): Promise<VideoGenState> => {
