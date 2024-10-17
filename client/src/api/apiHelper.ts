@@ -60,7 +60,7 @@ export const generateVideo = async (
 	id: string,
 	commentary: TimestampTextList,
 	options: VideoOptions,
-): Promise<{ videoId: string; audioFiles: string[] }> => {
+): Promise<{ videoId: string; audioIds: string[] }> => {
 	if (!commentary) {
 		throw new Error('No commentary data provided');
 	}
@@ -72,7 +72,7 @@ export const generateVideo = async (
 	}
 	const data = await res.json();
 	console.log(data);
-	return { videoId: data.videoId as string, audioFiles: data.audioFiles as string[] };
+	return { videoId: data.videoId as string, audioIds: data.audioIds as string[] };
 };
 
 export const fetchVideoGenState = async (id: string): Promise<VideoGenState> => {

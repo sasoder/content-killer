@@ -47,8 +47,7 @@ export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: st
 
 	const generateVideoFile = async (options: VideoOptions) => {
 		try {
-			const { videoId, audioFiles } = await generateVideo(id, commentary!, options);
-			console.log(videoId, audioFiles);
+			const { videoId, audioIds } = await generateVideo(id, commentary!, options);
 			setVideoId(videoId);
 			setAudioIds(audioIds);
 		} catch (error) {
