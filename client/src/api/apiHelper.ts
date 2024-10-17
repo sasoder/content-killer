@@ -49,14 +49,13 @@ export const generateCommentary = async (
 export const generateVideo = async (
 	id: string,
 	commentaryData: TimestampTextList,
-	audioData: string[],
 	options: VideoOptions,
 ): Promise<string> => {
-	if (!commentaryData || !audioData) {
-		throw new Error('No commentary or audio data provided');
+	if (!commentaryData) {
+		throw new Error('No commentary data provided');
 	}
 	const res = await client.api.generate.video[id].$post({
-		json: { commentaryData, audioData, options },
+		json: { commentaryData, options },
 	});
 	if (!res.ok) {
 		throw new Error(`HTTP error! status: ${res.status}`);

@@ -1,6 +1,6 @@
 import { Database } from 'bun:sqlite';
 import { mkdir, writeFile, readFile } from 'fs/promises';
-import fs from 'fs';
+import * as fs from 'fs';
 import * as path from 'path';
 import { VideoMetadata, VideoGenState } from '@shared/types/api/schema';
 import { createDefaultVideoGenState } from '@/util/defaultVideoGenState';
@@ -10,7 +10,6 @@ const DB_PATH = path.join(DATA_DIR, 'projects.db');
 
 interface Project {
 	id: string;
-	metadata: VideoMetadata;
 	state: VideoGenState;
 }
 
@@ -48,12 +47,12 @@ class ProjectStorage {
 	async getProject(id: string): Promise<Project | null> {
 		const row = this.db.query('SELECT * FROM projects WHERE id = ?').get(id) as any;
 		if (!row) {
+			console.log('creating project', id);
 			await this.createProject(id);
 			return this.getProject(id);
 		}
 		return {
 			id: row.id,
-			metadata: JSON.parse(row.metadata),
 			state: JSON.parse(row.state),
 		};
 	}

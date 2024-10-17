@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useVideoGen } from '@/context/VideoGenContext';
 import { Button } from '@/components/ui/button';
-import { TimestampTextList } from '@shared/types/api/schema';
 import { CommentaryOptions } from '@shared/types/options';
 import { generateCommentary } from '@/api/apiHelper';
 import StepOptions from '@/components/cards/StepOptions';
@@ -12,14 +11,14 @@ import { toast } from '@/hooks/use-toast';
 import QuickInfo from '@/components/QuickInfo';
 
 const GenerateCommentary = () => {
-	const { description, updateCommentary } = useVideoGen();
+	const { description, updateCommentary, id } = useVideoGen();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [options, setOptions] = useState<CommentaryOptions>(defaultCommentaryOptions);
 
 	const handleGenerate = async () => {
 		try {
 			setIsLoading(true);
-			const generatedCommentary = await generateCommentary(description, options);
+			const generatedCommentary = await generateCommentary(id, description, options);
 			console.log('generatedCommentary', generatedCommentary);
 			updateCommentary(generatedCommentary);
 			toast({

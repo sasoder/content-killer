@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { TimestampTextList, VideoOptions, VideoMetadata } from '@/lib/schema';
+import { TimestampTextList, VideoOptions, VideoMetadata } from '@shared/types/api/schema';
 import { generateVideo } from '@/api/apiHelper';
 import { useFetchVideoGenState } from '@/hooks/useFetchVideoGenState';
 

@@ -7,8 +7,6 @@ const ytDl = create(process.env.YT_DLP_PATH || 'yt-dlp');
 
 export const generateMetadata = async (url: string): Promise<VideoMetadata> => {
 	try {
-		console.log('Fetching metadata for URL:', url);
-
 		const result = await ytDl(url, {
 			dumpSingleJson: true,
 			noCheckCertificates: true,

@@ -9,7 +9,7 @@ import { videoOptionDefinitions } from '@/lib/options/optionDefinitions';
 import StepOptions from '@/components/cards/StepOptions';
 import QuickInfo from '@/components/QuickInfo';
 const GenerateVideo = () => {
-	const { generateVideoFile, commentary, audioFiles } = useVideoGen();
+	const { generateVideoFile, commentary, id } = useVideoGen();
 	const [isLoading, setIsLoading] = useState(false);
 	const [options, setOptions] = useState<VideoOptions>(defaultVideoOptions);
 
@@ -50,7 +50,7 @@ const GenerateVideo = () => {
 			<div className='flex justify-center'>
 				<div className='flex flex-grow flex-col gap-2'>
 					<StepOptions options={options} onOptionChange={setOptions} optionDefinitions={videoOptionDefinitions} />
-					<Button onClick={handleGenerate} disabled={commentary?.items?.length === 0 || audioFiles?.length === 0}>
+					<Button onClick={handleGenerate} disabled={commentary?.items?.length === 0}>
 						{isLoading ? (
 							<>
 								<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />

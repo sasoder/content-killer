@@ -40,9 +40,8 @@ const generateRouter = new Hono()
 		const project = await projectStorage.getProject(id);
 		if (project) {
 			const metadata: VideoMetadata = await generateMetadata(url);
-			console.log('metadata', metadata);
-			project.metadata = metadata;
-			await projectStorage.updateMetadata(id, project.metadata);
+			project.state.metadata = metadata;
+			await projectStorage.updateProjectState(id, project.state);
 			return c.json(metadata);
 		}
 		return c.json({ message: 'Project not found' }, 404);
