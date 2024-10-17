@@ -71,6 +71,7 @@ export const generateVideo = async (
 		throw new Error(`HTTP error! status: ${res.status}`);
 	}
 	const data = await res.json();
+	console.log(data);
 	return { videoId: data.videoId as string, audioFiles: data.audioFiles as string[] };
 };
 
@@ -105,7 +106,7 @@ export const fetchVideoIds = async (): Promise<string[]> => {
 };
 
 export const fetchFile = async (id: string): Promise<Blob> => {
-	const res = await client.api.fetchFile.$get({
+	const res = await client.api.fetch.file[id].$get({
 		query: { id },
 	});
 	if (!res.ok) {

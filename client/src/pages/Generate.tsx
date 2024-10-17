@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Link, useParams } from 'react-router-dom';
 
 const GeneratePageContent = () => {
-	const { description, commentary, audioFiles, updateDescription, updateCommentary, metadata } = useVideoGen();
+	const { description, commentary, audioIds, videoId, updateDescription, updateCommentary, metadata } = useVideoGen();
 
 	return (
 		<main className='container mx-auto space-y-8 p-4'>
@@ -60,7 +60,7 @@ const GeneratePageContent = () => {
 					</>
 				)}
 
-				{audioFiles?.length > 0 && commentary?.items?.length > 0 && (
+				{audioIds?.length > 0 && videoId && (
 					<>
 						<StepTransition data={null} jsonEditorTitle={null} onUpdate={null} />
 

@@ -8,13 +8,13 @@ type VideoGenStateContext = {
 	metadata: VideoMetadata | null;
 	description: TimestampTextList | null;
 	commentary: TimestampTextList | null;
-	audioFiles: string[] | null;
-	videoFile: string;
+	audioIds: string[] | null;
+	videoId: string | null;
 	generateVideoFile: (options: VideoOptions) => Promise<void>;
 	updateDescription: (data: TimestampTextList) => void;
 	updateCommentary: (data: TimestampTextList) => void;
-	updateAudioFiles: (data: string[]) => void;
-	updateVideoFile: (data: string) => void;
+	updateAudioIds: (data: string[]) => void;
+	updateVideoId: (data: string) => void;
 	updateMetadata: (data: VideoMetadata) => void;
 	error: string | null;
 	isLoading: boolean;
@@ -26,29 +26,31 @@ export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: st
 	const { data, isLoading, error } = useFetchVideoGenState(id);
 	const [description, setDescription] = useState<TimestampTextList | null>(null);
 	const [commentary, setCommentary] = useState<TimestampTextList | null>(null);
-	const [audioFiles, setAudioFiles] = useState<string[] | null>(null);
-	const [videoFile, setVideoFile] = useState<string>('');
+	const [audioIds, setAudioIds] = useState<string[] | null>(null);
+	const [videoId, setVideoId] = useState<string>('');
 	const [metadata, setMetadata] = useState<VideoMetadata | null>(null);
 	const updateDescription = (data: TimestampTextList) => setDescription(data);
 	const updateCommentary = (data: TimestampTextList) => setCommentary(data);
-	const updateAudioFiles = (data: string[]) => setAudioFiles(data);
-	const updateVideoFile = (data: string) => setVideoFile(data);
+	const updateAudioIds = (data: string[]) => setAudioIds(data);
+	const updateVideoId = (data: string) => setVideoId(data);
 	const updateMetadata = (data: VideoMetadata) => setMetadata(data);
 
 	useEffect(() => {
 		if (data && !isLoading && !error) {
 			setDescription(data.description);
 			setCommentary(data.commentary);
-			setAudioFiles(data.audioFiles);
-			setVideoFile(data.videoFile);
+			setAudioIds(data.audioIds);
+			setVideoId(data.videoId);
 			setMetadata(data.metadata);
 		}
 	}, [data, isLoading, error]);
 
 	const generateVideoFile = async (options: VideoOptions) => {
 		try {
-			const video = await generateVideo(id, commentary, options);
-			setVideoFile(video);
+			const { videoId, audioFiles } = await generateVideo(id, commentary!, options);
+			console.log(videoId, audioFiles);
+			setVideoId(videoId);
+			setAudioIds(audioIds);
 		} catch (error) {
 			console.error('Error generating video:', error);
 		}
@@ -61,12 +63,12 @@ export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: st
 				metadata,
 				description,
 				commentary,
-				audioFiles,
-				videoFile,
+				audioIds,
+				videoId,
 				updateDescription,
 				updateCommentary,
-				updateAudioFiles,
-				updateVideoFile,
+				updateAudioIds,
+				updateVideoId,
 				generateVideoFile,
 				updateMetadata,
 				error,

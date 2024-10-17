@@ -16,7 +16,7 @@ export type VideoMetadata = {
 export type VideoGenState = {
 	description: TimestampTextList;
 	commentary: TimestampTextList;
-	audioFiles: string[];
-	videoFile: string;
+	audioIds: string[];
+	videoId: string;
 	metadata: VideoMetadata;
 };

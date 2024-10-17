@@ -63,14 +63,14 @@ const generateRouter = new Hono()
 	.post('/video/:id', zValidator('json', VideoOptionsSchema), async c => {
 		const { commentary, options } = c.req.valid('json');
 		const id = c.req.param('id');
-		const { videoId, audioFiles } = await generateVideo(commentary, options);
+		const { videoId, audioIds } = await generateVideo(commentary, options);
 		const project = await projectStorage.getProject(id);
 		if (project) {
-			project.state.videoFile = videoId;
-			project.state.audioFiles = audioFiles;
+			project.state.videoId = videoId;
+			project.state.audioIds = audioIds;
 			await projectStorage.updateProjectState(id, project.state);
 		}
-		return c.json({ videoId, audioFiles });
+		return c.json({ videoId, audioIds });
 	})
 	.post('/project', async c => {
 		try {

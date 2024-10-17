@@ -50,7 +50,7 @@ const GenerateVideo = () => {
 			<div className='flex justify-center'>
 				<div className='flex flex-grow flex-col gap-2'>
 					<StepOptions options={options} onOptionChange={setOptions} optionDefinitions={videoOptionDefinitions} />
-					<Button onClick={handleGenerate} disabled={commentary?.items?.length === 0}>
+					<Button onClick={handleGenerate} disabled={!commentary || commentary.items.length === 0 || isLoading}>
 						{isLoading ? (
 							<>
 								<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />

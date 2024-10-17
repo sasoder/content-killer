@@ -64,7 +64,7 @@ export default function GenerateDescription() {
 					id='url'
 					type='text'
 					placeholder='https://www.example.com'
-					value={url}
+					value={metadata?.url || ''}
 					onChange={e => setUrl(e.target.value)}
 					className='mt-1'
 				/>
@@ -74,8 +74,8 @@ export default function GenerateDescription() {
 				{metadata && metadata.title && metadata.duration && (
 					<div className='mt-4'>
 						<Separator />
-						<p className='text-sm text-gray-500'>{metadata.title}</p>
-						<p className='text-sm text-gray-500'>{metadata.duration}</p>
+						<p className='text-sm text-gray-500'>Title: {metadata.title}</p>
+						<p className='text-sm text-gray-500'>Duration: {metadata.duration}</p>
 					</div>
 				)}
 			</div>
