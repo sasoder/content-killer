@@ -11,39 +11,41 @@ type StepOptionsProps<T> = {
 
 function StepOptions<T>({ options, optionDefinitions, onOptionChange }: StepOptionsProps<T>) {
 	return (
-		<div className='flex flex-col gap-4 py-4'>
+		<div className='flex flex-col gap-0 py-4'>
 			<p className='text-sm text-muted-foreground'>Options</p>
 			<Separator />
-			{(Object.keys(options) as Array<keyof T>).map(key => {
-				const definition = optionDefinitions[key];
-				const value = options[key];
-				if (definition.type === 'checkbox' && typeof value === 'boolean') {
-					return (
-						<CheckboxOption
-							id={key as string}
-							checked={value}
-							onChange={checked => onOptionChange({ ...options, [key]: checked })}
-							label={definition.label}
-						/>
-					);
-				}
+			<div className='flex flex-col gap-4'>
+				{(Object.keys(options) as Array<keyof T>).map(key => {
+					const definition = optionDefinitions[key];
+					const value = options[key];
+					if (definition.type === 'checkbox' && typeof value === 'boolean') {
+						return (
+							<CheckboxOption
+								id={key as string}
+								checked={value}
+								onChange={checked => onOptionChange({ ...options, [key]: checked })}
+								label={definition.label}
+							/>
+						);
+					}
 
-				if (definition.type === 'slider' && typeof value === 'number') {
-					return (
-						<SliderOption
-							id={key as string}
-							value={value}
-							onChange={newValue => onOptionChange({ ...options, [key]: newValue })}
-							min={definition.min}
-							max={definition.max}
-							step={definition.step}
-							label={definition.label}
-						/>
-					);
-				}
+					if (definition.type === 'slider' && typeof value === 'number') {
+						return (
+							<SliderOption
+								id={key as string}
+								value={value}
+								onChange={newValue => onOptionChange({ ...options, [key]: newValue })}
+								min={definition.min}
+								max={definition.max}
+								step={definition.step}
+								label={definition.label}
+							/>
+						);
+					}
 
-				return null;
-			})}
+					return null;
+				})}
+			</div>
 		</div>
 	);
 }

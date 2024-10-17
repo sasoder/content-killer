@@ -8,8 +8,10 @@
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.1",
+    "@types/node": "^22.7.6",
+    "dotenv": "^16.4.5",
     "hono": "^4.6.5",
-    "yt-dlp-wrap": "^2.3.12",
+    "youtube-dl-exec": "^3.0.10",
     "zod": "^3.23.8"
   }
 }

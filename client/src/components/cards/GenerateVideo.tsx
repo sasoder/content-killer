@@ -14,7 +14,7 @@ const GenerateVideo = () => {
 	const [options, setOptions] = useState<VideoOptions>(defaultVideoOptions);
 
 	const handleGenerate = async () => {
-		if (!commentary || commentary.items.length === 0 || !audioFiles || audioFiles.length === 0) {
+		if (!commentary || commentary.items.length === 0) {
 			toast({
 				title: 'Invalid data',
 				description: 'Make sure you have generated commentary and audio files.',

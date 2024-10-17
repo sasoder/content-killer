@@ -11,8 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 
 const GeneratePageContent = () => {
-	const { description, commentary, audioFiles, updateDescription, updateCommentary } = useVideoGen();
+	const { description, commentary, audioFiles, updateDescription, updateCommentary, metadata } = useVideoGen();
 
+	console.log(metadata);
 	return (
 		<main className='container mx-auto space-y-8 p-4'>
 			<div className='flex flex-row items-center justify-center gap-4 pt-2'>
@@ -26,7 +27,7 @@ const GeneratePageContent = () => {
 				<div className='absolute right-0 top-0 m-4'>
 					<ModeToggle />
 				</div>
-				<h1 className='flex items-center justify-center text-3xl'>Content Killer</h1>
+				<h1 className='flex items-center justify-center text-3xl'>{metadata?.title || 'Content Killer'}</h1>
 				<Icons.skull className='h-12 w-12 -translate-y-1' />
 			</div>
 

@@ -9,16 +9,16 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { generateProjectId } from '@/lib/utils';
 
 const SelectProject = () => {
-	const { data, isLoading, error } = useFetchVideoIds();
+	const { data, isLoading } = useFetchVideoIds();
 	const [selectedId, setSelectedId] = useState<string>('new');
-
+	console.log(data);
 	const handleSelectChange = useCallback((value: string) => {
 		setSelectedId(value);
 	}, []);
 
 	const handleGenerate = useCallback(() => {
 		const newId = selectedId === 'new' ? generateProjectId() : selectedId;
-		return `/generate/${newId}${selectedId === 'new' ? '?new=true' : ''}`;
+		return `/generate/${newId}`;
 	}, [selectedId]);
 
 	return (

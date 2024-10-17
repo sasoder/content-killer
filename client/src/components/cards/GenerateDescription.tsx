@@ -13,9 +13,9 @@ import { validateUrl } from '@/lib/utils';
 
 export default function GenerateDescription() {
 	const { toast } = useToast();
-	const [url, setUrl] = useState('');
+	const { updateDescription, updateMetadata, metadata, id } = useVideoGen();
+	const [url, setUrl] = useState(metadata?.url || '');
 	const [isLoading, setIsLoading] = useState(false);
-	const { updateDescription, updateMetadata, metadata } = useVideoGen();
 	const [options, setOptions] = useState(defaultDescriptionOptions);
 
 	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -32,10 +32,12 @@ export default function GenerateDescription() {
 
 		setIsLoading(true);
 		try {
-			const newData = await generateDescription(url, options);
-			// const metadata = await generateMetadata(url);
-			// updateMetadata(metadata);
+			const newData = await generateDescription(id, url, options);
 			updateDescription(newData);
+			if (url.length > 0) {
+				const metadata = await generateMetadata(id, url);
+				updateMetadata(metadata);
+			}
 			toast({
 				title: 'Success',
 				description: 'Description generated successfully.',

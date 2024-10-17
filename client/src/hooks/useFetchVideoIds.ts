@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { fetchVideoIds } from '@/api/apiHelper';
 
-export const useFetchVideoIds = (): { data: string[]; isLoading: boolean; error: string } => {
+export const useFetchVideoIds = (): { data: string[]; isLoading: boolean } => {
 	const [data, setData] = useState<string[]>([]);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
-	const [error, setError] = useState<string>('');
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -12,7 +11,7 @@ export const useFetchVideoIds = (): { data: string[]; isLoading: boolean; error:
 				const ids = await fetchVideoIds();
 				setData(ids);
 			} catch (error) {
-				setError(error as string);
+				console.error(error);
 			} finally {
 				setIsLoading(false);
 			}
@@ -20,5 +19,5 @@ export const useFetchVideoIds = (): { data: string[]; isLoading: boolean; error:
 		fetchData();
 	}, []);
 
-	return { data, isLoading, error };
+	return { data, isLoading };
 };

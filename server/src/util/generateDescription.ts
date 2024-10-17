@@ -1,7 +1,11 @@
 import { DescriptionOptions } from '@shared/types/options';
 import { TimestampTextList } from '@shared/types/api/schema';
 
-export const generateDescription = async (url: string, options: DescriptionOptions): Promise<TimestampTextList> => {
+export const generateDescription = async (
+	id: string,
+	url: string,
+	options: DescriptionOptions,
+): Promise<TimestampTextList> => {
 	if (options.sample) {
 		return {
 			items: [
