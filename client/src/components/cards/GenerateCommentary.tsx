@@ -4,22 +4,23 @@ import { Button } from '@/components/ui/button';
 import { CommentaryOptions } from '@shared/types/options';
 import { generateCommentary } from '@/api/apiHelper';
 import StepOptions from '@/components/cards/StepOptions';
-import { defaultCommentaryOptions } from '@/lib/options/defaultOptions';
 import { commentaryOptionDefinitions } from '@/lib/options/optionDefinitions';
 import { Icons } from '@/components/icons';
 import { toast } from '@/hooks/use-toast';
 import QuickInfo from '@/components/QuickInfo';
 
 const GenerateCommentary = () => {
-	const { description, updateCommentary, id } = useVideoGen();
+	const { description, updateCommentary, id, options } = useVideoGen();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const [options, setOptions] = useState<CommentaryOptions>(defaultCommentaryOptions);
+	const [commentaryOptions, setCommentaryOptions] = useState<CommentaryOptions>(options.commentary);
 
 	const handleGenerate = async () => {
 		try {
+			if (!description || description.length === 0) {
+				throw new Error('No description data provided');
+			}
 			setIsLoading(true);
-			const generatedCommentary = await generateCommentary(id, description, options);
-			console.log('generatedCommentary', generatedCommentary);
+			const generatedCommentary = await generateCommentary(id, description, commentaryOptions);
 			updateCommentary(generatedCommentary);
 			toast({
 				title: 'Success',
@@ -40,13 +41,17 @@ const GenerateCommentary = () => {
 	return (
 		<div className='flex h-full flex-col'>
 			<div className='flex-grow'>
-				<QuickInfo data={description} />
+				<QuickInfo data={description!} />
 			</div>
 			<div className='flex justify-center'>
 				<div className='flex flex-grow flex-col gap-2'>
-					<StepOptions options={options} onOptionChange={setOptions} optionDefinitions={commentaryOptionDefinitions} />
+					<StepOptions
+						options={commentaryOptions}
+						onOptionChange={setCommentaryOptions}
+						optionDefinitions={commentaryOptionDefinitions}
+					/>
 					<div className='flex justify-center'>
-						<Button onClick={handleGenerate} disabled={description?.items?.length === 0}>
+						<Button onClick={handleGenerate} disabled={!description || isLoading}>
 							{isLoading ? (
 								<>
 									<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />

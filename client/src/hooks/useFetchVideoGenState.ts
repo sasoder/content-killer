@@ -12,6 +12,7 @@ export const useFetchVideoGenState = (id: string) => {
 			try {
 				const fetchedData = await fetchVideoGenState(id);
 				setData(fetchedData);
+				console.log('fetchedData', fetchedData);
 				setError(null);
 			} catch (error: any) {
 				if (error.response?.status === 404) {

@@ -1,18 +1,18 @@
 import React, { useState, useCallback } from 'react';
-import { useFetchVideoIds } from '@/hooks/useFetchVideoIds';
-import { Icons } from '@/components/icons';
+import { useFetchAllVideoGenStates } from '@/hooks/useFetchAllVideoGenStates';
 import { Button } from '@/components/ui/button';
-import { Link, useNavigate } from 'react-router-dom';
-import { ModeToggle } from '@/components/mode-toggle';
+import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { createProject } from '@/api/apiHelper';
 import { Header } from '@/components/layout/Header';
+import { formatDate } from '@/lib/utils';
 
 const SelectProject = () => {
-	const { data, isLoading } = useFetchVideoIds();
+	const { data, isLoading } = useFetchAllVideoGenStates();
 	const [selectedId, setSelectedId] = useState<string>('new');
 	const navigate = useNavigate();
+
 	const handleSelectChange = useCallback((value: string) => {
 		setSelectedId(value);
 	}, []);
@@ -20,8 +20,8 @@ const SelectProject = () => {
 	const handleGenerate = useCallback(async () => {
 		if (selectedId === 'new') {
 			try {
-				const newId = await createProject();
-				navigate(`/generate/${newId}`);
+				const videoGenState = await createProject();
+				navigate(`/generate/${videoGenState.id}`);
 			} catch (error) {
 				console.error('Error creating project:', error);
 			}
@@ -30,6 +30,12 @@ const SelectProject = () => {
 		}
 	}, [selectedId, navigate]);
 
+	const getSelectedTitle = useCallback(() => {
+		if (selectedId === 'new') return 'New Project';
+		const selected = data?.find(item => item.id === selectedId);
+		return selected ? selected.metadata.title : 'Select a project';
+	}, [selectedId, data]);
+
 	return (
 		<>
 			<Header title='Choose Project' showBackButton backTo='/' />
@@ -37,19 +43,24 @@ const SelectProject = () => {
 				<div className='flex flex-grow flex-col items-center justify-center gap-4 pt-6'>
 					<Select onValueChange={handleSelectChange} value={selectedId}>
 						<SelectTrigger className='w-[200px]'>
-							<SelectValue placeholder='Select a project' />
+							<SelectValue>{getSelectedTitle()}</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
-							<ScrollArea className='h-[200px]'>
-								<SelectItem value='new'>New Project</SelectItem>
+							<ScrollArea className='h-auto'>
+								<SelectItem value='new' className='cursor-pointer'>
+									New Project
+								</SelectItem>
 								{isLoading ? (
 									<SelectItem value='loading' disabled>
 										Loading...
 									</SelectItem>
 								) : (
-									data?.map(id => (
-										<SelectItem key={id} value={id}>
-											{id}
+									data?.map(videoGenState => (
+										<SelectItem key={videoGenState.id} value={videoGenState.id} className='cursor-pointer'>
+											<div className='flex flex-col'>
+												<div className='font-medium'>{videoGenState.metadata.title}</div>
+												<div className='text-xs text-gray-500'>{formatDate(videoGenState.metadata.createdAt)}</div>
+											</div>
 										</SelectItem>
 									))
 								)}

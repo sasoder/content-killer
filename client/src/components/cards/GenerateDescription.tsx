@@ -1,31 +1,33 @@
-import { useState, FormEvent, useEffect } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useVideoGen } from '@/context/VideoGenContext';
+import { generateDescription, generateMetadata } from '@/api/apiHelper';
+import { VideoMetadata } from '@shared/types/api/schema';
+import { validateUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { generateDescription, generateMetadata } from '@/api/apiHelper';
-import { Icons } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
-import { useVideoGen } from '@/context/VideoGenContext';
 import StepOptions from '@/components/cards/StepOptions';
-import { defaultDescriptionOptions } from '@/lib/options/defaultOptions';
 import { descriptionOptionDefinitions } from '@/lib/options/optionDefinitions';
-import { validateUrl } from '@/lib/utils';
+import { Icons } from '@/components/icons';
 
 export default function GenerateDescription() {
 	const { toast } = useToast();
-	const { updateDescription, updateMetadata, metadata, id } = useVideoGen();
-	const [url, setUrl] = useState(metadata?.url);
+	const { updateDescription, updateMetadata, metadata, id, options } = useVideoGen();
+	const [url, setUrl] = useState<string>(metadata?.url || '');
 	const [isLoading, setIsLoading] = useState(false);
-	const [options, setOptions] = useState(defaultDescriptionOptions);
+	const [descriptionOptions, setDescriptionOptions] = useState(options.description);
 
 	useEffect(() => {
-		setUrl(metadata?.url);
-	}, [metadata?.url]);
+		if (metadata) {
+			setUrl(metadata.url);
+		}
+	}, [metadata]);
 
 	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
-		if (!validateUrl(url!) && !options.sample) {
+		if (!validateUrl(url) && !options.description.sample) {
 			toast({
 				title: 'Invalid URL',
 				description: 'Please enter a valid URL.',
@@ -36,11 +38,11 @@ export default function GenerateDescription() {
 
 		setIsLoading(true);
 		try {
-			const newData = await generateDescription(id, url!, options);
+			const newData = await generateDescription(id, url, descriptionOptions);
 			updateDescription(newData);
 			if (url && url.length > 0) {
-				const metadata = await generateMetadata(id, url);
-				updateMetadata(metadata);
+				const fetchedMetadata: VideoMetadata = await generateMetadata(id, url);
+				updateMetadata(fetchedMetadata);
 			}
 			toast({
 				title: 'Success',
@@ -85,7 +87,11 @@ export default function GenerateDescription() {
 			</div>
 			<div className='flex justify-center'>
 				<div className='flex flex-grow flex-col gap-2'>
-					<StepOptions options={options} onOptionChange={setOptions} optionDefinitions={descriptionOptionDefinitions} />
+					<StepOptions
+						options={descriptionOptions}
+						onOptionChange={setDescriptionOptions}
+						optionDefinitions={descriptionOptionDefinitions}
+					/>
 					<div className='flex justify-center'>
 						<Button type='submit' disabled={isLoading}>
 							{isLoading ? (
@@ -94,7 +100,7 @@ export default function GenerateDescription() {
 									Generating...
 								</>
 							) : (
-								'Generate description'
+								'Generate Description'
 							)}
 						</Button>
 					</div>

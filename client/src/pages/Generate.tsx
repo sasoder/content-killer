@@ -25,6 +25,11 @@ const GeneratePageContent = () => {
 		error,
 	} = useVideoGen();
 
+	console.log(commentary);
+	console.log(audioIds);
+	console.log(videoId);
+	console.log(description);
+
 	if (isLoading) {
 		return (
 			<div className='flex h-screen items-center justify-center'>
@@ -48,7 +53,7 @@ const GeneratePageContent = () => {
 						info='This step generates a comprehensive description of the video, with timestamps for all the pivotal moments in the video.'
 					/>
 
-					{description?.items?.length > 0 && (
+					{description && description.length > 0 && (
 						<>
 							<StepTransition data={description} jsonEditorTitle='Edit Description Data' onUpdate={updateDescription} />
 
@@ -60,7 +65,7 @@ const GeneratePageContent = () => {
 						</>
 					)}
 
-					{commentary?.items?.length > 0 && (
+					{commentary && commentary.length > 0 && (
 						<>
 							<StepTransition data={commentary} jsonEditorTitle='Edit Commentary Data' onUpdate={updateCommentary} />
 
@@ -72,9 +77,9 @@ const GeneratePageContent = () => {
 						</>
 					)}
 
-					{audioIds?.length > 0 && videoId && (
+					{audioIds && audioIds.length > 0 && videoId && (
 						<>
-							<StepTransition data={null} jsonEditorTitle={null} onUpdate={null} />
+							<StepTransition data={[]} jsonEditorTitle='' onUpdate={() => {}} />
 
 							<StepCard
 								title='Download'

@@ -4,15 +4,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { VideoMetadata, VideoGenState } from '@shared/types/api/schema';
 import { createDefaultVideoGenState } from '@/lib/defaultVideoGenState';
-import { generateProjectId } from '@/lib/util';
 
 const DATA_DIR = './data';
 const DB_PATH = path.join(DATA_DIR, 'projects.db');
-
-interface Project {
-	id: string;
-	state: VideoGenState;
-}
 
 class ProjectStorage {
 	private db: Database;
@@ -29,44 +23,36 @@ class ProjectStorage {
 		this.db.run(`
       CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY,
-        metadata TEXT,
         state TEXT
       )
     `);
 	}
 
-	async createProject(id: string): Promise<void> {
+	async createProject(id: string): Promise<VideoGenState> {
 		const defaultState = createDefaultVideoGenState(id);
-		await this.db.run('INSERT INTO projects (id, metadata, state) VALUES (?, ?, ?)', [
-			id,
-			JSON.stringify({}),
-			JSON.stringify(defaultState),
-		]);
+		await this.db.run('INSERT INTO projects (id, state) VALUES (?, ?)', [id, JSON.stringify(defaultState)]);
 		await mkdir(path.join(DATA_DIR, id), { recursive: true });
+		return defaultState;
 	}
 
-	async getProject(id: string): Promise<Project | null> {
+	async getProject(id: string): Promise<VideoGenState | null> {
 		const row = this.db.query('SELECT * FROM projects WHERE id = ?').get(id) as any;
 		if (!row) {
 			return null;
 		}
-		return {
-			id: row.id,
-			state: JSON.parse(row.state),
-		};
+		console.log('--------------GET PROJECT-------------------');
+		console.log(JSON.parse(row.state));
+		console.log('--------------GET PROJECT-------------------');
+		return JSON.parse(row.state);
 	}
 
-	async getVideoIds(): Promise<string[]> {
-		const rows = this.db.query('SELECT id FROM projects').all() as any[];
-		return rows.map(row => row.id);
+	async getAllVideoGenStates(): Promise<VideoGenState[]> {
+		const rows = this.db.query('SELECT id, state FROM projects').all() as any[];
+		return rows.map(row => JSON.parse(row.state));
 	}
 
-	async updateProjectState(id: string, state: VideoGenState): Promise<void> {
-		await this.db.run('UPDATE projects SET state = ? WHERE id = ?', [JSON.stringify(state), id]);
-	}
-
-	async updateMetadata(id: string, metadata: VideoMetadata): Promise<void> {
-		await this.db.run('UPDATE projects SET metadata = ? WHERE id = ?', [JSON.stringify(metadata), id]);
+	async updateProjectState(state: VideoGenState): Promise<void> {
+		await this.db.run('UPDATE projects SET state = ? WHERE id = ?', [JSON.stringify(state), state.id]);
 	}
 
 	async saveFile(id: string, fileName: string, content: Buffer): Promise<void> {

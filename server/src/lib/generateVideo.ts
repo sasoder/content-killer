@@ -1,8 +1,8 @@
 import { VideoOptions } from '@shared/types/options';
-import { TimestampTextList } from '@shared/types/api/schema';
+import { TimestampText } from '@shared/types/api/schema';
 
 export const generateVideo = async (
-	commentary: TimestampTextList,
+	commentary: TimestampText[],
 	options: VideoOptions,
 ): Promise<{ videoId: string; audioIds: string[] }> => {
 	if (options.playSound) {

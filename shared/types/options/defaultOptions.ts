@@ -1,4 +1,4 @@
-import { DescriptionOptions, CommentaryOptions, AudioOptions, VideoOptions } from '@shared/types/options';
+import { DescriptionOptions, CommentaryOptions, AudioOptions, VideoOptions } from './';
 
 export const defaultDescriptionOptions: DescriptionOptions = {
 	sample: true,

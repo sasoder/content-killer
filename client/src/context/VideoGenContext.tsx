@@ -1,21 +1,30 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { TimestampTextList, VideoOptions, VideoMetadata } from '@shared/types/api/schema';
-import { generateVideo } from '@/api/apiHelper';
+import { VideoGenState, TimestampText, VideoMetadata } from '@shared/types/api/schema';
 import { useFetchVideoGenState } from '@/hooks/useFetchVideoGenState';
+import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/types/options';
+import {
+	defaultCommentaryOptions,
+	defaultDescriptionOptions,
+	defaultVideoOptions,
+} from '@shared/types/options/defaultOptions';
 
 type VideoGenStateContext = {
 	id: string;
 	metadata: VideoMetadata | null;
-	description: TimestampTextList | null;
-	commentary: TimestampTextList | null;
+	description: TimestampText[] | null;
+	commentary: TimestampText[] | null;
 	audioIds: string[] | null;
 	videoId: string | null;
-	generateVideoFile: (options: VideoOptions) => Promise<void>;
-	updateDescription: (data: TimestampTextList) => void;
-	updateCommentary: (data: TimestampTextList) => void;
+	updateDescription: (data: TimestampText[]) => void;
+	updateCommentary: (data: TimestampText[]) => void;
 	updateAudioIds: (data: string[]) => void;
 	updateVideoId: (data: string) => void;
 	updateMetadata: (data: VideoMetadata) => void;
+	options: {
+		description: DescriptionOptions;
+		commentary: CommentaryOptions;
+		video: VideoOptions;
+	};
 	error: string | null;
 	isLoading: boolean;
 };
@@ -24,13 +33,22 @@ const VideoGenContext = createContext<VideoGenStateContext | undefined>(undefine
 
 export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: string }) => {
 	const { data, isLoading, error } = useFetchVideoGenState(id);
-	const [description, setDescription] = useState<TimestampTextList | null>(null);
-	const [commentary, setCommentary] = useState<TimestampTextList | null>(null);
-	const [audioIds, setAudioIds] = useState<string[] | null>(null);
-	const [videoId, setVideoId] = useState<string>('');
+	const [description, setDescription] = useState<TimestampText[]>([]);
+	const [commentary, setCommentary] = useState<TimestampText[]>([]);
+	const [audioIds, setAudioIds] = useState<string[]>([]);
+	const [videoId, setVideoId] = useState<string | null>(null);
 	const [metadata, setMetadata] = useState<VideoMetadata | null>(null);
-	const updateDescription = (data: TimestampTextList) => setDescription(data);
-	const updateCommentary = (data: TimestampTextList) => setCommentary(data);
+	const [options, setOptions] = useState<{
+		description: DescriptionOptions;
+		commentary: CommentaryOptions;
+		video: VideoOptions;
+	}>({
+		description: defaultDescriptionOptions,
+		commentary: defaultCommentaryOptions,
+		video: defaultVideoOptions,
+	});
+	const updateDescription = (data: TimestampText[]) => setDescription(data);
+	const updateCommentary = (data: TimestampText[]) => setCommentary(data);
 	const updateAudioIds = (data: string[]) => setAudioIds(data);
 	const updateVideoId = (data: string) => setVideoId(data);
 	const updateMetadata = (data: VideoMetadata) => setMetadata(data);
@@ -42,18 +60,9 @@ export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: st
 			setAudioIds(data.audioIds);
 			setVideoId(data.videoId);
 			setMetadata(data.metadata);
+			setOptions(data.options);
 		}
 	}, [data, isLoading, error]);
-
-	const generateVideoFile = async (options: VideoOptions) => {
-		try {
-			const { videoId, audioIds } = await generateVideo(id, commentary!, options);
-			setVideoId(videoId);
-			setAudioIds(audioIds);
-		} catch (error) {
-			console.error('Error generating video:', error);
-		}
-	};
 
 	return (
 		<VideoGenContext.Provider
@@ -68,8 +77,8 @@ export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: st
 				updateCommentary,
 				updateAudioIds,
 				updateVideoId,
-				generateVideoFile,
 				updateMetadata,
+				options,
 				error,
 				isLoading,
 			}}

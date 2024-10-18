@@ -10,13 +10,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { TimestampTextList, TimestampText } from '@shared/types/api/schema';
+import { TimestampText } from '@shared/types/api/schema';
 import { Icons } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
 
 interface JsonEditorProps {
-	data: TimestampTextList | null;
-	onUpdate: (updatedData: TimestampTextList) => void;
+	data: TimestampText[];
+	onUpdate: (updatedData: TimestampText[]) => void;
 	title: string;
 }
 
@@ -27,11 +27,7 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 		text: '',
 	});
 	const { toast } = useToast();
-	const [editedData, setEditedData] = useState<TimestampTextList | null>(data);
-
-	useEffect(() => {
-		setEditedData(data);
-	}, [data]);
+	const [editedData, setEditedData] = useState<TimestampText[] | null>(data);
 
 	const validateTimestamp = (timestamp: string): boolean => {
 		const regex = /^(\d|[0-5]\d):([0-5]\d)$/;
@@ -39,8 +35,8 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 	};
 
 	const handleInputChange = (rowIndex: number, key: keyof TimestampText, value: string) => {
-		const newData = { ...editedData };
-		newData.items[rowIndex] = { ...newData.items[rowIndex], [key]: value };
+		const newData = [...(editedData ?? [])];
+		newData[rowIndex] = { ...newData[rowIndex], [key]: value };
 		setEditedData(newData);
 		handleSave(true);
 	};
@@ -50,8 +46,8 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 		handleSave(true);
 	};
 
-	const handleSave = (remainOpen: boolean = false, newData: TimestampTextList = editedData) => {
-		const invalidTimestamps = newData.items.filter(item => !validateTimestamp(item.timestamp));
+	const handleSave = (remainOpen: boolean = false, newData: TimestampText[] | null = editedData) => {
+		const invalidTimestamps = newData?.filter(item => !validateTimestamp(item.timestamp)) ?? [];
 		if (invalidTimestamps.length > 0) {
 			toast({
 				title: 'Invalid Timestamps',
@@ -60,7 +56,7 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 			});
 			return;
 		}
-		onUpdate(newData);
+		onUpdate(newData ?? []);
 		setIsOpen(remainOpen);
 	};
 
@@ -72,10 +68,11 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 	};
 
 	const handleDelete = (rowIndex: number) => {
-		const newData = { ...editedData };
-		newData.items = newData.items.filter((_, index) => index !== rowIndex);
-		setEditedData(newData);
-		handleSave(true, newData);
+		const newData = [...(editedData ?? [])];
+		console.log(newData);
+		const filteredData = newData.filter((_, index) => index !== rowIndex);
+		setEditedData(filteredData);
+		handleSave(true, filteredData);
 	};
 
 	const handleAdd = () => {
@@ -100,13 +97,13 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 			return;
 		}
 
-		const newData = { ...editedData };
-		const insertIndex = newData.items.findIndex(item => item.timestamp > newRow.timestamp);
+		const newData = [...(editedData ?? [])];
+		const insertIndex = newData.findIndex(item => item.timestamp > newRow.timestamp);
 
 		if (insertIndex === -1) {
-			newData.items.push({ ...newRow });
+			newData.push({ ...newRow });
 		} else {
-			newData.items.splice(insertIndex, 0, { ...newRow });
+			newData.splice(insertIndex, 0, { ...newRow });
 		}
 
 		handleSave(true, newData);
@@ -123,7 +120,7 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 	return (
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DialogDescription />
-			{editedData?.items?.length > 0 ? (
+			{editedData && editedData.length > 0 ? (
 				<DialogTrigger asChild>
 					<Button variant='outline' size='icon'>
 						<Icons.pencil className='h-[1.1rem] w-[1.1rem]' />
@@ -185,7 +182,7 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 								</TableRow>
 
 								{/* Existing Data Rows */}
-								{editedData?.items.map((row, rowIndex) => (
+								{editedData?.map((row, rowIndex) => (
 									<TableRow className='border-none hover:bg-transparent' key={rowIndex}>
 										{columns?.map(column => (
 											<TableCell className={column === 'timestamp' ? 'w-16' : 'w-full'} key={`${rowIndex}-${column}`}>

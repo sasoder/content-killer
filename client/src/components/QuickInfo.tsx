@@ -1,16 +1,15 @@
-import { TimestampTextList } from '@shared/types/api/schema';
+import { TimestampText } from '@shared/types/api/schema';
 
 interface QuickInfoProps {
-	data: TimestampTextList;
+	data: TimestampText[];
 }
 
 export default function QuickInfo({ data }: QuickInfoProps) {
-	if (!data || data.items.length === 0) {
+	if (!data || data.length === 0) {
 		return <p className='text-sm text-gray-500'>No data to display. Generate it first.</p>;
 	}
-
-	const listLength = data.items.length;
-	const totalWords = data.items.reduce((total, item) => total + item.text.split(' ').length, 0);
+	const listLength = data.length;
+	const totalWords = data.reduce((total, item) => total + item.text.split(' ').length, 0);
 
 	return (
 		<div className='h-full overflow-auto'>

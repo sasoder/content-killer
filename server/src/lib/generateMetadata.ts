@@ -5,7 +5,7 @@ require('dotenv').config();
 
 const ytDl = create(process.env.YT_DLP_PATH || 'yt-dlp');
 
-export const generateMetadata = async (url: string): Promise<VideoMetadata> => {
+export const generateMetadata = async (url: string): Promise<Partial<VideoMetadata>> => {
 	try {
 		const result = await ytDl(url, {
 			dumpSingleJson: true,
@@ -16,7 +16,6 @@ export const generateMetadata = async (url: string): Promise<VideoMetadata> => {
 		});
 
 		return {
-			url,
 			title: result.title as string,
 			duration: result.duration_string as string,
 		};

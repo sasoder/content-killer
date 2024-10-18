@@ -4,17 +4,28 @@ import { useVideoGen } from '@/context/VideoGenContext';
 import { VideoOptions } from '@shared/types/options';
 import { Icons } from '@/components/icons';
 import { toast } from '@/hooks/use-toast';
-import { defaultVideoOptions } from '@/lib/options/defaultOptions';
 import { videoOptionDefinitions } from '@/lib/options/optionDefinitions';
 import StepOptions from '@/components/cards/StepOptions';
 import QuickInfo from '@/components/QuickInfo';
-const GenerateVideo = () => {
-	const { generateVideoFile, commentary, id } = useVideoGen();
-	const [isLoading, setIsLoading] = useState(false);
-	const [options, setOptions] = useState<VideoOptions>(defaultVideoOptions);
+import { generateVideo } from '@/api/apiHelper';
 
+const GenerateVideo = () => {
+	const { commentary, id, updateVideoId, updateAudioIds, options } = useVideoGen();
+	const [isLoading, setIsLoading] = useState(false);
+	const [videoOptions, setVideoOptions] = useState<VideoOptions>(options.video);
+	console.log(commentary);
+
+	const generateVideoFile = async (options: VideoOptions) => {
+		try {
+			const { videoId, audioIds } = await generateVideo(id, commentary!, options);
+			updateVideoId(videoId);
+			updateAudioIds(audioIds);
+		} catch (error) {
+			console.error('Error generating video:', error);
+		}
+	};
 	const handleGenerate = async () => {
-		if (!commentary || commentary.items.length === 0) {
+		if (!commentary || commentary.length === 0) {
 			toast({
 				title: 'Invalid data',
 				description: 'Make sure you have generated commentary and audio files.',
@@ -25,7 +36,7 @@ const GenerateVideo = () => {
 
 		setIsLoading(true);
 		try {
-			await generateVideoFile(options);
+			await generateVideoFile(videoOptions);
 			toast({
 				title: 'Success',
 				description: 'Video generated successfully.',
@@ -49,8 +60,12 @@ const GenerateVideo = () => {
 			</div>
 			<div className='flex justify-center'>
 				<div className='flex flex-grow flex-col gap-2'>
-					<StepOptions options={options} onOptionChange={setOptions} optionDefinitions={videoOptionDefinitions} />
-					<Button onClick={handleGenerate} disabled={!commentary || commentary.items.length === 0 || isLoading}>
+					<StepOptions
+						options={videoOptions}
+						onOptionChange={setVideoOptions}
+						optionDefinitions={videoOptionDefinitions}
+					/>
+					<Button onClick={handleGenerate} disabled={!commentary || commentary.length === 0 || isLoading}>
 						{isLoading ? (
 							<>
 								<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />

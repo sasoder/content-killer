@@ -1,11 +1,11 @@
-import { TimestampTextList, VideoGenState, VideoMetadata } from '@shared/types/api/schema';
+import { TimestampText, VideoGenState, VideoMetadata } from '@shared/types/api/schema';
 import { CommentaryOptions, DescriptionOptions, VideoOptions } from '@shared/types/options';
 import { hc } from 'hono/client';
 import { AppType } from '@shared/server/index';
 
 const client = hc<AppType>(import.meta.env.VITE_APP_HONO_API_URL);
 
-export const createProject = async (): Promise<string> => {
+export const createProject = async (): Promise<VideoGenState> => {
 	const res = await client.api.generate.project.$post({
 		json: {},
 	});
@@ -13,20 +13,24 @@ export const createProject = async (): Promise<string> => {
 		throw new Error('Failed to create project');
 	}
 	const data = await res.json();
-	return data.id as string;
+	return data as VideoGenState;
 };
+
 export const generateDescription = async (
 	id: string,
 	url: string,
 	options: DescriptionOptions,
-): Promise<TimestampTextList> => {
-	const res = await client.api.generate.description[id].$post({
+): Promise<TimestampText[]> => {
+	const res = await client.api.generate.description[':id'].$post({
+		param: {
+			id,
+		},
 		json: { url: url.length > 0 ? url : 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', options },
 	});
 	if (!res.ok) {
 		throw new Error(`${res.status} ${res.statusText}`);
 	}
-	return res.json() as Promise<TimestampTextList>;
+	return res.json() as Promise<TimestampText[]>;
 };
 
 export const generateMetadata = async (id: string, url: string): Promise<VideoMetadata> => {
@@ -44,27 +48,33 @@ export const generateMetadata = async (id: string, url: string): Promise<VideoMe
 
 export const generateCommentary = async (
 	id: string,
-	description: TimestampTextList,
+	description: TimestampText[],
 	options: CommentaryOptions,
-): Promise<TimestampTextList> => {
-	const res = await client.api.generate.commentary[id].$post({
+): Promise<TimestampText[]> => {
+	const res = await client.api.generate.commentary[':id'].$post({
+		param: {
+			id,
+		},
 		json: { description, options },
 	});
 	if (!res.ok) {
 		throw new Error(`${res.status} ${res.statusText}`);
 	}
-	return res.json() as Promise<TimestampTextList>;
+	return res.json() as Promise<TimestampText[]>;
 };
 
 export const generateVideo = async (
 	id: string,
-	commentary: TimestampTextList,
+	commentary: TimestampText[],
 	options: VideoOptions,
 ): Promise<{ videoId: string; audioIds: string[] }> => {
 	if (!commentary) {
 		throw new Error('No commentary data provided');
 	}
-	const res = await client.api.generate.video[id].$post({
+	const res = await client.api.generate.video[':id'].$post({
+		param: {
+			id,
+		},
 		json: { commentary, options },
 	});
 	if (!res.ok) {
@@ -76,8 +86,10 @@ export const generateVideo = async (
 };
 
 export const fetchVideoGenState = async (id: string): Promise<VideoGenState> => {
-	const res = await client.api.fetch.videoGenState[id].$get({
-		query: { id },
+	const res = await client.api.fetch.videoGenState[':id'].$get({
+		param: {
+			id,
+		},
 	});
 	if (!res.ok) {
 		throw new Error(`${res.status} ${res.statusText}`);
@@ -86,7 +98,10 @@ export const fetchVideoGenState = async (id: string): Promise<VideoGenState> => 
 };
 
 export const createVideoGenState = async (id: string): Promise<VideoGenState> => {
-	const res = await client.api.createVideoGenState[id].$post({
+	const res = await client.api.createVideoGenState[':id'].$post({
+		param: {
+			id,
+		},
 		json: { id },
 	});
 	if (!res.ok) {
@@ -95,19 +110,21 @@ export const createVideoGenState = async (id: string): Promise<VideoGenState> =>
 	return res.json() as Promise<VideoGenState>;
 };
 
-export const fetchVideoIds = async (): Promise<string[]> => {
-	const res = await client.api.fetch.videoIds.$get({
+export const fetchAllVideoGenStates = async (): Promise<VideoGenState[]> => {
+	const res = await client.api.fetch.videoGenStates.$get({
 		headers: { 'Content-Type': 'application/json' },
 	});
 	if (!res.ok) {
 		throw new Error(`${res.status} ${res.statusText}`);
 	}
-	return res.json() as Promise<string[]>;
+	return res.json() as Promise<VideoGenState[]>;
 };
 
 export const fetchFile = async (id: string): Promise<Blob> => {
-	const res = await client.api.fetch.file[id].$get({
-		query: { id },
+	const res = await client.api.fetch.file[':id'].$get({
+		param: {
+			id,
+		},
 	});
 	if (!res.ok) {
 		throw new Error(`${res.status} ${res.statusText}`);

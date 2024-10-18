@@ -1,28 +1,20 @@
 import { Icons } from '@/components/icons';
 import JsonEditor from '@/components/JsonEditor';
-import { TimestampTextList } from '@/lib/schema';
+import { TimestampText } from '@shared/types/api/schema';
 
 type StepTransitionProps = {
-	data: TimestampTextList | null;
-	jsonEditorTitle: string | null;
-	onUpdate: ((updatedData: TimestampTextList) => void) | null;
+	data: TimestampText[];
+	jsonEditorTitle: string;
+	onUpdate: (data: TimestampText[]) => void;
 };
 
-function StepTransition({ data, jsonEditorTitle, onUpdate }: StepTransitionProps) {
+export default function StepTransition({ data, jsonEditorTitle, onUpdate }: StepTransitionProps) {
 	return (
 		<div className='flex flex-col items-center justify-center'>
 			<Icons.moveRight className='h-8 w-8' strokeWidth={0.8} color='gray' />
 			<div className='absolute pt-24'>
-				{data && data.items.length > 0 && (
-					<JsonEditor
-						title={jsonEditorTitle ?? 'Edit Data'}
-						data={data ?? null}
-						onUpdate={onUpdate as (updatedData: TimestampTextList) => void}
-					/>
-				)}
+				{data && data.length > 0 && <JsonEditor title={jsonEditorTitle} data={data} onUpdate={onUpdate} />}
 			</div>
 		</div>
 	);
 }
-
-export default StepTransition;
