@@ -1,4 +1,4 @@
-import { fetchVideoGenState, createVideoGenState } from '@/api/apiHelper';
+import { fetchVideoGenState } from '@/api/apiHelper';
 import { useEffect, useState } from 'react';
 import { VideoGenState } from '@shared/types/api/schema';
 
@@ -12,20 +12,17 @@ export const useFetchVideoGenState = (id: string) => {
 			try {
 				const fetchedData = await fetchVideoGenState(id);
 				setData(fetchedData);
+				setError(null);
 			} catch (error: any) {
 				if (error.response?.status === 404) {
-					// If not found, create a new VideoGenState
-					try {
-						const createdData = await createVideoGenState(id);
-						setData(createdData);
-					} catch (createError: any) {
-						setError(createError.message || 'Error creating VideoGenState');
-					}
+					setError('Video generation state not found');
 				} else {
 					setError(error.message || 'Error fetching VideoGenState');
 				}
+				setData(null);
+			} finally {
+				setIsLoading(false);
 			}
-			setIsLoading(false);
 		};
 		fetchData();
 	}, [id]);

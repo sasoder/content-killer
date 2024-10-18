@@ -24,7 +24,7 @@ export const generateDescription = async (
 		json: { url: url.length > 0 ? url : 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', options },
 	});
 	if (!res.ok) {
-		throw new Error(`HTTP error! status: ${res.status}`);
+		throw new Error(`${res.status} ${res.statusText}`);
 	}
 	return res.json() as Promise<TimestampTextList>;
 };
@@ -37,7 +37,7 @@ export const generateMetadata = async (id: string, url: string): Promise<VideoMe
 		json: { url },
 	});
 	if (!res.ok) {
-		throw new Error(`HTTP error! status: ${res.status}`);
+		throw new Error(`${res.status} ${res.statusText}`);
 	}
 	return res.json() as Promise<VideoMetadata>;
 };
@@ -51,7 +51,7 @@ export const generateCommentary = async (
 		json: { description, options },
 	});
 	if (!res.ok) {
-		throw new Error(`HTTP error! status: ${res.status}`);
+		throw new Error(`${res.status} ${res.statusText}`);
 	}
 	return res.json() as Promise<TimestampTextList>;
 };
@@ -68,7 +68,7 @@ export const generateVideo = async (
 		json: { commentary, options },
 	});
 	if (!res.ok) {
-		throw new Error(`HTTP error! status: ${res.status}`);
+		throw new Error(`${res.status} ${res.statusText}`);
 	}
 	const data = await res.json();
 	console.log(data);
@@ -80,7 +80,7 @@ export const fetchVideoGenState = async (id: string): Promise<VideoGenState> => 
 		query: { id },
 	});
 	if (!res.ok) {
-		throw new Error('Failed to fetch video gen state');
+		throw new Error(`${res.status} ${res.statusText}`);
 	}
 	return res.json() as Promise<VideoGenState>;
 };
@@ -90,7 +90,7 @@ export const createVideoGenState = async (id: string): Promise<VideoGenState> =>
 		json: { id },
 	});
 	if (!res.ok) {
-		throw new Error('Failed to create video gen state');
+		throw new Error(`${res.status} ${res.statusText}`);
 	}
 	return res.json() as Promise<VideoGenState>;
 };
@@ -100,7 +100,7 @@ export const fetchVideoIds = async (): Promise<string[]> => {
 		headers: { 'Content-Type': 'application/json' },
 	});
 	if (!res.ok) {
-		throw new Error('Failed to fetch video ids');
+		throw new Error(`${res.status} ${res.statusText}`);
 	}
 	return res.json() as Promise<string[]>;
 };
@@ -110,7 +110,7 @@ export const fetchFile = async (id: string): Promise<Blob> => {
 		query: { id },
 	});
 	if (!res.ok) {
-		throw new Error('Failed to fetch file');
+		throw new Error(`${res.status} ${res.statusText}`);
 	}
 	return res.blob();
 };

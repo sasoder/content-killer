@@ -9,78 +9,91 @@ import { Icons } from '@/components/icons';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Button } from '@/components/ui/button';
 import { Link, useParams } from 'react-router-dom';
+import { HTTPError } from '@/components/HTTPError';
+import { Header } from '@/components/layout/Header';
 
 const GeneratePageContent = () => {
-	const { description, commentary, audioIds, videoId, updateDescription, updateCommentary, metadata } = useVideoGen();
+	const {
+		description,
+		commentary,
+		audioIds,
+		videoId,
+		updateDescription,
+		updateCommentary,
+		metadata,
+		isLoading,
+		error,
+	} = useVideoGen();
+
+	if (isLoading) {
+		return (
+			<div className='flex h-screen items-center justify-center'>
+				<Icons.loader className='h-8 w-8 animate-spin' />
+			</div>
+		);
+	}
+
+	if (error) {
+		return <HTTPError error={error} />;
+	}
 
 	return (
-		<main className='container mx-auto space-y-8 p-4'>
-			<div className='flex flex-row items-center justify-center gap-4 pt-2'>
-				<div className='absolute left-0 top-0 m-4'>
-					<Link to='/new'>
-						<Button variant='ghost' size='icon'>
-							<Icons.chevronLeft className='h-[1.5rem] w-[1.5rem] -translate-x-[0.075rem]' />
-						</Button>
-					</Link>
+		<>
+			<Header title={metadata?.title || 'Content Killer'} showBackButton backTo='/new' />
+			<main className='container mx-auto space-y-8 p-4'>
+				<div className='flex flex-row items-stretch justify-center gap-4'>
+					<StepCard
+						title='Description'
+						content={<GenerateDescription />}
+						info='This step generates a comprehensive description of the video, with timestamps for all the pivotal moments in the video.'
+					/>
+
+					{description?.items?.length > 0 && (
+						<>
+							<StepTransition data={description} jsonEditorTitle='Edit Description Data' onUpdate={updateDescription} />
+
+							<StepCard
+								title='Commentary'
+								content={<GenerateCommentary />}
+								info='This step generates a commentary for the video at all the pivotal moments in the video.'
+							/>
+						</>
+					)}
+
+					{commentary?.items?.length > 0 && (
+						<>
+							<StepTransition data={commentary} jsonEditorTitle='Edit Commentary Data' onUpdate={updateCommentary} />
+
+							<StepCard
+								title='Video'
+								content={<GenerateVideo />}
+								info='This step generates the final video with the specified options and commentary.'
+							/>
+						</>
+					)}
+
+					{audioIds?.length > 0 && videoId && (
+						<>
+							<StepTransition data={null} jsonEditorTitle={null} onUpdate={null} />
+
+							<StepCard
+								title='Download'
+								content={<FileDownloader />}
+								info='This step downloads the generated video and audio files.'
+							/>
+						</>
+					)}
 				</div>
-				<div className='absolute right-0 top-0 m-4'>
-					<ModeToggle />
+
+				<div>
+					<p className='text-sm text-gray-500'>
+						This app uses Gemini 1.5 Pro to generate a description of the provided video. The description is then used
+						to create a commentary at all pivotal moments in the video with GPT 4o mini. This commentary is sent to
+						Elevenlabs and made into audio files.
+					</p>
 				</div>
-				<h1 className='flex items-center justify-center text-3xl'>{metadata?.title || 'Content Killer'}</h1>
-			</div>
-
-			<div className='flex flex-row items-stretch justify-center gap-4'>
-				<StepCard
-					title='Description'
-					content={<GenerateDescription />}
-					info='This step generates a comprehensive description of the video, with timestamps for all the pivotal moments in the video.'
-				/>
-
-				{description?.items?.length > 0 && (
-					<>
-						<StepTransition data={description} jsonEditorTitle='Edit Description Data' onUpdate={updateDescription} />
-
-						<StepCard
-							title='Commentary'
-							content={<GenerateCommentary />}
-							info='This step generates a commentary for the video at all the pivotal moments in the video.'
-						/>
-					</>
-				)}
-
-				{commentary?.items?.length > 0 && (
-					<>
-						<StepTransition data={commentary} jsonEditorTitle='Edit Commentary Data' onUpdate={updateCommentary} />
-
-						<StepCard
-							title='Video'
-							content={<GenerateVideo />}
-							info='This step generates the final video with the specified options and commentary.'
-						/>
-					</>
-				)}
-
-				{audioIds?.length > 0 && videoId && (
-					<>
-						<StepTransition data={null} jsonEditorTitle={null} onUpdate={null} />
-
-						<StepCard
-							title='Download'
-							content={<FileDownloader />}
-							info='This step downloads the generated video and audio files.'
-						/>
-					</>
-				)}
-			</div>
-
-			<div>
-				<p className='text-sm text-gray-500'>
-					This app uses Gemini 1.5 Pro to generate a description of the provided video. The description is then used to
-					create a commentary at all pivotal moments in the video with GPT 4o mini. This commentary is sent to
-					Elevenlabs and made into audio files.
-				</p>
-			</div>
-		</main>
+			</main>
+		</>
 	);
 };
 

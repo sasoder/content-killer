@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { VideoMetadata, VideoGenState } from '@shared/types/api/schema';
 import { createDefaultVideoGenState } from '@/lib/defaultVideoGenState';
+import { generateProjectId } from '@/lib/util';
 
 const DATA_DIR = './data';
 const DB_PATH = path.join(DATA_DIR, 'projects.db');
@@ -47,9 +48,7 @@ class ProjectStorage {
 	async getProject(id: string): Promise<Project | null> {
 		const row = this.db.query('SELECT * FROM projects WHERE id = ?').get(id) as any;
 		if (!row) {
-			console.log('creating project', id);
-			await this.createProject(id);
-			return this.getProject(id);
+			return null;
 		}
 		return {
 			id: row.id,
