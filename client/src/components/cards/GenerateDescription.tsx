@@ -14,12 +14,12 @@ import { Icons } from '@/components/icons';
 export default function GenerateDescription() {
 	const { toast } = useToast();
 	const { updateDescription, updateMetadata, metadata, id, options } = useVideoGen();
-	const [url, setUrl] = useState<string>(metadata?.url || '');
+	const [url, setUrl] = useState<string>('');
 	const [isLoading, setIsLoading] = useState(false);
 	const [descriptionOptions, setDescriptionOptions] = useState(options.description);
 
 	useEffect(() => {
-		if (metadata) {
+		if (metadata?.url) {
 			setUrl(metadata.url);
 		}
 	}, [metadata]);
@@ -40,7 +40,7 @@ export default function GenerateDescription() {
 		try {
 			const newData = await generateDescription(id, url, descriptionOptions);
 			updateDescription(newData);
-			if (url && url.length > 0) {
+			if (url) {
 				const fetchedMetadata: VideoMetadata = await generateMetadata(id, url);
 				updateMetadata(fetchedMetadata);
 			}
@@ -77,7 +77,7 @@ export default function GenerateDescription() {
 				<p className='mt-2 text-sm text-gray-500'>
 					Enter the URL of the YouTube video you want to generate a description for.
 				</p>
-				{metadata && metadata.title && metadata.duration && (
+				{metadata?.title && metadata?.duration && (
 					<div className='mt-4'>
 						<Separator />
 						<p className='text-sm text-gray-500'>Title: {metadata.title}</p>

@@ -8,6 +8,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import '@fontsource/nunito';
 import './index.css';
+import { HTTPError } from '@/components/HTTPError';
 
 const router = createBrowserRouter([
 	{
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
 	{
 		path: '/new',
 		element: <New />,
+	},
+	{
+		path: '*',
+		element: <HTTPError error='404: Not found' />,
 	},
 ]);
 
