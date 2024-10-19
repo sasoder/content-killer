@@ -13,7 +13,6 @@ const GenerateVideo = () => {
 	const { commentary, id, updateVideoId, updateAudioIds, options } = useVideoGen();
 	const [isLoading, setIsLoading] = useState(false);
 	const [videoOptions, setVideoOptions] = useState<VideoOptions>(options.video);
-	console.log(commentary);
 
 	const generateVideoFile = async (options: VideoOptions) => {
 		try {

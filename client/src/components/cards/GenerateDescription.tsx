@@ -27,7 +27,7 @@ export default function GenerateDescription() {
 	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
-		if (!validateUrl(url) && !options.description.sample) {
+		if (!validateUrl(url) && !descriptionOptions.sample) {
 			toast({
 				title: 'Invalid URL',
 				description: 'Please enter a valid URL.',

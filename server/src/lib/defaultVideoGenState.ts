@@ -15,8 +15,8 @@ export const createDefaultVideoGenState = (id: string): VideoGenState => {
 		videoId: '',
 		metadata: {
 			url: '',
-			title: 'New Project',
-			duration: '0:00',
+			title: 'Untitled Project',
+			duration: '',
 			createdAt: new Date().toISOString(),
 		},
 		options: {

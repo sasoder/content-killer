@@ -4,14 +4,14 @@ import { projectStorage } from '@/database/projectStorage';
 const fetchRouter = new Hono()
 	.get('/videoGenStates', async c => {
 		const videoGenStates = await projectStorage.getAllVideoGenStates();
-		return c.json(videoGenStates);
+		const sortedVideoGenStates = videoGenStates.sort((a, b) => {
+			return new Date(b.metadata.createdAt).getTime() - new Date(a.metadata.createdAt).getTime();
+		});
+		return c.json(sortedVideoGenStates);
 	})
 	.get('/videoGenState/:id', async c => {
 		const id = c.req.param('id');
 		const project = await projectStorage.getProject(id);
-		console.log('---------------------------------');
-		console.log('id', id, 'project', project);
-		console.log('---------------------------------');
 		if (!project) {
 			return c.json({ message: 'Project not found' }, 404);
 		}

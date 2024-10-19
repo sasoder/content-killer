@@ -25,11 +25,6 @@ const GeneratePageContent = () => {
 		error,
 	} = useVideoGen();
 
-	console.log(commentary);
-	console.log(audioIds);
-	console.log(videoId);
-	console.log(description);
-
 	if (isLoading) {
 		return (
 			<div className='flex h-screen items-center justify-center'>

@@ -28,7 +28,7 @@ export const generateDescription = async (
 		json: { url: url.length > 0 ? url : 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', options },
 	});
 	if (!res.ok) {
-		throw new Error(`${res.status} ${res.statusText}`);
+		throw new Error(`${res.status}: ${res.statusText}`);
 	}
 	return res.json() as Promise<TimestampText[]>;
 };
@@ -41,7 +41,7 @@ export const generateMetadata = async (id: string, url: string): Promise<VideoMe
 		json: { url },
 	});
 	if (!res.ok) {
-		throw new Error(`${res.status} ${res.statusText}`);
+		throw new Error(`${res.status}: ${res.statusText}`);
 	}
 	return res.json() as Promise<VideoMetadata>;
 };
@@ -58,7 +58,7 @@ export const generateCommentary = async (
 		json: { description, options },
 	});
 	if (!res.ok) {
-		throw new Error(`${res.status} ${res.statusText}`);
+		throw new Error(`${res.status}: ${res.statusText}`);
 	}
 	return res.json() as Promise<TimestampText[]>;
 };
@@ -78,7 +78,7 @@ export const generateVideo = async (
 		json: { commentary, options },
 	});
 	if (!res.ok) {
-		throw new Error(`${res.status} ${res.statusText}`);
+		throw new Error(`${res.status}: ${res.statusText}`);
 	}
 	const data = await res.json();
 	console.log(data);
@@ -92,7 +92,7 @@ export const fetchVideoGenState = async (id: string): Promise<VideoGenState> => 
 		},
 	});
 	if (!res.ok) {
-		throw new Error(`${res.status} ${res.statusText}`);
+		throw new Error(`${res.status}: ${res.statusText}`);
 	}
 	return res.json() as Promise<VideoGenState>;
 };
@@ -105,7 +105,7 @@ export const createVideoGenState = async (id: string): Promise<VideoGenState> =>
 		json: { id },
 	});
 	if (!res.ok) {
-		throw new Error(`${res.status} ${res.statusText}`);
+		throw new Error(`${res.status}: ${res.statusText}`);
 	}
 	return res.json() as Promise<VideoGenState>;
 };
@@ -115,7 +115,7 @@ export const fetchAllVideoGenStates = async (): Promise<VideoGenState[]> => {
 		headers: { 'Content-Type': 'application/json' },
 	});
 	if (!res.ok) {
-		throw new Error(`${res.status} ${res.statusText}`);
+		throw new Error(`${res.status}: ${res.statusText}`);
 	}
 	return res.json() as Promise<VideoGenState[]>;
 };
@@ -127,7 +127,7 @@ export const fetchFile = async (id: string): Promise<Blob> => {
 		},
 	});
 	if (!res.ok) {
-		throw new Error(`${res.status} ${res.statusText}`);
+		throw new Error(`${res.status}: ${res.statusText}`);
 	}
 	return res.blob();
 };

@@ -44,6 +44,7 @@ const generateRouter = new Hono()
 		if (project) {
 			project.description = description;
 			project.options.description = options;
+			project.metadata = { ...project.metadata, url };
 			await projectStorage.updateProjectState(project);
 		}
 		return c.json(description);
