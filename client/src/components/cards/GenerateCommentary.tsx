@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useVideoGen } from '@/context/VideoGenContext';
 import { Button } from '@/components/ui/button';
 import { CommentaryOptions } from '@shared/types/options';

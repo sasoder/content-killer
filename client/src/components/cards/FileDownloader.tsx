@@ -1,4 +1,3 @@
-import React from 'react';
 import { Button } from '@/components/ui/button';
 import { fetchFile, fetchFiles } from '@/api/apiHelper';
 import { useVideoGen } from '@/context/VideoGenContext';
@@ -24,7 +23,7 @@ const FileDownloader = () => {
 					<Button disabled={!audioIds || audioIds.length === 0} onClick={() => fetchFiles(audioIds)}>
 						Download Audio
 					</Button>
-					<Button disabled={!videoId} onClick={() => fetchFile(videoId)}>
+					<Button disabled={!videoId} onClick={() => fetchFile(videoId ?? '')}>
 						Download Video
 					</Button>
 				</div>

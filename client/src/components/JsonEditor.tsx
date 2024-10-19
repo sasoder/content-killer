@@ -69,7 +69,6 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 
 	const handleDelete = (rowIndex: number) => {
 		const newData = [...(editedData ?? [])];
-		console.log(newData);
 		const filteredData = newData.filter((_, index) => index !== rowIndex);
 		setEditedData(filteredData);
 		handleSave(true, filteredData);

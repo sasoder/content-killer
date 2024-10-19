@@ -56,13 +56,10 @@ const generateRouter = new Hono()
 		if (project) {
 			const metadata: Partial<VideoMetadata> = await generateMetadata(url);
 			project.metadata = { ...project.metadata, ...metadata };
-			console.log('------------METADATA-------------------');
-			console.log(project.metadata);
-			console.log('------------METADATA-------------------');
 			await projectStorage.updateProjectState(project);
 			return c.json(metadata);
 		}
-		return c.json({ message: 'Project not found' }, 404);
+		return c.json({ error: 'Project not found' }, 404);
 	})
 	.post('/commentary/:id', zValidator('json', CommentaryOptionsSchema), async c => {
 		const { description, options } = c.req.valid('json');
@@ -73,7 +70,6 @@ const generateRouter = new Hono()
 			project.commentary = commentary;
 			project.description = description;
 			project.options.commentary = options;
-			console.log('options', options);
 			await projectStorage.updateProjectState(project);
 		}
 		return c.json(commentary);
@@ -99,7 +95,7 @@ const generateRouter = new Hono()
 			return c.json(project);
 		} catch (error) {
 			console.error('Error creating project:', error);
-			return c.json({ message: 'Internal server error' }, 500);
+			return c.json({ error: 'Failed to create project' }, 500);
 		}
 	});
 

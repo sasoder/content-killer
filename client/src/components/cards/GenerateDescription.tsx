@@ -1,4 +1,4 @@
-import React, { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useVideoGen } from '@/context/VideoGenContext';
 import { generateDescription, generateMetadata } from '@/api/apiHelper';

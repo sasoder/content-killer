@@ -30,14 +30,17 @@ export const generateDescription = async (
 	if (!res.ok) {
 		throw new Error(`${res.status}: ${res.statusText}`);
 	}
-	return res.json() as Promise<TimestampText[]>;
+	return res.json();
 };
 
 export const generateMetadata = async (id: string, url: string): Promise<VideoMetadata> => {
 	if (!url) {
 		throw new Error('No URL provided');
 	}
-	const res = await client.api.generate.metadata[id].$post({
+	const res = await client.api.generate.metadata[':id'].$post({
+		param: {
+			id,
+		},
 		json: { url },
 	});
 	if (!res.ok) {
@@ -81,8 +84,7 @@ export const generateVideo = async (
 		throw new Error(`${res.status}: ${res.statusText}`);
 	}
 	const data = await res.json();
-	console.log(data);
-	return { videoId: data.videoId as string, audioIds: data.audioIds as string[] };
+	return { videoId: data.videoId, audioIds: data.audioIds };
 };
 
 export const fetchVideoGenState = async (id: string): Promise<VideoGenState> => {
