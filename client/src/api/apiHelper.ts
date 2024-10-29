@@ -46,7 +46,7 @@ export const generateMetadata = async (id: string, url: string): Promise<VideoMe
 	if (!res.ok) {
 		throw new Error(`${res.status}: ${res.statusText}`);
 	}
-	return res.json() as Promise<VideoMetadata>;
+	return res.json();
 };
 
 export const generateCommentary = async (
@@ -63,7 +63,7 @@ export const generateCommentary = async (
 	if (!res.ok) {
 		throw new Error(`${res.status}: ${res.statusText}`);
 	}
-	return res.json() as Promise<TimestampText[]>;
+	return res.json();
 };
 
 export const generateVideo = async (
@@ -96,7 +96,7 @@ export const fetchVideoGenState = async (id: string): Promise<VideoGenState> => 
 	if (!res.ok) {
 		throw new Error(`${res.status}: ${res.statusText}`);
 	}
-	return res.json() as Promise<VideoGenState>;
+	return res.json();
 };
 
 export const createVideoGenState = async (id: string): Promise<VideoGenState> => {
@@ -109,7 +109,7 @@ export const createVideoGenState = async (id: string): Promise<VideoGenState> =>
 	if (!res.ok) {
 		throw new Error(`${res.status}: ${res.statusText}`);
 	}
-	return res.json() as Promise<VideoGenState>;
+	return res.json();
 };
 
 export const fetchAllVideoGenStates = async (): Promise<VideoGenState[]> => {
@@ -119,7 +119,8 @@ export const fetchAllVideoGenStates = async (): Promise<VideoGenState[]> => {
 	if (!res.ok) {
 		throw new Error(`${res.status}: ${res.statusText}`);
 	}
-	return res.json() as Promise<VideoGenState[]>;
+
+	return res.json();
 };
 
 export const fetchFile = async (id: string): Promise<Blob> => {

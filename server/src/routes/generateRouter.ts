@@ -47,7 +47,7 @@ const generateRouter = new Hono()
 			project.metadata = { ...project.metadata, url };
 			await projectStorage.updateProjectState(project);
 		}
-		return c.json(description);
+		return c.json(description ?? []);
 	})
 	.post('/metadata/:id', zValidator('json', z.object({ url: z.string() })), async c => {
 		const { url } = c.req.valid('json');

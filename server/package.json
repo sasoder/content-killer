@@ -7,6 +7,7 @@
     "dev": "bun run --hot src/index.ts"
   },
   "dependencies": {
+    "@google-cloud/vertexai": "^1.9.0",
     "@hono/zod-validator": "^0.4.1",
     "@types/node": "^22.7.6",
     "dotenv": "^16.4.5",
