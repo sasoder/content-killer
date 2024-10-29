@@ -39,7 +39,7 @@ const generateRouter = new Hono()
 	.post('/description/:id', zValidator('json', DescriptionOptionsSchema), async c => {
 		const { url, options } = c.req.valid('json');
 		const id = c.req.param('id');
-		const description = await generateDescription(id, url, options);
+		const description = await generateDescription(url, options);
 		const project = await projectStorage.getProject(id);
 		if (project) {
 			project.description = description;
