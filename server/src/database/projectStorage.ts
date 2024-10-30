@@ -40,9 +40,6 @@ class ProjectStorage {
 		if (!row) {
 			return null;
 		}
-		console.log('--------------GET PROJECT-------------------');
-		console.log(JSON.parse(row.state));
-		console.log('--------------GET PROJECT-------------------');
 		return JSON.parse(row.state);
 	}
 

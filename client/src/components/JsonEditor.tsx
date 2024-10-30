@@ -27,7 +27,11 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 		text: '',
 	});
 	const { toast } = useToast();
-	const [editedData, setEditedData] = useState<TimestampText[] | null>(data);
+	const [editedData, setEditedData] = useState(data);
+
+	useEffect(() => {
+		setEditedData(data);
+	}, [data]);
 
 	const validateTimestamp = (timestamp: string): boolean => {
 		const regex = /^(\d|[0-5]\d):([0-5]\d)$/;

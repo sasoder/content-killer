@@ -9,7 +9,6 @@ const fetchRouter = new Hono()
 	.get('/videoGenState/:id', async c => {
 		const id = c.req.param('id');
 		const project = await projectStorage.getProject(id);
-		console.log('project', project);
 		if (!project) {
 			return c.json({ message: 'Project not found' }, 404);
 		}

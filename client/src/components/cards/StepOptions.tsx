@@ -62,7 +62,7 @@ function CheckboxOption({ id, checked, onChange, label }: CheckboxOptionProps) {
 	return (
 		<div className='flex flex-row items-center gap-2'>
 			<Checkbox id={id} checked={checked} onCheckedChange={onChange} />
-			<label className='text-sm text-muted-foreground' htmlFor={id}>
+			<label className='cursor-pointer text-sm text-muted-foreground' htmlFor={id}>
 				{label}
 			</label>
 		</div>

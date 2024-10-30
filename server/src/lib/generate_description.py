@@ -4,10 +4,6 @@ import json
 from vertexai.generative_models import GenerativeModel, Part, GenerationConfig
 import vertexai
 
-# Get command line arguments
-url = sys.argv[1]
-options = json.loads(sys.argv[2])
-
 prompt = f"""Provide a detailed description of the police bodycam video. The description should be comprehensive enough to generate insightful commentary in the style of JCS Criminal Psychology, with a focus on behavioral analysis and psychological insights. 
 
 **Guidelines**:
@@ -35,16 +31,15 @@ prompt = f"""Provide a detailed description of the police bodycam video. The des
 Focus on **behavioral analysis** and **key dialogues**, capturing pivotal moments that reveal the psychology of the suspect or the tactics of the officers.
 """
 
-def generate_description(url, options):
+def generate_description(url: str, options: dict) -> list:
     vertexai.init(project=os.getenv("VERTEXAI_PROJECT_ID"))
-    model = GenerativeModel("gemini-1.5-flash-002")
-
+    
     video_file = Part.from_uri(
         uri=url,
-        mime_type="video/mp4",
+        mime_type="video/mp4"
     )
 
-    description_list_schema = {
+    schema = {
         "type": "array",
         "items": {
             "type": "object",
@@ -56,20 +51,29 @@ def generate_description(url, options):
         }
     }
 
+    model = GenerativeModel("gemini-1.5-flash-002")
     response = model.generate_content(
         [video_file, prompt],
         generation_config=GenerationConfig(
             response_mime_type="application/json",
-            response_schema=description_list_schema
+            response_schema=schema
         )
     )
-    
-    return json.loads(response.text)["items"]
+
+    try:
+        result = json.loads(response.text)
+        if not isinstance(result, list):
+            raise ValueError("Expected array response from model")
+        return result
+    except Exception as e:
+        raise ValueError(f"Error processing model response: {str(e)}")
 
 if __name__ == "__main__":
     try:
+        url = sys.argv[1]
+        options = json.loads(sys.argv[2])
         result = generate_description(url, options)
         print(json.dumps(result))
     except Exception as e:
-        print(json.dumps({"error": str(e)}), file=sys.stderr)
+        json.dump({"error": str(e)}, sys.stderr)
         sys.exit(1)

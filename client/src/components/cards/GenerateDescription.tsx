@@ -38,12 +38,12 @@ export default function GenerateDescription() {
 
 		setIsLoading(true);
 		try {
-			const newData = await generateDescription(id, url, descriptionOptions);
-			updateDescription(newData);
 			if (url) {
 				const fetchedMetadata: VideoMetadata = await generateMetadata(id, url);
 				updateMetadata(fetchedMetadata);
 			}
+			const newData = await generateDescription(id, url, descriptionOptions);
+			updateDescription(newData);
 			toast({
 				title: 'Success',
 				description: 'Description generated successfully.',
