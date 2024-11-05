@@ -64,16 +64,19 @@ const GenerateVideo = () => {
 						onOptionChange={setVideoOptions}
 						optionDefinitions={videoOptionDefinitions}
 					/>
-					<Button onClick={handleGenerate} disabled={!commentary || commentary.length === 0 || isLoading}>
-						{isLoading ? (
-							<>
-								<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />
-								Generating...
-							</>
-						) : (
-							'Generate Video'
-						)}
-					</Button>
+
+					<div className='flex justify-center'>
+						<Button onClick={handleGenerate} disabled={!commentary || commentary.length === 0 || isLoading}>
+							{isLoading ? (
+								<>
+									<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />
+									Generating...
+								</>
+							) : (
+								'Generate Video'
+							)}
+						</Button>
+					</div>
 				</div>
 			</div>
 		</div>
