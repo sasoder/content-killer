@@ -3,6 +3,7 @@ import { generateDescription } from '@/lib/generateDescription';
 import { generateMetadata } from '@/lib/generateMetadata';
 import { generateCommentary } from '@/lib/generateCommentary';
 import { generateVideo } from '@/lib/generateVideo';
+import { generateAudio } from '@/lib/generateAudio';
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/types/options';
 import { TimestampText, VideoGenState, VideoMetadata } from '@shared/types/api/schema';
 import { zValidator } from '@hono/zod-validator';
@@ -77,15 +78,27 @@ const generateRouter = new Hono()
 	.post('/video/:id', zValidator('json', VideoOptionsSchema), async c => {
 		const { commentary, options } = c.req.valid('json');
 		const id = c.req.param('id');
-		const { videoId, audioIds } = await generateVideo(commentary, options);
+
 		const project = await projectStorage.getProject(id);
-		if (project) {
-			project.videoId = videoId;
-			project.audioIds = audioIds;
-			project.commentary = commentary;
-			project.options.video = options;
-			await projectStorage.updateProjectState(project);
+		if (!project) {
+			return c.json({ error: 'Project not found' }, 404);
 		}
+
+		if (!project.metadata?.url) {
+			return c.json({ error: 'Project URL not found in metadata' }, 400);
+		}
+
+		const audioIds = await generateAudio(commentary, options.audio, project.metadata.url);
+
+		const videoId = await generateVideo(commentary, audioIds, options.video, project.metadata.url);
+
+		// Update project with all information
+		project.videoId = videoId;
+		project.audioIds = audioIds;
+		project.commentary = commentary;
+		project.options.video = options;
+		await projectStorage.updateProjectState(project);
+
 		return c.json({ videoId, audioIds });
 	})
 	.post('/project', async c => {

@@ -3,17 +3,17 @@ import { TimestampText } from '@shared/types/api/schema';
 
 export const generateVideo = async (
 	commentary: TimestampText[],
-	options: VideoOptions,
-): Promise<{ videoId: string; audioIds: string[] }> => {
+	audioIds: string[],
+	options: VideoOptions['video'],
+	url: string,
+): Promise<{ videoId: string }> => {
 	if (options.playSound) {
 		return {
 			videoId: '123',
-			audioIds: ['123', '456', '789'],
 		};
 	}
 
 	return {
 		videoId: '',
-		audioIds: [],
 	};
 };

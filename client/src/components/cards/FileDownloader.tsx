@@ -20,12 +20,16 @@ const FileDownloader = () => {
 			</div>
 			<div className='flex justify-center'>
 				<div className='flex flex-grow flex-col gap-2'>
-					<Button disabled={!audioIds || audioIds.length === 0} onClick={() => fetchFiles(audioIds)}>
-						Download Audio
-					</Button>
-					<Button disabled={!videoId} onClick={() => fetchFile(videoId ?? '')}>
-						Download Video
-					</Button>
+					<div className='flex justify-center'>
+						<Button disabled={!audioIds || audioIds.length === 0} onClick={() => fetchFiles(audioIds)}>
+							Download Audio
+						</Button>
+					</div>
+					<div className='flex justify-center'>
+						<Button disabled={!videoId} onClick={() => fetchFile(videoId ?? '')}>
+							Download Video
+						</Button>
+					</div>
 				</div>
 			</div>
 		</div>

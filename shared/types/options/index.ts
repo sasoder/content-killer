@@ -1,20 +1,21 @@
 export type DescriptionOptions = {
-  sample: boolean;
+	sample: boolean;
 };
 
 export type CommentaryOptions = {
-  intro: boolean;
-  outro: boolean;
-  temperature: number;
-};
-
-export type AudioOptions = {
-  stability: number;
+	intro: boolean;
+	outro: boolean;
+	temperature: number;
 };
 
 export type VideoOptions = {
-  bw: boolean;
-  playSound: boolean;
-  subtitlesEnabled: boolean;
-  subtitlesSize: number;
+	audio: {
+		stability: number;
+	};
+	video: {
+		bw: boolean;
+		playSound: boolean;
+		subtitlesEnabled: boolean;
+		subtitlesSize: number;
+	};
 };
