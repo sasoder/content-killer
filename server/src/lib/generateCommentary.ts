@@ -7,9 +7,13 @@ const openai = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
 });
 
-const TimestampTextSchema = z.object({
-	timestamp: z.string(),
-	text: z.string(),
+const CommentarySchema = z.object({
+	data: z.array(
+		z.object({
+			timestamp: z.string(),
+			text: z.string(),
+		}),
+	),
 });
 
 const baseSystemPrompt = `Generate concise, sharp, and psychologically insightful commentary for a police bodycam video in the style of JCS Criminal Psychology. Each commentary point must:
@@ -68,8 +72,8 @@ export const generateCommentary = async (
 			{ role: 'system', content: baseSystemPrompt },
 			{ role: 'user', content: prompt },
 		],
-		response_format: zodResponseFormat(z.array(TimestampTextSchema), 'TimestampText[]'),
+		response_format: zodResponseFormat(CommentarySchema, 'commentary'),
 	});
 
-	return completion?.choices[0]?.message?.parsed ?? [];
+	return completion.choices[0].message.parsed?.data ?? [];
 };
