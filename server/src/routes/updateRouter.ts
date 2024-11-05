@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { projectStorage } from '@/database/projectStorage';
+import { projectStorage } from '@/db/storage';
 
 const fetchRouter = new Hono()
 	.get('/videoGenStates', async c => {

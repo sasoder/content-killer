@@ -1,7 +1,8 @@
 {
   "name": "hono",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "drizzle-kit": "^0.27.1"
   },
   "scripts": {
     "dev": "bun run --hot src/index.ts"
@@ -11,6 +12,7 @@
     "@hono/zod-validator": "^0.4.1",
     "@types/node": "^22.7.6",
     "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.36.0",
     "hono": "^4.6.5",
     "openai": "^4.68.4",
     "youtube-dl-exec": "^3.0.10",

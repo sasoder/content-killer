@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { streamFile } from '@/lib/streamFile';
-import { projectStorage } from '@/database/projectStorage';
+import { projectStorage } from '@/db/storage';
 
 const fileRouter = new Hono()
 	.get('/:id/:fileName', async c => {

@@ -7,7 +7,7 @@ import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/typ
 import { TimestampText, VideoGenState, VideoMetadata } from '@shared/types/api/schema';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { projectStorage } from '@/database/projectStorage';
+import { projectStorage } from '@/db/storage';
 import { generateProjectId } from '@/lib/util';
 
 const DescriptionOptionsSchema = z.object({
