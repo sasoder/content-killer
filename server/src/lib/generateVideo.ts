@@ -6,14 +6,10 @@ export const generateVideo = async (
 	audioIds: string[],
 	options: VideoOptions['video'],
 	url: string,
-): Promise<{ videoId: string }> => {
+): Promise<string> => {
 	if (options.playSound) {
-		return {
-			videoId: '123',
-		};
+		return '123';
 	}
 
-	return {
-		videoId: '',
-	};
+	return '';
 };
