@@ -13,6 +13,7 @@
     "@types/node": "^22.7.6",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.36.0",
+    "elevenlabs": "^0.18.0",
     "hono": "^4.6.5",
     "openai": "^4.68.4",
     "youtube-dl-exec": "^3.0.10",
