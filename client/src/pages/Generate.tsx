@@ -6,8 +6,6 @@ import GenerateVideo from '@/components/cards/GenerateVideo';
 import StepTransition from '@/components/cards/StepTransition';
 import StepCard from '@/components/cards/StepCard';
 import { Icons } from '@/components/icons';
-import { ModeToggle } from '@/components/mode-toggle';
-import { Button } from '@/components/ui/button';
 import { Link, useParams } from 'react-router-dom';
 import { HTTPError } from '@/components/HTTPError';
 import { Header } from '@/components/layout/Header';

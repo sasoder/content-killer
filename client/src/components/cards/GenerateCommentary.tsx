@@ -41,7 +41,7 @@ const GenerateCommentary = () => {
 	return (
 		<div className='flex h-full flex-col'>
 			<div className='flex-grow'>
-				<QuickInfo data={description!} />
+				<QuickInfo data={description} type='description' />
 			</div>
 			<div className='flex justify-center'>
 				<div className='flex flex-grow flex-col gap-2'>

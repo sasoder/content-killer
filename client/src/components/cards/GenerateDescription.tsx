@@ -11,7 +11,7 @@ import StepOptions from '@/components/cards/StepOptions';
 import { descriptionOptionDefinitions } from '@/lib/options/optionDefinitions';
 import { Icons } from '@/components/icons';
 
-export default function GenerateDescription() {
+const GenerateDescription = () => {
 	const { toast } = useToast();
 	const { updateDescription, updateMetadata, metadata, id, options } = useVideoGen();
 	const [url, setUrl] = useState<string>('');
@@ -108,4 +108,6 @@ export default function GenerateDescription() {
 			</div>
 		</form>
 	);
-}
+};
+
+export default GenerateDescription;

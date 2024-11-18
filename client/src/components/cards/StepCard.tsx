@@ -4,11 +4,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ReactNode, Suspense } from 'react';
 import { CardSkeleton } from '@/components/skeletons/CardSkeletion';
 
-type StepCardProps = {
+interface StepCardProps {
 	title: string;
 	content: ReactNode;
 	info: string;
-};
+}
 
 function StepCard({ title, content, info }: StepCardProps) {
 	return (

@@ -8,7 +8,7 @@ import {
 	defaultVideoOptions,
 } from '@shared/types/options/defaultOptions';
 
-type VideoGenStateContext = {
+interface VideoGenStateContext {
 	id: string;
 	metadata: VideoMetadata | null;
 	description: TimestampText[];
@@ -27,7 +27,7 @@ type VideoGenStateContext = {
 	};
 	error: string | null;
 	isLoading: boolean;
-};
+}
 
 const VideoGenContext = createContext<VideoGenStateContext | undefined>(undefined);
 

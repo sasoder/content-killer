@@ -55,7 +55,7 @@ const GenerateVideo = () => {
 	return (
 		<div className='flex h-full flex-col'>
 			<div className='flex-grow'>
-				<QuickInfo data={commentary ?? []} />
+				<QuickInfo data={commentary} type='commentary' />
 			</div>
 			<div className='flex justify-center'>
 				<div className='flex flex-grow flex-col gap-2'>
