@@ -11,9 +11,9 @@ import {
 type VideoGenStateContext = {
 	id: string;
 	metadata: VideoMetadata | null;
-	description: TimestampText[] | null;
-	commentary: TimestampText[] | null;
-	audioIds: string[] | null;
+	description: TimestampText[];
+	commentary: TimestampText[];
+	audioIds: string[];
 	videoId: string | null;
 	updateDescription: (data: TimestampText[]) => void;
 	updateCommentary: (data: TimestampText[]) => void;
@@ -38,11 +38,7 @@ export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: st
 	const [audioIds, setAudioIds] = useState<string[]>([]);
 	const [videoId, setVideoId] = useState<string | null>(null);
 	const [metadata, setMetadata] = useState<VideoMetadata | null>(null);
-	const [options, setOptions] = useState<{
-		description: DescriptionOptions;
-		commentary: CommentaryOptions;
-		video: VideoOptions;
-	}>({
+	const [options, setOptions] = useState({
 		description: defaultDescriptionOptions,
 		commentary: defaultCommentaryOptions,
 		video: defaultVideoOptions,
