@@ -11,7 +11,7 @@ export type CommentaryOptions = {
 export type VideoOptions = {
 	audio: {
 		stability: number;
-		voiceId: string;
+		// voiceId: string;
 	};
 	video: {
 		bw: boolean;

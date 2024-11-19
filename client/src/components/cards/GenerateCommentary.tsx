@@ -49,6 +49,7 @@ const GenerateCommentary = () => {
 						options={commentaryOptions}
 						onOptionChange={setCommentaryOptions}
 						optionDefinitions={commentaryOptionDefinitions}
+						type='commentary'
 					/>
 					<div className='flex justify-center'>
 						<Button onClick={handleGenerate} disabled={!description || isLoading}>

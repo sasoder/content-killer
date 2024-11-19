@@ -3,19 +3,20 @@ import { Slider } from '@/components/ui/slider';
 import { Option } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 
-type StepOptionsProps<T> = {
+interface StepOptionsProps<T> {
 	options: T;
 	optionDefinitions: { [K in keyof T]: Option };
 	onOptionChange: React.Dispatch<React.SetStateAction<T>>;
-};
+	type: string;
+}
 
-function StepOptions<T>({ options, optionDefinitions, onOptionChange }: StepOptionsProps<T>) {
+function StepOptions<T>({ options, optionDefinitions, onOptionChange, type }: StepOptionsProps<T>) {
 	return (
 		<div className='flex flex-col gap-0 py-4'>
-			<p className='text-sm text-muted-foreground'>Options</p>
+			<p className='text-sm capitalize text-muted-foreground'>{type} options</p>
 			<Separator />
 			<div className='flex flex-col gap-4'>
-				{(Object.keys(options) as Array<keyof T>).map(key => {
+				{(Object.keys(options as object) as Array<keyof T>).map(key => {
 					const definition = optionDefinitions[key];
 					const value = options[key];
 					if (definition.type === 'checkbox' && typeof value === 'boolean') {

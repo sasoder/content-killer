@@ -10,7 +10,7 @@ const client = new ElevenLabsClient({
 const generateSingleAudio = async (text: string, options: VideoOptions['audio']): Promise<Buffer> => {
 	try {
 		const audio = await client.generate({
-			voice: options.voiceId,
+			voice: options.voiceId ?? 'asd',
 			model_id: 'eleven_turbo_v2',
 			text,
 			voice_settings: {

@@ -91,6 +91,7 @@ const GenerateDescription = () => {
 						options={descriptionOptions}
 						onOptionChange={setDescriptionOptions}
 						optionDefinitions={descriptionOptionDefinitions}
+						type='description'
 					/>
 					<div className='flex justify-center'>
 						<Button type='submit' disabled={isLoading}>

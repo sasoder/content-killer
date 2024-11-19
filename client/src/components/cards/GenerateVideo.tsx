@@ -16,7 +16,7 @@ const GenerateVideo = () => {
 
 	const generateVideoFile = async (options: VideoOptions) => {
 		try {
-			const { videoId, audioIds } = await generateVideo(id, commentary!, options);
+			const { videoId, audioIds } = await generateVideo(id, commentary, options);
 			updateVideoId(videoId);
 			updateAudioIds(audioIds);
 		} catch (error) {
@@ -60,9 +60,27 @@ const GenerateVideo = () => {
 			<div className='flex justify-center'>
 				<div className='flex flex-grow flex-col gap-2'>
 					<StepOptions
-						options={videoOptions}
-						onOptionChange={setVideoOptions}
-						optionDefinitions={videoOptionDefinitions}
+						options={videoOptions.video}
+						onOptionChange={newOptions =>
+							setVideoOptions({
+								...videoOptions,
+								video: newOptions as VideoOptions['video'],
+							})
+						}
+						optionDefinitions={videoOptionDefinitions.video}
+						type='video'
+					/>
+
+					<StepOptions
+						options={videoOptions.audio}
+						onOptionChange={newOptions =>
+							setVideoOptions({
+								...videoOptions,
+								audio: newOptions as VideoOptions['audio'],
+							})
+						}
+						optionDefinitions={videoOptionDefinitions.audio}
+						type='audio'
 					/>
 
 					<div className='flex justify-center'>

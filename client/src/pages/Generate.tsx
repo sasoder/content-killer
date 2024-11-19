@@ -46,7 +46,7 @@ const GeneratePageContent = () => {
 						info='This step generates a comprehensive description of the video, with timestamps for all the pivotal moments in the video.'
 					/>
 
-					{description && description.length > 0 && (
+					{description.length > 0 && (
 						<>
 							<StepTransition data={description} jsonEditorTitle='Edit Description Data' onUpdate={updateDescription} />
 
@@ -58,7 +58,7 @@ const GeneratePageContent = () => {
 						</>
 					)}
 
-					{commentary && commentary.length > 0 && (
+					{commentary.length > 0 && (
 						<>
 							<StepTransition data={commentary} jsonEditorTitle='Edit Commentary Data' onUpdate={updateCommentary} />
 
@@ -70,7 +70,7 @@ const GeneratePageContent = () => {
 						</>
 					)}
 
-					{audioIds && audioIds.length > 0 && videoId && (
+					{audioIds.length > 0 && videoId && (
 						<>
 							<StepTransition data={[]} jsonEditorTitle='' onUpdate={() => {}} />
 
