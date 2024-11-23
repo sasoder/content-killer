@@ -10,7 +10,7 @@ const client = new ElevenLabsClient({
 const generateSingleAudio = async (text: string, options: VideoOptions['audio']): Promise<Buffer> => {
 	try {
 		const audio = await client.generate({
-			voice: options.voiceId ?? 'asd',
+			voice: options.voiceId ?? 'nPczCjzI2devNBz1zQrb',
 			model_id: 'eleven_turbo_v2',
 			text,
 			voice_settings: {
@@ -33,9 +33,9 @@ const generateSingleAudio = async (text: string, options: VideoOptions['audio'])
 };
 
 export const generateAudio = async (
+	id: string,
 	commentary: TimestampText[],
 	options: VideoOptions['audio'],
-	url: string,
 ): Promise<string[]> => {
 	try {
 		const audioPromises = commentary.map(async entry => {
@@ -44,7 +44,7 @@ export const generateAudio = async (
 
 			const buffer = await generateSingleAudio(entry.text, options);
 
-			await projectStorage.saveFile(url, filename, buffer);
+			await projectStorage.saveFile(id, filename, buffer);
 
 			return filename;
 		});

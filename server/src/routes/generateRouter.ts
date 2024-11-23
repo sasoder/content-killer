@@ -87,19 +87,22 @@ const generateRouter = new Hono()
 		if (!project.metadata?.url) {
 			return c.json({ error: 'Project URL not found in metadata' }, 400);
 		}
+		try {
+			const audioIds = await generateAudio(id, commentary, options.audio);
 
-		const audioIds = await generateAudio(commentary, options.audio, project.metadata.url);
+			const videoId = await generateVideo(id, commentary, audioIds, options.video, project.metadata.url);
 
-		const videoId = await generateVideo(commentary, audioIds, options.video, project.metadata.url);
+			// Update project with all information
+			project.videoId = videoId;
+			project.audioIds = audioIds;
+			project.commentary = commentary;
+			project.options.video = options;
+			await projectStorage.updateProjectState(project);
 
-		// Update project with all information
-		project.videoId = videoId;
-		project.audioIds = audioIds;
-		project.commentary = commentary;
-		project.options.video = options;
-		await projectStorage.updateProjectState(project);
-
-		return c.json({ videoId, audioIds });
+			return c.json({ videoId, audioIds });
+		} catch (error) {
+			return c.json({ error: `Failed to generate video: ${error}` }, 500);
+		}
 	})
 	.post('/project', async c => {
 		try {
