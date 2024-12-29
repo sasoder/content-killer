@@ -8,10 +8,16 @@ export type CommentaryOptions = {
 	temperature: number;
 };
 
+export type Voice = {
+	id: string;
+	name: string;
+	previewUrl?: string;
+};
+
 export type VideoOptions = {
 	audio: {
 		stability: number;
-		// voiceId: string;
+		voiceId: string;
 	};
 	video: {
 		bw: boolean;

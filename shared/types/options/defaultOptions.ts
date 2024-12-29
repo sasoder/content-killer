@@ -13,7 +13,7 @@ export const defaultCommentaryOptions: CommentaryOptions = {
 export const defaultVideoOptions: VideoOptions = {
 	audio: {
 		stability: 0.7,
-		// voiceId: '',
+		voiceId: 'nPczCjzI2devNBz1zQrb',
 	},
 	video: {
 		bw: true,

@@ -1,5 +1,9 @@
 import { Hono } from 'hono';
 import { projectStorage } from '@/db/storage';
+import { Voice } from '@shared/types/options';
+import { ElevenLabsClient } from 'elevenlabs';
+
+const client = new ElevenLabsClient();
 
 const fetchRouter = new Hono()
 	.get('/videoGenStates', async c => {
@@ -36,6 +40,21 @@ const fetchRouter = new Hono()
 		} catch (error) {
 			console.error('Error uploading file:', error);
 			return c.json({ message: 'Internal server error' }, 500);
+		}
+	}).get('/voices', async c => {
+		try {
+			const voices = await client.voices.getAll();
+			const formattedVoices: Voice[] = voices.voices
+				.filter(voice => voice.voice_id && voice.name)
+				.map(voice => ({
+					id: voice.voice_id,
+					name: voice.name || 'Unnamed Voice',
+					previewUrl: voice.preview_url,
+				}));
+			return c.json(formattedVoices);
+		} catch (error) {
+			console.error('Error fetching voices:', error);
+			return c.json({ error: 'Failed to fetch voices' }, 500);
 		}
 	});
 
