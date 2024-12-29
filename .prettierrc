@@ -1,5 +1,4 @@
 {
-	"plugins": ["prettier-plugin-tailwindcss"],
 	"arrowParens": "avoid",
 	"bracketSpacing": true,
 	"endOfLine": "lf",
@@ -12,5 +11,13 @@
 	"singleQuote": true,
 	"tabWidth": 2,
 	"trailingComma": "all",
-	"useTabs": true
+	"useTabs": true,
+	"overrides": [
+		{
+			"files": ["client/**/*.{js,jsx,ts,tsx}"],
+			"options": {
+				"plugins": ["prettier-plugin-tailwindcss"]
+			}
+		}
+	]
 }
