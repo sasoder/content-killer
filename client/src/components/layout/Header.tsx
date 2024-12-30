@@ -26,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBackButton = false, b
 			<div className='absolute right-0 top-0 m-4'>
 				<ModeToggle />
 			</div>
-			{title && <h1 className='flex items-center justify-center pt-2 text-3xl'>{title}</h1>}
+			{title && <h1 className='text-foreground flex items-center justify-center pt-2 text-2xl'>{title}</h1>}
 		</div>
 	);
 };
