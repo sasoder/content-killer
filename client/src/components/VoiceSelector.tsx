@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFetchVoices } from '@/hooks/useFetchVoices';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Icons } from '@/components/icons';
@@ -21,7 +14,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({ value, onValueChange }) =
 
 	if (error) {
 		return (
-			<div className='flex items-center gap-2 text-sm text-destructive'>
+			<div className='text-destructive flex items-center gap-2 text-sm'>
 				<Icons.alertTriangle className='h-4 w-4' />
 				Failed to load voices
 			</div>
@@ -57,4 +50,4 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({ value, onValueChange }) =
 	);
 };
 
-export default VoiceSelector; 
+export default VoiceSelector;

@@ -42,4 +42,7 @@ ehthumbs.db
 Thumbs.db
 
 # Project specific
-data/ 
+data/
+
+# ffmpeg testing
+ffmpeg-test/

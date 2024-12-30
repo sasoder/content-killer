@@ -58,7 +58,7 @@ const StepOptions = <T extends Record<string, any>>({
 
 					if (definition.type === 'number') {
 						return (
-							<div key={key} className='space-y-2'>
+							<div key={key} className='flex flex-col gap-0'>
 								<Label htmlFor={`${type}-${key}`} className='text-sm font-medium'>
 									{definition.label}
 								</Label>
