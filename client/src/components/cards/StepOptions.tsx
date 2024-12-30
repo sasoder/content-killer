@@ -1,105 +1,88 @@
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Option } from '@/lib/types';
+import { OptionDefinition } from '@/lib/options/optionDefinitions';
+import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
 interface StepOptionsProps<T> {
 	options: T;
-	optionDefinitions: { [K in keyof T]: Option };
-	onOptionChange: React.Dispatch<React.SetStateAction<T>>;
+	onOptionChange: (options: T) => void;
+	optionDefinitions: Record<keyof T, OptionDefinition>;
 	type: string;
 }
 
-function StepOptions<T>({ options, optionDefinitions, onOptionChange, type }: StepOptionsProps<T>) {
+const StepOptions = <T extends Record<string, any>>({
+	options,
+	onOptionChange,
+	optionDefinitions,
+	type,
+}: StepOptionsProps<T>) => {
+	const handleOptionChange = (key: keyof T, value: any) => {
+		onOptionChange({
+			...options,
+			[key]: value,
+		});
+	};
+
 	return (
-		<div className='flex flex-col gap-0 py-4'>
-			<p className='text-sm capitalize text-muted-foreground'>{type} options</p>
-			<Separator />
-			<div className='flex flex-col gap-4'>
-				{(Object.keys(options as object) as Array<keyof T>).map(key => {
-					const definition = optionDefinitions[key];
+		<div className='flex flex-col gap-2'>
+			<div className='flex flex-col'>
+				<div className='text-muted-foreground text-sm font-medium capitalize'>{type} Options</div>
+				<Separator className='my-1' />
+			</div>
+
+			<div className='flex flex-col gap-2'>
+				{Object.entries(optionDefinitions).map(([key, definition]) => {
 					const value = options[key];
-					if (definition.type === 'checkbox' && typeof value === 'boolean') {
+
+					if (definition.type === 'boolean') {
 						return (
-							<CheckboxOption
-								key={key as string}
-								id={key as string}
-								checked={value}
-								onChange={checked => onOptionChange({ ...options, [key]: checked })}
-								label={definition.label}
-							/>
+							<div key={key} className='flex items-center space-x-2'>
+								<Checkbox
+									id={`${type}-${key}`}
+									checked={value}
+									onCheckedChange={checked => handleOptionChange(key, checked)}
+								/>
+								<Label
+									htmlFor={`${type}-${key}`}
+									className={cn(
+										'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+									)}
+								>
+									{definition.label}
+								</Label>
+							</div>
 						);
 					}
 
-					if (definition.type === 'slider' && typeof value === 'number') {
+					if (definition.type === 'number') {
 						return (
-							<SliderOption
-								key={key as string}
-								id={key as string}
-								value={value}
-								onChange={newValue => onOptionChange({ ...options, [key]: newValue })}
-								min={definition.min}
-								max={definition.max}
-								step={definition.step}
-								label={definition.label}
-							/>
+							<div key={key} className='space-y-2'>
+								<Label htmlFor={`${type}-${key}`} className='text-sm font-medium'>
+									{definition.label}
+								</Label>
+								<div className='flex items-center gap-4'>
+									<Slider
+										id={`${type}-${key}`}
+										min={definition.min}
+										max={definition.max}
+										step={definition.step}
+										value={[value]}
+										onValueChange={([newValue]) => handleOptionChange(key, newValue)}
+									/>
+									<span className='text-muted-foreground w-12 text-sm tabular-nums'>{value}</span>
+								</div>
+							</div>
 						);
 					}
 
+					// skip string type options as they are handled separately
 					return null;
 				})}
 			</div>
 		</div>
 	);
-}
-interface CheckboxOptionProps {
-	id: string;
-	checked: boolean;
-	onChange: (checked: boolean) => void;
-	label: string;
-}
-
-function CheckboxOption({ id, checked, onChange, label }: CheckboxOptionProps) {
-	return (
-		<div className='flex flex-row items-center gap-2'>
-			<Checkbox id={id} checked={checked} onCheckedChange={onChange} />
-			<label className='cursor-pointer text-sm text-muted-foreground' htmlFor={id}>
-				{label}
-			</label>
-		</div>
-	);
-}
-interface SliderOptionProps {
-	id: string;
-	min: number;
-	max: number;
-	step: number;
-	value: number;
-	onChange: (value: number) => void;
-	label: string;
-}
-
-function SliderOption({ id, min, max, step, value, onChange, label }: SliderOptionProps) {
-	return (
-		<div className='flex w-full flex-col gap-1'>
-			<label className='text-sm text-muted-foreground' htmlFor={id}>
-				{label}: {value}
-			</label>
-			<div className='flex w-full flex-row items-center justify-between gap-4'>
-				<div className='text-sm text-muted-foreground'>{min}</div>
-				<Slider
-					className='cursor-pointer'
-					id={id}
-					min={min}
-					max={max}
-					step={step}
-					value={[value]}
-					onValueChange={values => onChange(values[0])}
-				/>
-				<div className='text-sm text-muted-foreground'>{max}</div>
-			</div>
-		</div>
-	);
-}
+};
 
 export default StepOptions;
