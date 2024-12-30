@@ -1,7 +1,0 @@
-# deps
-node_modules/
-
-.env
-.
-data/
-python_env/
