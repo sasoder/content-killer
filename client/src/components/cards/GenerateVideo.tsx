@@ -102,7 +102,7 @@ const GenerateVideo = () => {
 						</div>
 					</div>
 
-					<div className='flex justify-center'>
+					<div className='flex justify-center pt-2'>
 						<Button onClick={handleGenerate} disabled={!commentary || commentary.length === 0 || isLoading}>
 							{isLoading ? (
 								<>

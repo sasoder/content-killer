@@ -87,7 +87,7 @@ const GenerateDescription = () => {
 				)}
 			</div>
 			<div className='flex justify-center'>
-				<div className='flex flex-grow flex-col gap-2'>
+				<div className='flex flex-grow flex-col gap-4'>
 					<StepOptions
 						options={descriptionOptions}
 						onOptionChange={setDescriptionOptions}
