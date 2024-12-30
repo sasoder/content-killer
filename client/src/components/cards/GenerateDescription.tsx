@@ -10,13 +10,14 @@ import { Separator } from '@/components/ui/separator';
 import StepOptions from '@/components/cards/StepOptions';
 import { descriptionOptionDefinitions } from '@/lib/options/optionDefinitions';
 import { Icons } from '@/components/icons';
+import { DescriptionOptions } from '@shared/types/options';
 
 const GenerateDescription = () => {
 	const { toast } = useToast();
 	const { updateDescription, updateMetadata, metadata, id, options } = useVideoGen();
 	const [url, setUrl] = useState<string>('');
 	const [isLoading, setIsLoading] = useState(false);
-	const [descriptionOptions, setDescriptionOptions] = useState(options.description);
+	const [descriptionOptions, setDescriptionOptions] = useState<DescriptionOptions>(options.description);
 
 	useEffect(() => {
 		if (metadata?.url) {

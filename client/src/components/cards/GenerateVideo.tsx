@@ -8,6 +8,7 @@ import { videoOptionDefinitions } from '@/lib/options/optionDefinitions';
 import StepOptions from '@/components/cards/StepOptions';
 import QuickInfo from '@/components/QuickInfo';
 import { generateVideo } from '@/api/apiHelper';
+import VoiceSelector from '@/components/VoiceSelector';
 
 const GenerateVideo = () => {
 	const { commentary, id, updateVideoId, updateAudioIds, options } = useVideoGen();
@@ -23,6 +24,7 @@ const GenerateVideo = () => {
 			console.error('Error generating video:', error);
 		}
 	};
+
 	const handleGenerate = async () => {
 		if (!commentary || commentary.length === 0) {
 			toast({
@@ -71,17 +73,34 @@ const GenerateVideo = () => {
 						type='video'
 					/>
 
-					<StepOptions
-						options={videoOptions.audio}
-						onOptionChange={newOptions =>
-							setVideoOptions({
-								...videoOptions,
-								audio: newOptions as VideoOptions['audio'],
-							})
-						}
-						optionDefinitions={videoOptionDefinitions.audio}
-						type='audio'
-					/>
+					<div className='flex flex-col gap-2'>
+						<StepOptions
+							options={videoOptions.audio}
+							onOptionChange={newOptions =>
+								setVideoOptions({
+									...videoOptions,
+									audio: newOptions as VideoOptions['audio'],
+								})
+							}
+							optionDefinitions={videoOptionDefinitions.audio}
+							type='audio'
+						/>
+						<div className='flex flex-col gap-2'>
+							<label className='text-sm font-medium'>Voice</label>
+							<VoiceSelector
+								value={videoOptions.audio.voiceId}
+								onValueChange={voiceId =>
+									setVideoOptions({
+										...videoOptions,
+										audio: {
+											...videoOptions.audio,
+											voiceId,
+										},
+									})
+								}
+							/>
+						</div>
+					</div>
 
 					<div className='flex justify-center'>
 						<Button onClick={handleGenerate} disabled={!commentary || commentary.length === 0 || isLoading}>
