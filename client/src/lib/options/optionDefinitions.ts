@@ -7,6 +7,7 @@ export type OptionDefinition = {
 	min?: number;
 	max?: number;
 	step?: number;
+	options?: string[];
 };
 
 type OptionsDefinitionMap<T> = {
@@ -87,6 +88,12 @@ export const videoOptionDefinitions: VideoOptionDefinitions = {
 			min: 8,
 			max: 32,
 			step: 2,
+		},
+		size: {
+			label: 'Size',
+			description: 'The size of the output video.',
+			type: 'string',
+			options: ['720p', '1080p', 'source'],
 		},
 	},
 };

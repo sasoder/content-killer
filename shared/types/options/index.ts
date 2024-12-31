@@ -24,5 +24,6 @@ export type VideoOptions = {
 		playSound: boolean;
 		subtitlesEnabled: boolean;
 		subtitlesSize: number;
+		size: '720p' | '1080p' | 'source';
 	};
 };
