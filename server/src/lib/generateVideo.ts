@@ -1,18 +1,17 @@
-import { VideoOptions } from '@shared/types/options';
-import { TimestampText } from '@shared/types/api/schema';
-import { create } from 'youtube-dl-exec';
 import ffmpeg from 'fluent-ffmpeg';
-import { projectStorage } from '@/db/storage';
+import fs from 'fs/promises';
 import path from 'path';
+import OpenAI from 'openai';
 
-const ytDl = create(process.env.YT_DLP_PATH || 'yt-dlp');
+const openai = new OpenAI({
+	apiKey: process.env.OPENAI_API_KEY,
+});
 
 /*
 Video Processor with Timed Audio Pauses
 
 Input Files:
-- source.mp4: Silent source video
-- audio.m4a: Main audio track for the source video
+- source.mp4: source video
 - XXXX.mp3: Audio files where XXXX is timestamp in seconds (e.g., 0000.mp3 plays at 0:00)
 
 Processing Logic:
@@ -89,12 +88,72 @@ const getScaleFilter = (size: string) => {
 	}
 };
 
+async function extractAudio(videoPath: string, outputPath: string): Promise<string> {
+	return new Promise((resolve, reject) => {
+		ffmpeg()
+			.input(videoPath)
+			.toFormat('mp3')
+			.output(outputPath)
+			.on('end', () => resolve(outputPath))
+			.on('error', err => reject(err))
+			.run();
+	});
+}
+
+async function generateSubtitles(videoPath: string, srtPath: string): Promise<string> {
+	console.log('Generating subtitles...');
+	// first extract audio from video
+	const audioPath = videoPath.replace(/\.[^/.]+$/, '.mp3');
+	await extractAudio(videoPath, audioPath);
+
+	// read the audio file
+	const audioFile = await fs.readFile(audioPath);
+
+	// create a file object from the audio buffer
+	const audioBlob = new Blob([audioFile], { type: 'audio/mp3' });
+	const file = new File([audioBlob], 'audio.mp3', { type: 'audio/mp3' });
+
+	// call whisper api with srt format
+	const transcript = await openai.audio.transcriptions.create({
+		file: file,
+		model: 'whisper-1',
+		language: 'en',
+		response_format: 'srt',
+	});
+
+	// write srt file
+	await fs.writeFile(srtPath, transcript);
+
+	// clean up temporary audio file
+	await fs.unlink(audioPath);
+
+	return srtPath;
+}
+
+async function addSubtitles(videoPath: string, srtPath: string, outputPath: string, size: number): Promise<string> {
+	return new Promise((resolve, reject) => {
+		ffmpeg()
+			.input(videoPath)
+			.videoFilters([`subtitles=${srtPath}:force_style='FontSize=${size}'`])
+			.output(outputPath)
+			.on('end', () => resolve(outputPath))
+			.on('error', err => reject(err))
+			.run();
+	});
+}
+
 async function generateVideo(
 	sourceVideo: string,
 	outputPath: string,
 	pauseAudio: string,
-	options: { bw: boolean; playSound: boolean; size: '720p' | '1080p' | 'source' },
+	options: {
+		bw: boolean;
+		playSound: boolean;
+		size: '720p' | '1080p' | 'source';
+		subtitlesEnabled: boolean;
+	},
 ) {
+	console.log('Generating video...');
 	const directory = path.dirname(sourceVideo);
 	const overlays = await findOverlayAudios(directory);
 	const originalVideoLength = await getMediaDuration(sourceVideo);
@@ -142,13 +201,13 @@ async function generateVideo(
 				// mix pause sound and delayed overlay audio
 				filterComplex.push(`[pause${i}][delay${i}]amix=inputs=2:duration=longest[af${i}]`);
 			} else {
-				// Just use overlay audio directly if no pause sound
+				// just use overlay audio directly if no pause sound
 				filterComplex.push(`[${i + 1}:a]asetpts=PTS-STARTPTS[af${i}]`);
 			}
 
 			streams.push(`[vf${i}][af${i}]`);
 
-			// Next segment if not last overlay
+			// next segment if not last overlay
 			const nextTs = i < overlays.length - 1 ? overlays[i + 1].timestampSeconds : originalVideoLength;
 			if (nextTs > overlay.timestampSeconds + 0.04) {
 				filterComplex.push(
@@ -159,7 +218,7 @@ async function generateVideo(
 			}
 		});
 
-		// Concatenate all segments
+		// concatenate all segments
 		filterComplex.push(`${streams.join('')}concat=n=${streams.length}:v=1:a=1[outv][outa]`);
 
 		command
@@ -174,11 +233,27 @@ async function generateVideo(
 
 async function main() {
 	try {
-		const output = await generateVideo('source.mp4', 'output.mp4', 'pause.wav', {
-			bw: false,
-			playSound: false,
+		const srtPath = 'subtitles.srt';
+		const subtitledVideoPath = 'subtitled.mp4';
+
+		// generate subtitles with whisper
+		await generateSubtitles('source.mp4', srtPath);
+
+		// add subtitles to video
+		await addSubtitles('source.mp4', srtPath, subtitledVideoPath, 26);
+
+		// continue with existing pause/overlay processing
+		const output = await generateVideo(subtitledVideoPath, 'output.mp4', 'pause.wav', {
+			bw: true,
+			playSound: true,
 			size: '720p',
+			subtitlesEnabled: false,
 		});
+
+		// clean up intermediate files
+		await fs.unlink(srtPath);
+		await fs.unlink(subtitledVideoPath);
+
 		console.log('Done:', output);
 	} catch (err) {
 		console.error('Failed:', err);
