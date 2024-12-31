@@ -7,82 +7,135 @@ import path from 'path';
 
 const ytDl = create(process.env.YT_DLP_PATH || 'yt-dlp');
 
-export const generateVideo = async (
-	id: string,
-	commentary: TimestampText[],
-	audioIds: string[],
-	options: VideoOptions['video'],
-	url: string,
-): Promise<string> => {
-	const videoPath = path.join('data', id, 'source.mp4');
-	await ytDl(url, {
-		output: videoPath,
-		format: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4',
-		mergeOutputFormat: 'mp4',
-	});
+/*
+Video Processor with Timed Audio Pauses
 
-	let filterComplex = '[0:v]';
-	let segments = '';
+Input Files:
+- source.mp4: Silent source video
+- audio.m4a: Main audio track for the source video
+- XXXX.mp3: Audio files where XXXX is timestamp in seconds (e.g., 0000.mp3 plays at 0:00)
 
-	const sortedCommentary = [...commentary].sort((a, b) => timeToSeconds(a.timestamp) - timeToSeconds(b.timestamp));
+Processing Logic:
+1. Video plays synchronized with audio.m4a until reaching a timestamp marked by XXXX.mp3
+2. At each XXXX timestamp:
+  - Video frame pauses (stays visible) and main audio pauses
+  - XXXX.mp3 plays completely over the paused frame
+  - Video and main audio resume from paused position
+3. Timestamps refer to original video time - if 0003.mp3 is 2s long and 0004.mp3 is 1s:
+  - Video plays 0:00-0:03
+  - Pauses for 2s for 0003.mp3
+  - Plays 1s more (reaching 0:04 in original time)
+  - Pauses for 1s for 0004.mp3
+  - Continues to end
 
-	// filter segments for each pause point
-	for (let i = 0; i < sortedCommentary.length; i++) {
-		const { timestamp } = sortedCommentary[i];
-		const audioFile = `${timestamp.replace(':', '')}.mp3`;
+Output:
+output.mp4 with duration = original_length + sum(overlay_audio_lengths)
 
-		if (!audioIds.includes(audioFile)) continue;
+Assumptions: 4-digit timestamp naming convention, valid audio files
+*/
 
-		const seconds = timeToSeconds(timestamp);
-		const audioPath = path.join('data', id, audioFile);
-		const audioDuration = await getAudioDuration(audioPath);
-
-		// split at timestamp, freeze frame, apply b&w if needed
-		segments += `split[main${i}][freeze${i}];`;
-		segments += `[freeze${i}]freeze,`;
-		if (options.bw) {
-			segments += `hue=s=0,`;
-		}
-		segments += `setpts=PTS-STARTPTS+${seconds}/TB[frozen${i}];`;
-
-		// prepare for next iteration
-		filterComplex += segments;
-		filterComplex += `[main${i}]`;
-		segments = '';
-	}
-
-	const outputPath = path.join('data', id, 'output.mp4');
-
-	return new Promise((resolve, reject) => {
-		const command = ffmpeg(videoPath);
-
-		// add audio inputs
-		audioIds.forEach(audioId => {
-			command.input(path.join('data', id, audioId));
-		});
-
-		command
-			.complexFilter(filterComplex)
-			.outputOptions(['-c:v libx264', '-c:a aac'])
-			.output(outputPath)
-			.on('end', () => resolve('output.mp4'))
-			.on('error', err => reject(err))
-			.run();
-	});
-};
-
-// convert timestamp (MM:SS) to seconds
-function timeToSeconds(timestamp: string): number {
-	const [minutes, seconds] = timestamp.split(':').map(Number);
-	return minutes * 60 + seconds;
+interface AudioOverlay {
+	timestamp: string;
+	timestampSeconds: number;
+	duration: number;
+	filepath: string;
 }
 
-// get audio duration using ffprobe
-function getAudioDuration(filepath: string): Promise<number> {
+function parseTimestamp(timestamp: string): number {
+	return parseInt(timestamp, 10);
+}
+
+async function getMediaDuration(filepath: string): Promise<number> {
 	return new Promise((resolve, reject) => {
 		ffmpeg.ffprobe(filepath, (err, metadata) => {
-			if (err) reject(err);
+			if (err) return reject(err);
 			resolve(metadata.format.duration || 0);
 		});
 	});
 }
+
+async function findOverlayAudios(directory: string): Promise<AudioOverlay[]> {
+	const files = await fs.readdir(directory);
+	const overlays: AudioOverlay[] = [];
+
+	for (const file of files) {
+		if (file.match(/^\d{4}\.mp3$/)) {
+			const timestamp = file.slice(0, 4);
+			const filepath = path.join(directory, file);
+			const duration = await getMediaDuration(filepath);
+			const timestampSeconds = parseTimestamp(timestamp);
+			overlays.push({
+				timestamp,
+				timestampSeconds,
+				duration,
+				filepath,
+			});
+		}
+	}
+
+	return overlays.sort((a, b) => a.timestampSeconds - b.timestampSeconds);
+}
+
+async function generateVideo(sourceVideo: string, mainAudio: string, outputPath: string) {
+	const directory = path.dirname(sourceVideo);
+	const overlays = await findOverlayAudios(directory);
+	const originalVideoLength = await getMediaDuration(sourceVideo);
+
+	return new Promise<string>((resolve, reject) => {
+		const command = ffmpeg();
+		command.input(sourceVideo);
+		command.input(mainAudio);
+		overlays.forEach(o => command.input(o.filepath));
+
+		const filterComplex: string[] = [];
+		const streams: string[] = [];
+
+		// Initial segment before first overlay
+		if (overlays[0].timestampSeconds > 0) {
+			filterComplex.push(`[0:v]trim=0:${overlays[0].timestampSeconds},setpts=PTS-STARTPTS[v0]`);
+			filterComplex.push(`[1:a]atrim=0:${overlays[0].timestampSeconds},asetpts=PTS-STARTPTS[a0]`);
+			streams.push('[v0][a0]');
+		}
+
+		// Process each overlay and segment after it
+		overlays.forEach((overlay, i) => {
+			// Freeze frame with overlay audio
+			filterComplex.push(
+				`[0:v]trim=${overlay.timestampSeconds}:${overlay.timestampSeconds + 0.1},setpts=PTS-STARTPTS,` +
+					`fps=1,tpad=stop_mode=clone:stop_duration=${overlay.duration}[vf${i}]`,
+			);
+			filterComplex.push(`[${i + 2}:a]asetpts=PTS-STARTPTS[af${i}]`);
+			streams.push(`[vf${i}][af${i}]`);
+
+			// Next segment if not last overlay
+			const nextTs = i < overlays.length - 1 ? overlays[i + 1].timestampSeconds : originalVideoLength;
+			if (nextTs > overlay.timestampSeconds) {
+				filterComplex.push(`[0:v]trim=${overlay.timestampSeconds}:${nextTs},setpts=PTS-STARTPTS[v${i + 1}]`);
+				filterComplex.push(`[1:a]atrim=${overlay.timestampSeconds}:${nextTs},asetpts=PTS-STARTPTS[a${i + 1}]`);
+				streams.push(`[v${i + 1}][a${i + 1}]`);
+			}
+		});
+
+		// Concatenate all segments
+		filterComplex.push(`${streams.join('')}concat=n=${streams.length}:v=1:a=1[outv][outa]`);
+
+		command
+			.complexFilter(filterComplex, ['outv', 'outa'])
+			.outputOptions(['-c:v', 'libx264', '-c:a', 'aac', '-vsync', '1', '-y'])
+			.output(outputPath)
+			.on('end', () => resolve(outputPath))
+			.on('error', err => reject(err))
+			.run();
+	});
+}
+
+async function main() {
+	try {
+		const output = await generateVideo('source.mp4', 'audio.m4a', 'output.mp4');
+		console.log('Done:', output);
+	} catch (err) {
+		console.error('Failed:', err);
+	}
+}
+
+main();
