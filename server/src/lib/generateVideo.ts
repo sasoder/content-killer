@@ -102,12 +102,20 @@ async function generateVideo(
 	return new Promise<string>((resolve, reject) => {
 		const command = ffmpeg();
 		command.input(sourceVideo);
+
+		// add all overlay audio files as inputs
 		overlays.forEach(o => command.input(o.filepath));
+
+		// add pause sound as last input if enabled
+		if (options.playSound) {
+			command.input(pauseAudio);
+		}
 
 		const filterComplex: string[] = [];
 		const streams: string[] = [];
+		const pauseInputIndex = overlays.length + 1;
 
-		// output video size based on option
+		// get scale filter based on size option
 		const scaleFilter = getScaleFilter(options.size);
 
 		// initial segment before first overlay (if there is one)
@@ -119,16 +127,28 @@ async function generateVideo(
 
 		// process each overlay and segment after it
 		overlays.forEach((overlay, i) => {
-			// freeze frame with overlay audio
+			// freeze frame
 			filterComplex.push(
 				`[0:v]trim=${overlay.timestampSeconds}:${overlay.timestampSeconds + 0.04},setpts=PTS-STARTPTS,` +
-					`tpad=stop_mode=clone:stop_duration=${overlay.duration}` +
+					`tpad=stop_mode=clone:stop_duration=${overlay.duration + (options.playSound ? 0.5 : 0)}` +
 					`${options.bw ? ',hue=s=0:b=0' : ''}${scaleFilter}[vf${i}]`,
 			);
-			filterComplex.push(`[${i + 1}:a]asetpts=PTS-STARTPTS[af${i}]`);
+
+			if (options.playSound) {
+				// pause sound
+				filterComplex.push(`[${pauseInputIndex}:a]asetpts=PTS-STARTPTS[pause${i}]`);
+				// overlay audio delayed by pause sound duration
+				filterComplex.push(`[${i + 1}:a]asetpts=PTS-STARTPTS,adelay=500|500[delay${i}]`);
+				// mix pause sound and delayed overlay audio
+				filterComplex.push(`[pause${i}][delay${i}]amix=inputs=2:duration=longest[af${i}]`);
+			} else {
+				// Just use overlay audio directly if no pause sound
+				filterComplex.push(`[${i + 1}:a]asetpts=PTS-STARTPTS[af${i}]`);
+			}
+
 			streams.push(`[vf${i}][af${i}]`);
 
-			// next segment if not last overlay
+			// Next segment if not last overlay
 			const nextTs = i < overlays.length - 1 ? overlays[i + 1].timestampSeconds : originalVideoLength;
 			if (nextTs > overlay.timestampSeconds + 0.04) {
 				filterComplex.push(
@@ -139,7 +159,7 @@ async function generateVideo(
 			}
 		});
 
-		// concatenate all segments
+		// Concatenate all segments
 		filterComplex.push(`${streams.join('')}concat=n=${streams.length}:v=1:a=1[outv][outa]`);
 
 		command
@@ -155,8 +175,8 @@ async function generateVideo(
 async function main() {
 	try {
 		const output = await generateVideo('source.mp4', 'output.mp4', 'pause.wav', {
-			bw: true,
-			playSound: true,
+			bw: false,
+			playSound: false,
 			size: '720p',
 		});
 		console.log('Done:', output);
