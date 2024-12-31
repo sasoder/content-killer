@@ -76,7 +76,24 @@ async function findOverlayAudios(directory: string): Promise<AudioOverlay[]> {
 	return overlays.sort((a, b) => a.timestampSeconds - b.timestampSeconds);
 }
 
-async function generateVideo(sourceVideo: string, mainAudio: string, outputPath: string) {
+const getScaleFilter = (size: string) => {
+	switch (size) {
+		case 'source':
+			return '';
+		case '720p':
+			return ',scale=-2:720';
+		case '1080p':
+			return ',scale=-2:1080';
+		default:
+			return '';
+	}
+};
+
+async function generateVideo(
+	sourceVideo: string,
+	outputPath: string,
+	options: { bw: boolean; playSound: boolean; size: '720p' | '1080p' | 'source' },
+) {
 	const directory = path.dirname(sourceVideo);
 	const overlays = await findOverlayAudios(directory);
 	const originalVideoLength = await getMediaDuration(sourceVideo);
@@ -84,16 +101,18 @@ async function generateVideo(sourceVideo: string, mainAudio: string, outputPath:
 	return new Promise<string>((resolve, reject) => {
 		const command = ffmpeg();
 		command.input(sourceVideo);
-		command.input(mainAudio);
 		overlays.forEach(o => command.input(o.filepath));
 
 		const filterComplex: string[] = [];
 		const streams: string[] = [];
 
+		// Set video size based on option
+		const scaleFilter = getScaleFilter(options.size);
+
 		// Initial segment before first overlay
 		if (overlays[0].timestampSeconds > 0) {
-			filterComplex.push(`[0:v]trim=0:${overlays[0].timestampSeconds},setpts=PTS-STARTPTS[v0]`);
-			filterComplex.push(`[1:a]atrim=0:${overlays[0].timestampSeconds},asetpts=PTS-STARTPTS[a0]`);
+			filterComplex.push(`[0:v]trim=0:${overlays[0].timestampSeconds},setpts=PTS-STARTPTS${scaleFilter}[v0]`);
+			filterComplex.push(`[0:a]atrim=0:${overlays[0].timestampSeconds},asetpts=PTS-STARTPTS[a0]`);
 			streams.push('[v0][a0]');
 		}
 
@@ -102,16 +121,19 @@ async function generateVideo(sourceVideo: string, mainAudio: string, outputPath:
 			// Freeze frame with overlay audio
 			filterComplex.push(
 				`[0:v]trim=${overlay.timestampSeconds}:${overlay.timestampSeconds + 0.1},setpts=PTS-STARTPTS,` +
-					`fps=1,tpad=stop_mode=clone:stop_duration=${overlay.duration}[vf${i}]`,
+					`tpad=stop_mode=clone:stop_duration=${overlay.duration}` +
+					`${options.bw ? ',hue=s=0:b=0' : ''}${scaleFilter}[vf${i}]`,
 			);
-			filterComplex.push(`[${i + 2}:a]asetpts=PTS-STARTPTS[af${i}]`);
+			filterComplex.push(`[${i + 1}:a]asetpts=PTS-STARTPTS[af${i}]`);
 			streams.push(`[vf${i}][af${i}]`);
 
 			// Next segment if not last overlay
 			const nextTs = i < overlays.length - 1 ? overlays[i + 1].timestampSeconds : originalVideoLength;
 			if (nextTs > overlay.timestampSeconds) {
-				filterComplex.push(`[0:v]trim=${overlay.timestampSeconds}:${nextTs},setpts=PTS-STARTPTS[v${i + 1}]`);
-				filterComplex.push(`[1:a]atrim=${overlay.timestampSeconds}:${nextTs},asetpts=PTS-STARTPTS[a${i + 1}]`);
+				filterComplex.push(
+					`[0:v]trim=${overlay.timestampSeconds}:${nextTs},setpts=PTS-STARTPTS${scaleFilter}[v${i + 1}]`,
+				);
+				filterComplex.push(`[0:a]atrim=${overlay.timestampSeconds}:${nextTs},asetpts=PTS-STARTPTS[a${i + 1}]`);
 				streams.push(`[v${i + 1}][a${i + 1}]`);
 			}
 		});
@@ -131,7 +153,11 @@ async function generateVideo(sourceVideo: string, mainAudio: string, outputPath:
 
 async function main() {
 	try {
-		const output = await generateVideo('source.mp4', 'audio.m4a', 'output.mp4');
+		const output = await generateVideo('source.mp4', 'output.mp4', {
+			bw: true,
+			playSound: true,
+			size: '720p',
+		});
 		console.log('Done:', output);
 	} catch (err) {
 		console.error('Failed:', err);
