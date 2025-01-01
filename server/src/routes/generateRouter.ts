@@ -36,7 +36,23 @@ const VideoOptionsSchema = z.object({
 	options: z.custom<VideoOptions>(),
 });
 
+const ProjectOptionsSchema = z.object({
+	configId: z.string().optional(),
+});
+
 const generateRouter = new Hono()
+	.post('/project', zValidator('json', ProjectOptionsSchema), async c => {
+		const { configId } = c.req.valid('json');
+		const id = generateProjectId();
+
+		let optionConfig;
+		if (configId) {
+			optionConfig = await projectStorage.getOptionConfig(configId);
+		}
+
+		const project = await projectStorage.createProject(id, optionConfig);
+		return c.json(project);
+	})
 	.post('/description/:id', zValidator('json', DescriptionOptionsSchema), async c => {
 		const { url, options } = c.req.valid('json');
 		const id = c.req.param('id');
@@ -79,39 +95,23 @@ const generateRouter = new Hono()
 		const { commentary, options } = c.req.valid('json');
 		const id = c.req.param('id');
 
-		const project = await projectStorage.getProject(id);
-		if (!project) {
-			return c.json({ error: 'Project not found' }, 404);
-		}
-
-		if (!project.metadata?.url) {
-			return c.json({ error: 'Project URL not found in metadata' }, 400);
-		}
 		try {
 			const audioIds = await generateAudio(id, commentary, options.audio);
+			const videoId = await generateVideo(id, commentary, options);
 
-			const videoId = await generateVideo(id, commentary, audioIds, options.video, project.metadata.url);
-
-			// Update project with all information
-			project.videoId = videoId;
-			project.audioIds = audioIds;
-			project.commentary = commentary;
-			project.options.video = options;
-			await projectStorage.updateProjectState(project);
+			const project = await projectStorage.getProject(id);
+			if (project) {
+				project.commentary = commentary;
+				project.audioIds = audioIds;
+				project.videoId = videoId;
+				project.options.video = options;
+				await projectStorage.updateProjectState(project);
+			}
 
 			return c.json({ videoId, audioIds });
 		} catch (error) {
-			return c.json({ error: `Failed to generate video: ${error}` }, 500);
-		}
-	})
-	.post('/project', async c => {
-		try {
-			const newId = generateProjectId();
-			const project = await projectStorage.createProject(newId);
-			return c.json(project);
-		} catch (error) {
-			console.error('Error creating project:', error);
-			return c.json({ error: 'Failed to create project' }, 500);
+			console.error('Error generating video:', error);
+			return c.json({ error: 'Failed to generate video' }, 500);
 		}
 	});
 

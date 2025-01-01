@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { VideoGenState, TimestampText, VideoMetadata } from '@shared/types/api/schema';
-import { useFetchVideoGenState } from '@/hooks/useFetchVideoGenState';
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/types/options';
 import {
 	defaultCommentaryOptions,
 	defaultDescriptionOptions,
 	defaultVideoOptions,
 } from '@shared/types/options/defaultOptions';
+import { useQuery } from '@tanstack/react-query';
+import { fetchVideoGenState } from '@/api/apiHelper';
 
 interface VideoGenStateContext {
 	id: string;
@@ -32,7 +33,10 @@ interface VideoGenStateContext {
 const VideoGenContext = createContext<VideoGenStateContext | undefined>(undefined);
 
 export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: string }) => {
-	const { data, isLoading, error } = useFetchVideoGenState(id);
+	const { data, isLoading, error } = useQuery({
+		queryKey: ['videoGenState', id],
+		queryFn: () => fetchVideoGenState(id),
+	});
 	const [description, setDescription] = useState<TimestampText[]>([]);
 	const [commentary, setCommentary] = useState<TimestampText[]>([]);
 	const [audioIds, setAudioIds] = useState<string[]>([]);
@@ -75,8 +79,8 @@ export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: st
 				updateVideoId,
 				updateMetadata,
 				options,
-				error,
-				isLoading,
+				error: error ? error.message : null,
+				isLoading: isLoading,
 			}}
 		>
 			{children}

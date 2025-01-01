@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { projectStorage } from '@/db/storage';
 import { Voice } from '@shared/types/options';
 import { ElevenLabsClient } from 'elevenlabs';
+import { OptionConfig } from '@shared/types/options/config';
 
 const client = new ElevenLabsClient();
 
@@ -21,27 +22,34 @@ const fetchRouter = new Hono()
 		}
 		return c.json(project);
 	})
-	.post('/:id/:fileName', async c => {
-		const id = c.req.param('id');
-		const fileName = c.req.param('fileName');
-
+	.get('/optionConfigs', async c => {
 		try {
-			const formData = await c.req.formData();
-			const file = formData.get('file') as File;
-
-			if (!file) {
-				return c.json({ message: 'No file uploaded' }, 400);
-			}
-
-			const buffer = await file.arrayBuffer();
-			await projectStorage.saveFile(id, fileName, Buffer.from(buffer));
-
-			return c.json({ message: 'File uploaded successfully' }, 201);
+			const configs = await projectStorage.getAllOptionConfigs();
+			return c.json(configs);
 		} catch (error) {
-			console.error('Error uploading file:', error);
-			return c.json({ message: 'Internal server error' }, 500);
+			console.error('Error fetching option configs:', error);
+			return c.json({ message: 'Failed to fetch option configs' }, 500);
 		}
-	}).get('/voices', async c => {
+	})
+	.get('/optionConfig/:id', async c => {
+		const id = c.req.param('id');
+		const config = await projectStorage.getOptionConfig(id);
+		if (!config) {
+			return c.json({ message: 'Option config not found' }, 404);
+		}
+		return c.json(config);
+	})
+	.post('/optionConfig', async c => {
+		try {
+			const config = await c.req.json<OptionConfig>();
+			await projectStorage.createOptionConfig(config);
+			return c.json(config, 201);
+		} catch (error) {
+			console.error('Error creating option config:', error);
+			return c.json({ message: 'Failed to create option config' }, 500);
+		}
+	})
+	.get('/voices', async c => {
 		try {
 			const voices = await client.voices.getAll();
 			const formattedVoices: Voice[] = voices.voices
@@ -57,19 +65,5 @@ const fetchRouter = new Hono()
 			return c.json({ error: 'Failed to fetch voices' }, 500);
 		}
 	});
-
-function getContentType(fileName: string): string {
-	const extension = fileName.split('.').pop()?.toLowerCase();
-	switch (extension) {
-		case 'mp4':
-			return 'video/mp4';
-		case 'mp3':
-			return 'audio/mpeg';
-		case 'wav':
-			return 'audio/wav';
-		default:
-			return 'application/octet-stream';
-	}
-}
 
 export { fetchRouter };

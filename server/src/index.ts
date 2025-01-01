@@ -1,20 +1,11 @@
 import { Hono } from 'hono';
-import { logger } from 'hono/logger';
-import { generateRouter } from '@/routes/generateRouter';
 import { cors } from 'hono/cors';
-import { fileRouter } from '@/routes/fileRouter';
-import { fetchRouter } from '@/routes/fetchRouter';
-const app = new Hono().use(logger()).use(cors());
+import { router, RouterType } from './routes';
 
-app.get('/', c => {
-	return c.text('Hello Hono!');
-});
+const app = new Hono();
 
-const apiRoutes = app
-	.basePath('/api')
-	.route('/generate', generateRouter)
-	.route('/file', fileRouter)
-	.route('/fetch', fetchRouter);
+app.use('*', cors());
+app.route('/api', router);
 
-export type AppType = typeof apiRoutes;
+export type AppType = RouterType;
 export default app;

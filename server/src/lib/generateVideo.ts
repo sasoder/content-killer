@@ -142,7 +142,7 @@ async function addSubtitles(videoPath: string, srtPath: string, outputPath: stri
 	});
 }
 
-async function generateVideo(
+export async function generateVideo(
 	sourceVideo: string,
 	outputPath: string,
 	pauseAudio: string,
@@ -253,11 +253,7 @@ async function main() {
 		// clean up intermediate files
 		await fs.unlink(srtPath);
 		await fs.unlink(subtitledVideoPath);
-
-		console.log('Done:', output);
 	} catch (err) {
 		console.error('Failed:', err);
 	}
 }
-
-main();

@@ -1,144 +1,231 @@
-import { TimestampText, VideoGenState, VideoMetadata } from '@shared/types/api/schema';
-import { CommentaryOptions, DescriptionOptions, VideoOptions } from '@shared/types/options';
-import { hc } from 'hono/client';
-import { AppType } from '@shared/server/index';
+import { VideoGenState, TimestampText, VideoMetadata } from '@shared/types/api/schema';
+import { OptionConfig } from '@shared/types/options/config';
+import { CommentaryOptions, DescriptionOptions, VideoOptions, Voice } from '@shared/types/options';
 
-const client = hc<AppType>(import.meta.env.VITE_APP_HONO_API_URL);
+const API_BASE = import.meta.env.VITE_APP_API_BASE;
 
-export const createProject = async (): Promise<VideoGenState> => {
-	const res = await client.api.generate.project.$post({
-		json: {},
+export async function createProject(): Promise<VideoGenState> {
+	const response = await fetch(`${API_BASE}/generate/project`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({}),
 	});
-	if (!res.ok) {
+	if (!response.ok) {
 		throw new Error('Failed to create project');
 	}
-	const data = await res.json();
-	return data as VideoGenState;
-};
+	return response.json();
+}
 
-export const generateDescription = async (
+export async function generateDescription(
 	id: string,
 	url: string,
 	options: DescriptionOptions,
-): Promise<TimestampText[]> => {
-	const res = await client.api.generate.description[':id'].$post({
-		param: {
-			id,
+): Promise<TimestampText[]> {
+	const response = await fetch(`${API_BASE}/generate/description/${id}`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
 		},
-		json: { url: url.length > 0 ? url : 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', options },
+		body: JSON.stringify({ url: url.length > 0 ? url : 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', options }),
 	});
-	if (!res.ok) {
-		throw new Error(`${res.status}: ${res.statusText}`);
+	if (!response.ok) {
+		throw new Error('Failed to generate description');
 	}
-	return res.json();
-};
+	return response.json();
+}
 
-export const generateMetadata = async (id: string, url: string): Promise<VideoMetadata> => {
+export async function generateMetadata(id: string, url: string): Promise<VideoMetadata> {
 	if (!url) {
 		throw new Error('No URL provided');
 	}
-	const res = await client.api.generate.metadata[':id'].$post({
-		param: {
-			id,
+	const response = await fetch(`${API_BASE}/generate/metadata/${id}`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
 		},
-		json: { url },
+		body: JSON.stringify({ url }),
 	});
-	if (!res.ok) {
-		throw new Error(`${res.status}: ${res.statusText}`);
+	if (!response.ok) {
+		throw new Error('Failed to generate metadata');
 	}
-	return res.json();
-};
+	return response.json();
+}
 
-export const generateCommentary = async (
+export async function generateCommentary(
 	id: string,
 	description: TimestampText[],
 	options: CommentaryOptions,
-): Promise<TimestampText[]> => {
-	const res = await client.api.generate.commentary[':id'].$post({
-		param: {
-			id,
+): Promise<TimestampText[]> {
+	const response = await fetch(`${API_BASE}/generate/commentary/${id}`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
 		},
-		json: { description, options },
+		body: JSON.stringify({ description, options }),
 	});
-	if (!res.ok) {
-		throw new Error(`${res.status}: ${res.statusText}`);
+	if (!response.ok) {
+		throw new Error('Failed to generate commentary');
 	}
-	return res.json();
-};
+	return response.json();
+}
 
-export const generateVideo = async (
+export async function generateVideo(
 	id: string,
 	commentary: TimestampText[],
 	options: VideoOptions,
-): Promise<{ videoId: string; audioIds: string[] }> => {
+): Promise<{ videoId: string; audioIds: string[] }> {
 	if (!commentary) {
 		throw new Error('No commentary data provided');
 	}
-	const res = await client.api.generate.video[':id'].$post({
-		param: {
-			id,
+	const response = await fetch(`${API_BASE}/generate/video/${id}`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
 		},
-		json: { commentary, options },
+		body: JSON.stringify({ commentary, options }),
 	});
-	if (!res.ok) {
-		throw new Error(`${res.status}: ${res.statusText}`);
+	if (!response.ok) {
+		throw new Error('Failed to generate video');
 	}
-	const data = await res.json();
-	return { videoId: data.videoId, audioIds: data.audioIds };
-};
+	return response.json();
+}
 
-export const fetchVideoGenState = async (id: string): Promise<VideoGenState> => {
-	const res = await client.api.fetch.videoGenState[':id'].$get({
-		param: {
-			id,
+export async function fetchVideoGenState(id: string): Promise<VideoGenState> {
+	const response = await fetch(`${API_BASE}/fetch/videoGenState/${id}`);
+	if (!response.ok) {
+		throw new Error('Failed to fetch video gen state');
+	}
+	return response.json();
+}
+
+export async function fetchAllVideoGenStates(): Promise<VideoGenState[]> {
+	const response = await fetch(`${API_BASE}/fetch/videoGenStates`);
+	console.log('response', response);
+	if (!response.ok) {
+		throw new Error('Failed to fetch video gen states');
+	}
+	return response.json();
+}
+
+export async function fetchFile(fileName: string): Promise<File> {
+	const response = await fetch(`${API_BASE}/fetch/file/${fileName}`);
+	if (!response.ok) {
+		throw new Error('Failed to fetch file');
+	}
+	const blob = await response.blob();
+	return new File([blob], fileName, { type: blob.type });
+}
+
+export async function fetchFiles(fileNames: string[]): Promise<File[]> {
+	const files = await Promise.all(fileNames.map(fileName => fetchFile(fileName)));
+	return files;
+}
+
+export async function fetchOptionConfigs(): Promise<OptionConfig[]> {
+	console.log('fetching configs');
+	const response = await fetch(`${API_BASE}/fetch/optionConfigs`);
+	if (!response.ok) {
+		throw new Error('Failed to fetch option configs');
+	}
+	return response.json();
+}
+
+export async function fetchOptionConfig(id: string): Promise<OptionConfig> {
+	const response = await fetch(`${API_BASE}/fetch/optionConfig/${id}`);
+	if (!response.ok) {
+		throw new Error('Failed to fetch option config');
+	}
+	return response.json();
+}
+
+export async function fetchVoices(): Promise<Voice[]> {
+	const response = await fetch(`${API_BASE}/fetch/voices`);
+	if (!response.ok) {
+		throw new Error('Failed to fetch voices');
+	}
+	return response.json();
+}
+
+export async function createOptionConfig(config: Omit<OptionConfig, 'id' | 'createdAt'>): Promise<OptionConfig> {
+	const newConfig: OptionConfig = {
+		...config,
+		id: crypto.randomUUID(),
+		createdAt: new Date().toISOString(),
+	};
+
+	const response = await fetch(`${API_BASE}/fetch/optionConfig`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
 		},
+		body: JSON.stringify(newConfig),
 	});
-	if (!res.ok) {
-		throw new Error(`${res.status}: ${res.statusText}`);
-	}
-	return res.json();
-};
 
-export const createVideoGenState = async (id: string): Promise<VideoGenState> => {
-	const res = await client.api.createVideoGenState[':id'].$post({
-		param: {
-			id,
+	if (!response.ok) {
+		throw new Error('Failed to create option config');
+	}
+
+	return response.json();
+}
+
+export async function updateOptionConfig(config: OptionConfig): Promise<OptionConfig> {
+	const response = await fetch(`${API_BASE}/update/optionConfig/${config.id}`, {
+		method: 'PUT',
+		headers: {
+			'Content-Type': 'application/json',
 		},
-		json: { id },
+		body: JSON.stringify(config),
 	});
-	if (!res.ok) {
-		throw new Error(`${res.status}: ${res.statusText}`);
-	}
-	return res.json();
-};
 
-export const fetchAllVideoGenStates = async (): Promise<VideoGenState[]> => {
-	const res = await client.api.fetch.videoGenStates.$get({
-		headers: { 'Content-Type': 'application/json' },
-	});
-	if (!res.ok) {
-		throw new Error(`${res.status}: ${res.statusText}`);
+	if (!response.ok) {
+		throw new Error('Failed to update option config');
 	}
 
-	return res.json();
-};
+	return response.json();
+}
 
-export const fetchFile = async (id: string): Promise<Blob> => {
-	const res = await client.api.fetch.file[':id'].$get({
-		param: {
-			id,
+export async function deleteOptionConfig(id: string): Promise<void> {
+	const response = await fetch(`${API_BASE}/update/optionConfig/${id}`, {
+		method: 'DELETE',
+	});
+
+	if (!response.ok) {
+		throw new Error('Failed to delete option config');
+	}
+}
+
+export async function uploadPauseSound(configId: string, file: File): Promise<string> {
+	const formData = new FormData();
+	formData.append('file', file);
+
+	const response = await fetch(`${API_BASE}/update/optionConfig/${configId}/pauseSound`, {
+		method: 'POST',
+		body: formData,
+		// Important: Do not set Content-Type header, let the browser set it with the boundary
+	});
+
+	if (!response.ok) {
+		throw new Error('Failed to upload pause sound');
+	}
+
+	const data = await response.json();
+	return data.fileName;
+}
+
+export async function createProjectWithConfig(configId: string): Promise<VideoGenState> {
+	const response = await fetch(`${API_BASE}/generate/project`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
 		},
+		body: JSON.stringify({ configId }),
 	});
-	if (!res.ok) {
-		throw new Error(`${res.status}: ${res.statusText}`);
-	}
-	return res.blob();
-};
 
-export const fetchFiles = async (ids: string[] | null): Promise<Blob[]> => {
-	if (!ids) {
-		throw new Error('No fileids provided');
+	if (!response.ok) {
+		throw new Error('Failed to create project');
 	}
-	const responses = await Promise.all(ids.map(id => fetchFile(id)));
-	return responses;
-};
+
+	return response.json();
+}

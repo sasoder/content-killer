@@ -5,8 +5,9 @@ import {
 	defaultCommentaryOptions,
 	defaultVideoOptions,
 } from '@shared/types/options/defaultOptions';
+import { OptionConfig } from '@shared/types/options/config';
 
-export const createDefaultVideoGenState = (id: string): VideoGenState => {
+export const createDefaultVideoGenState = (id: string, optionConfig?: OptionConfig): VideoGenState => {
 	return {
 		id,
 		description: [],
@@ -19,7 +20,7 @@ export const createDefaultVideoGenState = (id: string): VideoGenState => {
 			duration: '',
 			createdAt: new Date().toISOString(),
 		},
-		options: {
+		options: optionConfig?.options ?? {
 			description: defaultDescriptionOptions,
 			commentary: defaultCommentaryOptions,
 			video: defaultVideoOptions,

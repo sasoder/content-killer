@@ -5,25 +5,15 @@ import { VideoOptions } from '@shared/types/options';
 import { Icons } from '@/components/icons';
 import { toast } from '@/hooks/use-toast';
 import { videoOptionDefinitions } from '@/lib/options/optionDefinitions';
+import { useVideoGeneration } from '@/hooks/useVideoGeneration';
 import StepOptions from '@/components/cards/StepOptions';
 import QuickInfo from '@/components/QuickInfo';
-import { generateVideo } from '@/api/apiHelper';
 import VoiceSelector from '@/components/VoiceSelector';
 
 const GenerateVideo = () => {
-	const { commentary, id, updateVideoId, updateAudioIds, options } = useVideoGen();
-	const [isLoading, setIsLoading] = useState(false);
+	const { commentary, id, options } = useVideoGen();
 	const [videoOptions, setVideoOptions] = useState<VideoOptions>(options.video);
-
-	const generateVideoFile = async (options: VideoOptions) => {
-		try {
-			const { videoId, audioIds } = await generateVideo(id, commentary, options);
-			updateVideoId(videoId);
-			updateAudioIds(audioIds);
-		} catch (error) {
-			console.error('Error generating video:', error);
-		}
-	};
+	const { generate, isLoading, error } = useVideoGeneration(id);
 
 	const handleGenerate = async () => {
 		if (!commentary || commentary.length === 0) {
@@ -35,22 +25,19 @@ const GenerateVideo = () => {
 			return;
 		}
 
-		setIsLoading(true);
 		try {
-			await generateVideoFile(videoOptions);
+			await generate({ commentary, options: videoOptions });
 			toast({
 				title: 'Success',
-				description: 'Video generated successfully.',
+				description: 'Video generation started successfully.',
 			});
 		} catch (error) {
 			console.error('Error generating content:', error);
 			toast({
 				title: 'Error',
-				description: 'Failed to generate video. Please try again.',
+				description: 'Failed to start video generation. Please try again.',
 				variant: 'destructive',
 			});
-		} finally {
-			setIsLoading(false);
 		}
 	};
 

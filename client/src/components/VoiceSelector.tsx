@@ -1,8 +1,10 @@
 import React from 'react';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useFetchVoices } from '@/hooks/useFetchVoices';
+import { useQuery } from '@tanstack/react-query';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Icons } from '@/components/icons';
+import { fetchVoices } from '@/api/apiHelper';
+import { Voice } from '@shared/types/options';
 
 interface VoiceSelectorProps {
 	value: string;
@@ -10,7 +12,10 @@ interface VoiceSelectorProps {
 }
 
 const VoiceSelector: React.FC<VoiceSelectorProps> = ({ value, onValueChange }) => {
-	const { voices, isLoading, error } = useFetchVoices();
+	const { data, isLoading, error } = useQuery({
+		queryKey: ['voices'],
+		queryFn: fetchVoices,
+	});
 
 	if (error) {
 		return (
@@ -31,14 +36,14 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({ value, onValueChange }) =
 							Loading voices...
 						</div>
 					) : (
-						voices.find(v => v.id === value)?.name || 'Select a voice'
+						data?.find((v: Voice) => v.id === value)?.name || 'Select a voice'
 					)}
 				</SelectValue>
 			</SelectTrigger>
 			<SelectContent>
 				<ScrollArea className='h-[200px]'>
 					<SelectGroup>
-						{voices.map(voice => (
+						{data?.map((voice: Voice) => (
 							<SelectItem key={voice.id} value={voice.id}>
 								{voice.name}
 							</SelectItem>

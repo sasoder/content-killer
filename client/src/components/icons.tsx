@@ -14,6 +14,8 @@ import {
 	ChevronLeft,
 	LoaderCircle,
 	AlertTriangle,
+	Settings,
+	Trash2,
 } from 'lucide-react';
 
 export type IconKeys = keyof typeof icons;
@@ -38,6 +40,8 @@ const icons = {
 	chevronLeft: ChevronLeft,
 	skull: Skull,
 	alertTriangle: AlertTriangle,
+	settings: Settings,
+	trash: Trash2,
 };
 
 export const Icons: IconsType = icons;
