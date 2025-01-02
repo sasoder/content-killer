@@ -7,18 +7,18 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { VideoGenState } from '@shared/types/api/schema';
 import { createDefaultVideoGenState } from '@/lib/defaultVideoGenState';
-import { OptionConfig } from '@shared/types/options/config';
+import { ProjectConfig } from '@shared/types/options/config';
 
 const DATA_DIR = './data';
-const OPTION_CONFIGS_DIR = path.join(DATA_DIR, 'option-configs');
+const PROJECT_CONFIGS_DIR = path.join(DATA_DIR, 'project-configs');
 const DB_PATH = path.join(DATA_DIR, 'projects.db');
 
 // Ensure directories exist
 if (!fs.existsSync(DATA_DIR)) {
 	fs.mkdirSync(DATA_DIR);
 }
-if (!fs.existsSync(OPTION_CONFIGS_DIR)) {
-	fs.mkdirSync(OPTION_CONFIGS_DIR);
+if (!fs.existsSync(PROJECT_CONFIGS_DIR)) {
+	fs.mkdirSync(PROJECT_CONFIGS_DIR);
 }
 
 // Initialize database and tables
@@ -30,13 +30,13 @@ sqlite.run(`
 	)
 `);
 sqlite.run(`
-	CREATE TABLE IF NOT EXISTS option_configs (
+	CREATE TABLE IF NOT EXISTS project_configs (
 		id TEXT PRIMARY KEY,
 		name TEXT NOT NULL,
 		description TEXT NOT NULL,
 		created_at TEXT NOT NULL,
 		options TEXT NOT NULL,
-		pause_sound_path TEXT
+		pause_sound_filename TEXT
 	)
 `);
 
@@ -46,21 +46,21 @@ const projects = sqliteTable('projects', {
 	state: text('state').notNull(),
 });
 
-const optionConfigs = sqliteTable('option_configs', {
+const projectConfigs = sqliteTable('project_configs', {
 	id: text('id').primaryKey(),
 	name: text('name').notNull(),
 	description: text('description').notNull(),
 	createdAt: text('created_at').notNull(),
 	options: text('options').notNull(),
-	pauseSoundPath: text('pause_sound_path'),
+	pauseSoundFilename: text('pause_sound_filename'),
 });
 
 // Initialize Drizzle
 const db = drizzle(sqlite);
 
 export class ProjectStorage {
-	async createProject(id: string, optionConfig?: OptionConfig): Promise<VideoGenState> {
-		const defaultState = createDefaultVideoGenState(id, optionConfig);
+	async createProject(id: string, projectConfig?: ProjectConfig): Promise<VideoGenState> {
+		const defaultState = createDefaultVideoGenState(id, projectConfig);
 
 		await db.insert(projects).values({
 			id,
@@ -68,13 +68,13 @@ export class ProjectStorage {
 		});
 
 		await mkdir(path.join(DATA_DIR, id), { recursive: true });
+		await mkdir(path.join(DATA_DIR, id, 'misc'), { recursive: true });
 
-		// If there's a pause sound in the option config, copy it to the project directory
-		if (optionConfig?.pauseSoundPath) {
-			const sourcePath = path.join(OPTION_CONFIGS_DIR, optionConfig.pauseSoundPath);
-			const destPath = path.join(DATA_DIR, id, 'pause.mp3');
-			if (fs.existsSync(sourcePath)) {
-				await fs.promises.copyFile(sourcePath, destPath);
+		// If there's a pause sound in the config, copy it to the project
+		if (projectConfig) {
+			const pausePath = path.join(PROJECT_CONFIGS_DIR, projectConfig.id, 'pause.mp3');
+			if (fs.existsSync(pausePath)) {
+				await fs.promises.copyFile(pausePath, path.join(DATA_DIR, id, 'misc', 'pause.mp3'));
 			}
 		}
 
@@ -110,19 +110,22 @@ export class ProjectStorage {
 		return readFile(filePath);
 	}
 
-	async createOptionConfig(config: OptionConfig): Promise<void> {
-		await db.insert(optionConfigs).values({
+	async createProjectConfig(config: ProjectConfig): Promise<void> {
+		const configDir = path.join(PROJECT_CONFIGS_DIR, config.id);
+		await mkdir(configDir, { recursive: true });
+
+		await db.insert(projectConfigs).values({
 			id: config.id,
 			name: config.name,
 			description: config.description,
 			createdAt: config.createdAt,
 			options: JSON.stringify(config.options),
-			pauseSoundPath: config.pauseSoundPath || null,
+			pauseSoundFilename: config.pauseSoundFilename,
 		});
 	}
 
-	async getOptionConfig(id: string): Promise<OptionConfig | null> {
-		const result = await db.select().from(optionConfigs).where(eq(optionConfigs.id, id)).limit(1);
+	async getProjectConfig(id: string): Promise<ProjectConfig | null> {
+		const result = await db.select().from(projectConfigs).where(eq(projectConfigs.id, id)).limit(1);
 		const config = result[0];
 		if (!config) return null;
 
@@ -132,54 +135,53 @@ export class ProjectStorage {
 			description: config.description,
 			createdAt: config.createdAt,
 			options: JSON.parse(config.options),
-			pauseSoundPath: config.pauseSoundPath || '',
+			pauseSoundFilename: config.pauseSoundFilename,
 		};
 	}
 
-	async getAllOptionConfigs(): Promise<OptionConfig[]> {
-		const results = await db.select().from(optionConfigs);
+	async getAllProjectConfigs(): Promise<ProjectConfig[]> {
+		const results = await db.select().from(projectConfigs);
 		return results.map(config => ({
 			id: config.id,
 			name: config.name,
 			description: config.description,
 			createdAt: config.createdAt,
 			options: JSON.parse(config.options),
-			pauseSoundPath: config.pauseSoundPath || '',
+			pauseSoundFilename: config.pauseSoundFilename,
 		}));
 	}
 
-	async updateOptionConfig(config: OptionConfig): Promise<void> {
+	async updateProjectConfig(config: ProjectConfig): Promise<void> {
 		await db
-			.update(optionConfigs)
+			.update(projectConfigs)
 			.set({
 				name: config.name,
 				description: config.description,
 				options: JSON.stringify(config.options),
-				pauseSoundPath: config.pauseSoundPath || '',
+				pauseSoundFilename: config.pauseSoundFilename,
 			})
-			.where(eq(optionConfigs.id, config.id));
+			.where(eq(projectConfigs.id, config.id));
 	}
 
-	async deleteOptionConfig(id: string): Promise<void> {
-		await db.delete(optionConfigs).where(eq(optionConfigs.id, id));
-		// Also delete the pause sound file if it exists
-		const config = await this.getOptionConfig(id);
-		if (config?.pauseSoundPath) {
-			const filePath = path.join(OPTION_CONFIGS_DIR, config.pauseSoundPath);
-			if (fs.existsSync(filePath)) {
-				await fs.promises.unlink(filePath);
-			}
+	async deleteProjectConfig(id: string): Promise<void> {
+		await db.delete(projectConfigs).where(eq(projectConfigs.id, id));
+
+		// Delete the config directory and all its contents
+		const configDir = path.join(PROJECT_CONFIGS_DIR, id);
+		if (fs.existsSync(configDir)) {
+			await fs.promises.rm(configDir, { recursive: true, force: true });
 		}
 	}
 
-	async saveOptionConfigFile(id: string, fileName: string, content: Buffer): Promise<string> {
-		const filePath = path.join(OPTION_CONFIGS_DIR, `${id}_${fileName}`);
+	async saveProjectConfigFile(id: string, fileName: string, content: Buffer): Promise<void> {
+		const configDir = path.join(PROJECT_CONFIGS_DIR, id);
+		await mkdir(configDir, { recursive: true });
+		const filePath = path.join(configDir, fileName);
 		await writeFile(filePath, content);
-		return `${id}_${fileName}`;
 	}
 
-	async getOptionConfigFile(fileName: string): Promise<Buffer> {
-		const filePath = path.join(OPTION_CONFIGS_DIR, fileName);
+	async getProjectConfigFile(configId: string, fileName: string): Promise<Buffer> {
+		const filePath = path.join(PROJECT_CONFIGS_DIR, configId, fileName);
 		return readFile(filePath);
 	}
 }

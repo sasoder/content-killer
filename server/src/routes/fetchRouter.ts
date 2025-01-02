@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { projectStorage } from '@/db/storage';
 import { Voice } from '@shared/types/options';
 import { ElevenLabsClient } from 'elevenlabs';
-import { OptionConfig } from '@shared/types/options/config';
+import { ProjectConfig } from '@shared/types/options/config';
 import * as path from 'path';
 import * as fs from 'fs';
 import JSZip from 'jszip';
@@ -25,32 +25,22 @@ const fetchRouter = new Hono()
 		}
 		return c.json(project);
 	})
-	.get('/optionConfigs', async c => {
+	.get('/projectConfigs', async c => {
 		try {
-			const configs = await projectStorage.getAllOptionConfigs();
+			const configs = await projectStorage.getAllProjectConfigs();
 			return c.json(configs);
 		} catch (error) {
-			console.error('Error fetching option configs:', error);
-			return c.json({ message: 'Failed to fetch option configs' }, 500);
+			console.error('Error fetching project configs:', error);
+			return c.json({ message: 'Failed to fetch project configs' }, 500);
 		}
 	})
-	.get('/optionConfig/:id', async c => {
+	.get('/projectConfig/:id', async c => {
 		const id = c.req.param('id');
-		const config = await projectStorage.getOptionConfig(id);
+		const config = await projectStorage.getProjectConfig(id);
 		if (!config) {
-			return c.json({ message: 'Option config not found' }, 404);
+			return c.json({ message: 'Project config not found' }, 404);
 		}
 		return c.json(config);
-	})
-	.post('/optionConfig', async c => {
-		try {
-			const config = await c.req.json<OptionConfig>();
-			await projectStorage.createOptionConfig(config);
-			return c.json(config, 201);
-		} catch (error) {
-			console.error('Error creating option config:', error);
-			return c.json({ message: 'Failed to create option config' }, 500);
-		}
 	})
 	.get('/voices', async c => {
 		try {

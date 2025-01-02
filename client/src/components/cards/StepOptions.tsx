@@ -49,7 +49,7 @@ const StepOptions = <T extends Record<string, any>>({
 								<Label
 									htmlFor={`${type}-${key}`}
 									className={cn(
-										'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+										'cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
 									)}
 								>
 									{definition.label}

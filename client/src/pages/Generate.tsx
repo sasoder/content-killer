@@ -6,23 +6,14 @@ import GenerateVideo from '@/components/cards/GenerateVideo';
 import StepTransition from '@/components/cards/StepTransition';
 import StepCard from '@/components/cards/StepCard';
 import { Icons } from '@/components/icons';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { HTTPError } from '@/components/HTTPError';
 import { Header } from '@/components/layout/Header';
-import { VideoGenStatus, AudioGenStatus } from '@shared/types/api/schema';
+import { GenerationStep } from '@shared/types/api/schema';
 
 const GeneratePageContent = () => {
-	const {
-		description,
-		commentary,
-		audioStatus,
-		videoStatus,
-		updateDescription,
-		updateCommentary,
-		metadata,
-		isLoading,
-		error,
-	} = useVideoGen();
+	const { description, commentary, generationState, updateDescription, updateCommentary, metadata, isLoading, error } =
+		useVideoGen();
 
 	if (isLoading) {
 		return (
@@ -35,6 +26,8 @@ const GeneratePageContent = () => {
 	if (error) {
 		return <HTTPError error={error} />;
 	}
+
+	console.log(description);
 
 	return (
 		<>
@@ -71,7 +64,7 @@ const GeneratePageContent = () => {
 						</>
 					)}
 
-					{audioStatus !== AudioGenStatus.IDLE && videoStatus !== VideoGenStatus.IDLE && (
+					{generationState.currentStep !== GenerationStep.IDLE && (
 						<>
 							<StepTransition data={[]} jsonEditorTitle='' onUpdate={() => {}} />
 

@@ -6,7 +6,7 @@ import youtubeDl, { create } from 'youtube-dl-exec';
 import { VideoOptions } from '@shared/types/options';
 import type { FfprobeData } from 'fluent-ffmpeg';
 import 'dotenv/config';
-import { VideoGenStatus } from '@shared/types/api/schema';
+import { GenerationStep } from '@shared/types/api/schema';
 
 const openai = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
@@ -143,11 +143,11 @@ export async function generateVideo(
 	url: string,
 	audioIds: string[],
 	options: VideoOptions,
-	onStatusUpdate: (status: VideoGenStatus, errorStep?: VideoGenStatus) => Promise<void>,
+	onStatusUpdate: (status: GenerationStep, errorStep?: GenerationStep) => Promise<void>,
 ): Promise<void> {
 	try {
-		console.log('Generating video...');
-		await onStatusUpdate(VideoGenStatus.DOWNLOADING_SOURCE);
+		console.log('Preparing to generate video...');
+		await onStatusUpdate(GenerationStep.PREPARING);
 		const projectDir = path.join('data', id);
 		const videoDir = path.join(projectDir, 'video');
 		const miscDir = path.join(projectDir, 'misc');
@@ -165,11 +165,13 @@ export async function generateVideo(
 		const outputPath = path.join(videoDir, 'output.mp4');
 
 		try {
+			console.log('Downloading video...');
+			await onStatusUpdate(GenerationStep.DOWNLOADING_VIDEO);
 			// Download video (will get best quality if upscaling needed)
 			await downloadVideo(url, sourceVideoPath, options.video.size);
 			console.log('Downloaded video');
 		} catch (error) {
-			await onStatusUpdate(VideoGenStatus.ERROR, VideoGenStatus.DOWNLOADING_SOURCE);
+			await onStatusUpdate(GenerationStep.ERROR, GenerationStep.DOWNLOADING_VIDEO);
 			throw error;
 		}
 
@@ -181,25 +183,25 @@ export async function generateVideo(
 
 		// Add subtitles if enabled (after scaling)
 		if (options.video.subtitlesEnabled) {
-			console.log('Transcripting source...');
-			await onStatusUpdate(VideoGenStatus.TRANSCRIBING_SOURCE);
+			console.log('Transcribing source...');
+			await onStatusUpdate(GenerationStep.TRANSCRIBING);
 			try {
 				const srtPath = path.join(projectDir, 'subtitles.srt');
 				await generateSubtitles(sourceVideoPath, srtPath);
 				await addSubtitles(scaledVideoPath, srtPath, subtitledVideoPath, options.video.subtitlesSize);
 				videoToProcess = subtitledVideoPath;
 			} catch (error) {
-				await onStatusUpdate(VideoGenStatus.ERROR, VideoGenStatus.TRANSCRIBING_SOURCE);
+				await onStatusUpdate(GenerationStep.ERROR, GenerationStep.TRANSCRIBING);
 				throw error;
 			}
 		}
 
 		console.log('Generating final video...');
-		await onStatusUpdate(VideoGenStatus.GENERATING_VIDEO);
+		await onStatusUpdate(GenerationStep.PROCESSING_VIDEO);
 		try {
 			await processVideo(videoToProcess, audioFiles, outputPath, pauseAudioPath, options.video);
 		} catch (error) {
-			await onStatusUpdate(VideoGenStatus.ERROR, VideoGenStatus.GENERATING_VIDEO);
+			await onStatusUpdate(GenerationStep.ERROR, GenerationStep.PROCESSING_VIDEO);
 			throw error;
 		}
 
@@ -211,7 +213,7 @@ export async function generateVideo(
 		]).catch(console.error); // Don't fail if cleanup fails
 
 		console.log('Video generation complete');
-		await onStatusUpdate(VideoGenStatus.COMPLETED);
+		await onStatusUpdate(GenerationStep.COMPLETED);
 	} catch (error) {
 		console.error('Error in video generation:', error);
 		throw error;

@@ -17,9 +17,9 @@ export default function Home() {
 					<Link to='/new' className={cn(buttonVariants({ size: 'default' }))}>
 						New
 					</Link>
-					<Link to='/options' className={cn(buttonVariants({ size: 'default' }))}>
+					<Link to='/configurations' className={cn(buttonVariants({ size: 'default' }))}>
 						<Icons.settings className='mr-2 h-4 w-4' />
-						Options
+						Configurations
 					</Link>
 					<ModeToggle />
 				</div>

@@ -1,22 +1,8 @@
 import { VideoGenState, TimestampText, VideoMetadata } from '@shared/types/api/schema';
-import { OptionConfig } from '@shared/types/options/config';
+import { ProjectConfig } from '@shared/types/options/config';
 import { CommentaryOptions, DescriptionOptions, VideoOptions, Voice } from '@shared/types/options';
 
 const API_BASE = import.meta.env.VITE_APP_API_BASE;
-
-export async function createProject(): Promise<VideoGenState> {
-	const response = await fetch(`${API_BASE}/generate/project`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify({}),
-	});
-	if (!response.ok) {
-		throw new Error('Failed to create project');
-	}
-	return response.json();
-}
 
 export async function generateDescription(
 	id: string,
@@ -123,19 +109,18 @@ export async function fetchFiles(fileNames: string[]): Promise<File[]> {
 	return files;
 }
 
-export async function fetchOptionConfigs(): Promise<OptionConfig[]> {
-	console.log('fetching configs');
-	const response = await fetch(`${API_BASE}/fetch/optionConfigs`);
+export async function fetchProjectConfigs(): Promise<ProjectConfig[]> {
+	const response = await fetch(`${API_BASE}/fetch/projectConfigs`);
 	if (!response.ok) {
-		throw new Error('Failed to fetch option configs');
+		throw new Error('Failed to fetch project configs');
 	}
 	return response.json();
 }
 
-export async function fetchOptionConfig(id: string): Promise<OptionConfig> {
-	const response = await fetch(`${API_BASE}/fetch/optionConfig/${id}`);
+export async function fetchProjectConfig(id: string): Promise<ProjectConfig> {
+	const response = await fetch(`${API_BASE}/fetch/projectConfig/${id}`);
 	if (!response.ok) {
-		throw new Error('Failed to fetch option config');
+		throw new Error('Failed to fetch project config');
 	}
 	return response.json();
 }
@@ -148,30 +133,24 @@ export async function fetchVoices(): Promise<Voice[]> {
 	return response.json();
 }
 
-export async function createOptionConfig(config: Omit<OptionConfig, 'id' | 'createdAt'>): Promise<OptionConfig> {
-	const newConfig: OptionConfig = {
-		...config,
-		id: crypto.randomUUID(),
-		createdAt: new Date().toISOString(),
-	};
-
-	const response = await fetch(`${API_BASE}/fetch/optionConfig`, {
+export async function createProjectConfig(params?: { name?: string; description?: string }): Promise<ProjectConfig> {
+	const response = await fetch(`${API_BASE}/generate/projectConfig`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify(newConfig),
+		body: JSON.stringify(params || {}),
 	});
 
 	if (!response.ok) {
-		throw new Error('Failed to create option config');
+		throw new Error('Failed to create project config');
 	}
 
 	return response.json();
 }
 
-export async function updateOptionConfig(config: OptionConfig): Promise<OptionConfig> {
-	const response = await fetch(`${API_BASE}/update/optionConfig/${config.id}`, {
+export async function updateProjectConfig(config: ProjectConfig): Promise<ProjectConfig> {
+	const response = await fetch(`${API_BASE}/update/projectConfig/${config.id}`, {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
@@ -180,38 +159,36 @@ export async function updateOptionConfig(config: OptionConfig): Promise<OptionCo
 	});
 
 	if (!response.ok) {
-		throw new Error('Failed to update option config');
+		throw new Error('Failed to update project config');
 	}
 
 	return response.json();
 }
 
-export async function deleteOptionConfig(id: string): Promise<void> {
-	const response = await fetch(`${API_BASE}/update/optionConfig/${id}`, {
+export async function deleteProjectConfig(id: string): Promise<void> {
+	const response = await fetch(`${API_BASE}/update/projectConfig/${id}`, {
 		method: 'DELETE',
 	});
 
 	if (!response.ok) {
-		throw new Error('Failed to delete option config');
+		throw new Error('Failed to delete project config');
 	}
 }
 
-export async function uploadPauseSound(configId: string, file: File): Promise<string> {
+export async function uploadPauseSound(configId: string, file: File): Promise<{ filename: string }> {
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const response = await fetch(`${API_BASE}/update/optionConfig/${configId}/pauseSound`, {
+	const response = await fetch(`${API_BASE}/update/projectConfig/${configId}/pauseSound`, {
 		method: 'POST',
 		body: formData,
-		// Important: Do not set Content-Type header, let the browser set it with the boundary
 	});
 
 	if (!response.ok) {
 		throw new Error('Failed to upload pause sound');
 	}
 
-	const data = await response.json();
-	return data.fileName;
+	return response.json();
 }
 
 export async function createProjectWithConfig(configId: string): Promise<VideoGenState> {

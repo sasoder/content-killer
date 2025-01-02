@@ -1,7 +1,6 @@
 import { VideoOptions } from '@shared/types/options';
-import { TimestampText, AudioGenStatus } from '@shared/types/api/schema';
+import { TimestampText } from '@shared/types/api/schema';
 import { ElevenLabsClient } from 'elevenlabs';
-import { projectStorage } from '@/db/storage';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 
@@ -38,7 +37,6 @@ export const generateAudio = async (
 	id: string,
 	commentary: TimestampText[],
 	options: VideoOptions['audio'],
-	onStatusUpdate: (status: AudioGenStatus, errorStep?: AudioGenStatus) => Promise<void>,
 ): Promise<string[]> => {
 	try {
 		const projectDir = path.join('data', id);
@@ -56,11 +54,9 @@ export const generateAudio = async (
 		});
 
 		const audioFilenames = await Promise.all(audioPromises);
-		await onStatusUpdate(AudioGenStatus.COMPLETED);
 		return audioFilenames;
 	} catch (error) {
 		console.error('Error generating audio files:', error);
-		await onStatusUpdate(AudioGenStatus.ERROR, AudioGenStatus.GENERATING);
 		return [];
 	}
 };

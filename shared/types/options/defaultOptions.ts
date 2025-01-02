@@ -1,4 +1,5 @@
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from './';
+import { ProjectConfig } from './config';
 
 export const defaultDescriptionOptions: DescriptionOptions = {
 	sample: true,
@@ -21,5 +22,18 @@ export const defaultVideoOptions: VideoOptions = {
 		subtitlesEnabled: true,
 		subtitlesSize: 14,
 		size: '1080p',
+	},
+};
+
+export const defaultProjectConfig: ProjectConfig = {
+	id: crypto.randomUUID(),
+	name: 'New Configuration',
+	description: 'A thought-provoking project configuration',
+	createdAt: new Date().toISOString(),
+	pauseSoundFilename: null,
+	options: {
+		description: defaultDescriptionOptions,
+		commentary: defaultCommentaryOptions,
+		video: defaultVideoOptions,
 	},
 };

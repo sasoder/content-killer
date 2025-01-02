@@ -12,16 +12,36 @@ export type VideoMetadata = {
 	createdAt: string;
 };
 
+export enum GenerationStep {
+	IDLE = 'IDLE',
+	PREPARING = 'PREPARING',
+	GENERATING_AUDIO = 'GENERATING_AUDIO',
+	DOWNLOADING_VIDEO = 'DOWNLOADING_VIDEO',
+	PROCESSING_VIDEO = 'PROCESSING_VIDEO',
+	TRANSCRIBING = 'TRANSCRIBING',
+	FINALIZING = 'FINALIZING',
+	COMPLETED = 'COMPLETED',
+	ERROR = 'ERROR',
+}
+
+export type GenerationState = {
+	currentStep: GenerationStep;
+	error?: {
+		step: GenerationStep;
+		message: string;
+	};
+	progress?: {
+		current: number;
+		total: number;
+		message?: string;
+	};
+};
+
 export type VideoGenState = {
 	id: string;
 	description: TimestampText[];
 	commentary: TimestampText[];
-	audioStatus: AudioGenStatus;
-	videoStatus: VideoGenStatus;
-	errorStep?: {
-		video?: VideoGenStatus;
-		audio?: AudioGenStatus;
-	};
+	generationState: GenerationState;
 	options: {
 		description: DescriptionOptions;
 		commentary: CommentaryOptions;
@@ -29,22 +49,3 @@ export type VideoGenState = {
 	};
 	metadata: VideoMetadata;
 };
-
-export enum VideoGenStatus {
-	IDLE,
-	STARTING,
-	GENERATING_COMMENTARY_AUDIO,
-	DOWNLOADING_SOURCE,
-	TRANSCRIBING_SOURCE,
-	GENERATING_VIDEO,
-	COMPLETED,
-	ERROR,
-}
-
-export enum AudioGenStatus {
-	IDLE,
-	STARTING,
-	GENERATING,
-	COMPLETED,
-	ERROR,
-}

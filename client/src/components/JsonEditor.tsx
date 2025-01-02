@@ -42,12 +42,10 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 		const newData = [...(editedData ?? [])];
 		newData[rowIndex] = { ...newData[rowIndex], [key]: value };
 		setEditedData(newData);
-		handleSave(true);
 	};
 
 	const handleNewRowInputChange = (key: keyof TimestampText, value: string) => {
 		setNewRow({ ...newRow, [key]: value });
-		handleSave(true);
 	};
 
 	const handleSave = (remainOpen: boolean = false, newData: TimestampText[] | null = editedData) => {
@@ -75,7 +73,6 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 		const newData = [...(editedData ?? [])];
 		const filteredData = newData.filter((_, index) => index !== rowIndex);
 		setEditedData(filteredData);
-		handleSave(true, filteredData);
 	};
 
 	const handleAdd = () => {
@@ -135,7 +132,7 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 				</Button>
 			)}
 			<DialogContent className='flex max-h-[90vh] max-w-[70vw] flex-col p-0'>
-				<DialogHeader className='sticky top-0 z-10 border-b bg-background'>
+				<DialogHeader className='bg-background sticky top-0 z-10 border-b'>
 					<div className='flex flex-col'>
 						<div className='flex flex-row items-center justify-between p-6'>
 							<DialogTitle>{title}</DialogTitle>

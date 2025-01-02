@@ -3,11 +3,11 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { createProject, createProjectWithConfig, fetchAllVideoGenStates, fetchOptionConfigs } from '@/api/apiHelper';
+import { createProjectWithConfig, fetchAllVideoGenStates, fetchProjectConfigs } from '@/api/apiHelper';
 import { Header } from '@/components/layout/Header';
 import { formatDate } from '@/lib/utils';
 import { Icons } from '@/components/icons';
-import { OptionConfig } from '@shared/types/options/config';
+import { ProjectConfig } from '@shared/types/options/config';
 import { useQuery } from '@tanstack/react-query';
 
 const SelectProject = () => {
@@ -18,13 +18,13 @@ const SelectProject = () => {
 	const navigate = useNavigate();
 	const [selectedId, setSelectedId] = useState('new');
 	const [isFetching, setIsFetching] = useState(false);
-	const [optionConfigs, setOptionConfigs] = useState<OptionConfig[]>([]);
+	const [optionConfigs, setOptionConfigs] = useState<ProjectConfig[]>([]);
 	const [selectedConfigId, setSelectedConfigId] = useState<string>('');
 
 	useEffect(() => {
 		const loadOptionConfigs = async () => {
 			try {
-				const configs = await fetchOptionConfigs();
+				const configs = await fetchProjectConfigs();
 				setOptionConfigs(configs);
 				if (configs.length > 0) {
 					setSelectedConfigId(configs[0].id);
@@ -40,9 +40,7 @@ const SelectProject = () => {
 		setIsFetching(true);
 		if (selectedId === 'new') {
 			try {
-				const videoGenState = selectedConfigId
-					? await createProjectWithConfig(selectedConfigId)
-					: await createProject();
+				const videoGenState = await createProjectWithConfig(selectedConfigId);
 				navigate(`/generate/${videoGenState.id}`);
 			} catch (error) {
 				console.error('Error creating project:', error);

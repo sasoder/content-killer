@@ -1,4 +1,4 @@
-import { AudioGenStatus, VideoGenState, VideoGenStatus } from '@shared/types/api/schema';
+import { GenerationStep, VideoGenState } from '@shared/types/api/schema';
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/types/options';
 import {
 	defaultDescriptionOptions,
@@ -12,8 +12,9 @@ export const createDefaultVideoGenState = (id: string, optionConfig?: OptionConf
 		id,
 		description: [],
 		commentary: [],
-		videoStatus: VideoGenStatus.IDLE,
-		audioStatus: AudioGenStatus.IDLE,
+		generationState: {
+			currentStep: GenerationStep.IDLE,
+		},
 		metadata: {
 			url: '',
 			title: 'New Project',

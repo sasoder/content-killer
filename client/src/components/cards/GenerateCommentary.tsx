@@ -2,39 +2,49 @@ import { useState } from 'react';
 import { useVideoGen } from '@/context/VideoGenContext';
 import { Button } from '@/components/ui/button';
 import { CommentaryOptions } from '@shared/types/options';
-import { generateCommentary } from '@/api/apiHelper';
 import StepOptions from '@/components/cards/StepOptions';
 import { commentaryOptionDefinitions } from '@/lib/options/optionDefinitions';
 import { Icons } from '@/components/icons';
 import { toast } from '@/hooks/use-toast';
 import QuickInfo from '@/components/QuickInfo';
+import { useCommentaryGeneration } from '@/hooks/useCommentaryGeneration';
 
 const GenerateCommentary = () => {
-	const { description, updateCommentary, id, options } = useVideoGen();
-	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const { description, id, options } = useVideoGen();
 	const [commentaryOptions, setCommentaryOptions] = useState<CommentaryOptions>(options.commentary);
+	const { generate, isLoading, error } = useCommentaryGeneration(id);
 
 	const handleGenerate = async () => {
-		try {
-			if (!description || description.length === 0) {
-				throw new Error('No description data provided');
-			}
-			setIsLoading(true);
-			const generatedCommentary = await generateCommentary(id, description, commentaryOptions);
-			updateCommentary(generatedCommentary);
+		if (!description || description.length === 0) {
 			toast({
-				title: 'Success',
-				description: 'Commentary generated successfully',
-			});
-		} catch (error) {
-			console.error('Error generating commentary:', error);
-			toast({
-				title: 'Error',
-				description: 'Failed to generate commentary. Please try again.',
+				title: 'Invalid data',
+				description: 'Make sure you have generated description.',
 				variant: 'destructive',
 			});
-		} finally {
-			setIsLoading(false);
+			return;
+		}
+
+		try {
+			generate(
+				{ description, options: commentaryOptions },
+				{
+					onSuccess: () => {
+						toast({
+							title: 'Success',
+							description: 'Commentary generated successfully',
+						});
+					},
+					onError: error => {
+						toast({
+							title: 'Error',
+							description: 'Failed to generate commentary. Please try again.',
+							variant: 'destructive',
+						});
+					},
+				},
+			);
+		} catch (error) {
+			console.error('Error generating content:', error);
 		}
 	};
 

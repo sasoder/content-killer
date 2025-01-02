@@ -13,34 +13,49 @@ import {
 	videoOptionDefinitions,
 } from '@/lib/options/optionDefinitions';
 import {
-	defaultDescriptionOptions,
-	defaultCommentaryOptions,
-	defaultVideoOptions,
-} from '@shared/types/options/defaultOptions';
-import {
-	fetchOptionConfigs,
-	createOptionConfig,
-	updateOptionConfig,
-	deleteOptionConfig,
+	fetchProjectConfigs,
+	createProjectConfig,
+	updateProjectConfig,
+	deleteProjectConfig,
 	uploadPauseSound,
 } from '@/api/apiHelper';
-import { OptionConfig } from '@shared/types/options/config';
+import { ProjectConfig } from '@shared/types/options/config';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/layout/Header';
+import VoiceSelector from '@/components/VoiceSelector';
 
-export default function OptionsPage() {
+export default function ConfigurationsPage() {
 	const { toast } = useToast();
-	const [configs, setConfigs] = useState<OptionConfig[]>([]);
-	const [selectedConfig, setSelectedConfig] = useState<OptionConfig | null>(null);
+	const [configs, setConfigs] = useState<ProjectConfig[]>([]);
+	const [selectedConfig, setSelectedConfig] = useState<ProjectConfig | null>(null);
+	const [originalConfig, setOriginalConfig] = useState<ProjectConfig | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const [pauseSoundFile, setPauseSoundFile] = useState<File | null>(null);
 
 	useEffect(() => {
 		loadConfigs();
 	}, []);
 
+	const handleConfigSelect = (config: ProjectConfig) => {
+		setSelectedConfig(config);
+		setOriginalConfig(config);
+		setPauseSoundFile(null);
+	};
+
+	const hasChanges = () => {
+		if (!selectedConfig || !originalConfig) return false;
+		if (pauseSoundFile) return true;
+
+		return (
+			selectedConfig.name !== originalConfig.name ||
+			selectedConfig.description !== originalConfig.description ||
+			JSON.stringify(selectedConfig.options) !== JSON.stringify(originalConfig.options)
+		);
+	};
+
 	const loadConfigs = async () => {
 		try {
-			const fetchedConfigs = await fetchOptionConfigs();
+			const fetchedConfigs = await fetchProjectConfigs();
 			setConfigs(fetchedConfigs);
 		} catch (error) {
 			console.error('Error loading configs:', error);
@@ -54,18 +69,9 @@ export default function OptionsPage() {
 
 	const handleCreateNew = async () => {
 		try {
-			const newConfig = await createOptionConfig({
-				name: 'New Configuration',
-				description: 'Description of the configuration',
-				options: {
-					description: defaultDescriptionOptions,
-					commentary: defaultCommentaryOptions,
-					video: defaultVideoOptions,
-				},
-				pauseSoundPath: '',
-			});
+			const newConfig = await createProjectConfig();
 			setConfigs([...configs, newConfig]);
-			setSelectedConfig(newConfig);
+			handleConfigSelect(newConfig);
 		} catch (error) {
 			console.error('Error creating config:', error);
 			toast({
@@ -81,8 +87,23 @@ export default function OptionsPage() {
 
 		try {
 			setIsLoading(true);
-			const updatedConfig = await updateOptionConfig(selectedConfig);
-			setConfigs(configs.map(c => (c.id === updatedConfig.id ? updatedConfig : c)));
+
+			let updatedConfig = { ...selectedConfig };
+
+			if (pauseSoundFile) {
+				const response = await uploadPauseSound(selectedConfig.id, pauseSoundFile);
+				updatedConfig = {
+					...updatedConfig,
+					pauseSoundFilename: response.filename,
+				};
+			}
+
+			const savedConfig = await updateProjectConfig(updatedConfig);
+			setConfigs(configs.map(c => (c.id === savedConfig.id ? savedConfig : c)));
+			setSelectedConfig(savedConfig);
+			setOriginalConfig(savedConfig);
+			setPauseSoundFile(null);
+
 			toast({
 				title: 'Success',
 				description: 'Configuration saved successfully',
@@ -101,7 +122,7 @@ export default function OptionsPage() {
 
 	const handleDelete = async (id: string) => {
 		try {
-			await deleteOptionConfig(id);
+			await deleteProjectConfig(id);
 			setConfigs(configs.filter(c => c.id !== id));
 			if (selectedConfig?.id === id) {
 				setSelectedConfig(null);
@@ -120,41 +141,12 @@ export default function OptionsPage() {
 		}
 	};
 
-	const handlePauseSoundUpload = async (file: File) => {
-		if (!selectedConfig) return;
-
-		try {
-			setIsLoading(true);
-			const fileName = await uploadPauseSound(selectedConfig.id, file);
-			const updatedConfig = {
-				...selectedConfig,
-				pauseSoundPath: fileName,
-			};
-			await updateOptionConfig(updatedConfig);
-			setSelectedConfig(updatedConfig);
-			setConfigs(configs.map(c => (c.id === updatedConfig.id ? updatedConfig : c)));
-			toast({
-				title: 'Success',
-				description: 'Pause sound uploaded successfully',
-			});
-		} catch (error) {
-			console.error('Error uploading pause sound:', error);
-			toast({
-				title: 'Error',
-				description: 'Failed to upload pause sound',
-				variant: 'destructive',
-			});
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
 	return (
 		<>
-			<Header title='Option Configurations' showBackButton backTo='/' />
+			<Header title='Project Configurations' showBackButton backTo='/' />
 			<div className='container mx-auto p-4'>
 				<div className='mb-4 flex items-center justify-between'>
-					<h1 className='text-2xl font-bold'>Option Configurations</h1>
+					<h1 className='text-2xl font-bold'>Project Configurations</h1>
 					<Button onClick={handleCreateNew}>
 						<Icons.plus className='mr-2 h-4 w-4' />
 						New Configuration
@@ -174,7 +166,7 @@ export default function OptionsPage() {
 										<div
 											key={config.id}
 											className='hover:bg-accent flex cursor-pointer items-center justify-between rounded p-2'
-											onClick={() => setSelectedConfig(config)}
+											onClick={() => handleConfigSelect(config)}
 										>
 											<span className='font-medium'>{config.name}</span>
 											<Button
@@ -235,12 +227,19 @@ export default function OptionsPage() {
 												onChange={e => {
 													const file = e.target.files?.[0];
 													if (file) {
-														handlePauseSoundUpload(file);
+														setPauseSoundFile(file);
 													}
 												}}
 											/>
-											{selectedConfig.pauseSoundPath && (
-												<p className='text-muted-foreground text-sm'>Current: {selectedConfig.pauseSoundPath}</p>
+											{selectedConfig.pauseSoundFilename && !pauseSoundFile && (
+												<p className='text-muted-foreground text-sm'>
+													Current pause sound: {selectedConfig.pauseSoundFilename}
+												</p>
+											)}
+											{pauseSoundFile && (
+												<p className='text-muted-foreground text-sm'>
+													New pause sound selected: {pauseSoundFile.name}. Click "Save Changes" to apply.
+												</p>
 											)}
 										</div>
 
@@ -312,8 +311,30 @@ export default function OptionsPage() {
 											type='audio'
 										/>
 
+										<div className='flex flex-col gap-1'>
+											<label className='text-sm font-medium'>Voice</label>
+											<VoiceSelector
+												value={selectedConfig.options.video.audio.voiceId}
+												onValueChange={voiceId =>
+													setSelectedConfig({
+														...selectedConfig,
+														options: {
+															...selectedConfig.options,
+															video: {
+																...selectedConfig.options.video,
+																audio: {
+																	...selectedConfig.options.video.audio,
+																	voiceId,
+																},
+															},
+														},
+													})
+												}
+											/>
+										</div>
+
 										<div className='flex justify-end'>
-											<Button onClick={handleSave} disabled={isLoading}>
+											<Button onClick={handleSave} disabled={isLoading || !hasChanges()}>
 												{isLoading ? (
 													<>
 														<Icons.loader className='mr-2 h-4 w-4 animate-spin' />

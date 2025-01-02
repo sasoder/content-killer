@@ -1,12 +1,7 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { VideoGenState, TimestampText, VideoMetadata, AudioGenStatus, VideoGenStatus } from '@shared/types/api/schema';
+import React, { createContext, useContext, ReactNode } from 'react';
+import { TimestampText, VideoMetadata, GenerationState, GenerationStep } from '@shared/types/api/schema';
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/types/options';
-import {
-	defaultCommentaryOptions,
-	defaultDescriptionOptions,
-	defaultVideoOptions,
-} from '@shared/types/options/defaultOptions';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchVideoGenState } from '@/api/apiHelper';
 
 interface VideoGenStateContext {
@@ -14,12 +9,7 @@ interface VideoGenStateContext {
 	metadata: VideoMetadata | null;
 	description: TimestampText[];
 	commentary: TimestampText[];
-	audioStatus: AudioGenStatus;
-	videoStatus: VideoGenStatus;
-	errorStep: {
-		video?: VideoGenStatus;
-		audio?: AudioGenStatus;
-	};
+	generationState: GenerationState;
 	updateDescription: (data: TimestampText[]) => void;
 	updateCommentary: (data: TimestampText[]) => void;
 	updateMetadata: (data: VideoMetadata) => void;
@@ -35,56 +25,46 @@ interface VideoGenStateContext {
 const VideoGenContext = createContext<VideoGenStateContext | undefined>(undefined);
 
 export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: string }) => {
+	const queryClient = useQueryClient();
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['videoGenState', id],
 		queryFn: () => fetchVideoGenState(id),
 	});
-	const [description, setDescription] = useState<TimestampText[]>([]);
-	const [commentary, setCommentary] = useState<TimestampText[]>([]);
-	const [audioStatus, setAudioStatus] = useState<AudioGenStatus>(AudioGenStatus.IDLE);
-	const [videoStatus, setVideoStatus] = useState<VideoGenStatus>(VideoGenStatus.IDLE);
-	const [metadata, setMetadata] = useState<VideoMetadata | null>(null);
-	const [options, setOptions] = useState({
-		description: defaultDescriptionOptions,
-		commentary: defaultCommentaryOptions,
-		video: defaultVideoOptions,
-	});
-	const updateDescription = (data: TimestampText[]) => setDescription(data);
-	const updateCommentary = (data: TimestampText[]) => setCommentary(data);
-	const updateMetadata = (data: VideoMetadata) => setMetadata(data);
 
-	useEffect(() => {
-		if (data && !isLoading && !error) {
-			setDescription(data.description);
-			setCommentary(data.commentary);
-			setAudioStatus(data.audioStatus);
-			setVideoStatus(data.videoStatus);
-			setMetadata(data.metadata);
-			setOptions(data.options);
-		}
-	}, [data, isLoading, error]);
+	const value: VideoGenStateContext = {
+		id,
+		metadata: data?.metadata ?? null,
+		description: data?.description ?? [],
+		commentary: data?.commentary ?? [],
+		generationState: data?.generationState ?? { currentStep: GenerationStep.IDLE },
+		updateDescription: (newDescription: TimestampText[]) => {
+			queryClient.setQueryData(['videoGenState', id], (old: any) => ({
+				...old,
+				description: newDescription,
+			}));
+		},
+		updateCommentary: (newCommentary: TimestampText[]) => {
+			queryClient.setQueryData(['videoGenState', id], (old: any) => ({
+				...old,
+				commentary: newCommentary,
+			}));
+		},
+		updateMetadata: (newMetadata: VideoMetadata) => {
+			queryClient.setQueryData(['videoGenState', id], (old: any) => ({
+				...old,
+				metadata: newMetadata,
+			}));
+		},
+		options: data?.options ?? {
+			description: {} as DescriptionOptions,
+			commentary: {} as CommentaryOptions,
+			video: {} as VideoOptions,
+		},
+		error: error ? (error as Error).message : null,
+		isLoading,
+	};
 
-	return (
-		<VideoGenContext.Provider
-			value={{
-				id,
-				metadata,
-				description,
-				commentary,
-				audioStatus,
-				videoStatus,
-				errorStep: {},
-				updateDescription,
-				updateCommentary,
-				updateMetadata,
-				options,
-				error: error ? error.message : null,
-				isLoading: isLoading,
-			}}
-		>
-			{children}
-		</VideoGenContext.Provider>
-	);
+	return <VideoGenContext.Provider value={value}>{children}</VideoGenContext.Provider>;
 };
 
 export const useVideoGen = (): VideoGenStateContext => {
@@ -93,4 +73,25 @@ export const useVideoGen = (): VideoGenStateContext => {
 		throw new Error('useVideoGen must be used within a VideoGenProvider');
 	}
 	return context;
+};
+
+// Helper hooks for status checks
+export const useIsGenerating = () => {
+	const { generationState } = useVideoGen();
+	return (
+		generationState.currentStep !== GenerationStep.IDLE &&
+		generationState.currentStep !== GenerationStep.COMPLETED &&
+		generationState.currentStep !== GenerationStep.ERROR
+	);
+};
+
+export const useGenerationProgress = () => {
+	const { generationState } = useVideoGen();
+	return {
+		step: generationState.currentStep,
+		progress: generationState.progress,
+		error: generationState.error,
+		isComplete: generationState.currentStep === GenerationStep.COMPLETED,
+		isError: generationState.currentStep === GenerationStep.ERROR,
+	};
 };
