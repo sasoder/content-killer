@@ -16,8 +16,8 @@ export type VideoGenState = {
 	id: string;
 	description: TimestampText[];
 	commentary: TimestampText[];
-	audioIds: string[];
-	videoId: string;
+	audioStatus: AudioGenStatus;
+	videoStatus: VideoGenStatus;
 	options: {
 		description: DescriptionOptions;
 		commentary: CommentaryOptions;
@@ -25,3 +25,13 @@ export type VideoGenState = {
 	};
 	metadata: VideoMetadata;
 };
+
+export type VideoGenStatus =
+	| 'idle'
+	| 'generating commentary audio'
+	| 'downloading source'
+	| 'transcribing source'
+	| 'generating video'
+	| 'completed'
+	| 'error';
+export type AudioGenStatus = 'idle' | 'generating' | 'completed' | 'error';

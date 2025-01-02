@@ -1,10 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { generateVideo, fetchVideoGenState } from '@/api/apiHelper';
 import type { VideoOptions } from '@shared/types/options';
-import type { VideoGenState } from '@shared/types/api/schema';
+import type { VideoGenState, VideoGenStatus } from '@shared/types/api/schema';
 import type { TimestampText } from '@shared/types/api/schema';
-
-export type VideoGenStatus = 'idle' | 'generating' | 'completed' | 'error';
 
 export function useVideoGeneration(id: string) {
 	const queryClient = useQueryClient();
@@ -14,8 +12,13 @@ export function useVideoGeneration(id: string) {
 		queryFn: () => fetchVideoGenState(id),
 		refetchInterval: query => {
 			const data = query.state.data as VideoGenState | undefined;
-			const status: VideoGenStatus = !data?.videoId && data?.audioIds?.length ? 'generating' : 'completed';
-			return status === 'generating' ? 1000 : false;
+			if (!data) return false;
+
+			return ['generating commentary audio', 'downloading source', 'transcribing source', 'generating video'].includes(
+				data.videoStatus,
+			)
+				? 1000
+				: false;
 		},
 	});
 
@@ -28,21 +31,14 @@ export function useVideoGeneration(id: string) {
 	});
 
 	const status: VideoGenStatus =
-		!genStatus.data?.videoId && genStatus.data?.audioIds?.length
-			? 'generating'
-			: genStatus.data?.videoId
-				? 'completed'
-				: generateMutation.isPending
-					? 'generating'
-					: 'idle';
+		genStatus.data?.videoStatus ?? (generateMutation.isPending ? 'generating video' : 'idle');
 
 	return {
 		status,
-		videoId: genStatus.data?.videoId,
-		audioIds: genStatus.data?.audioIds || [],
+		videoId: genStatus.data?.metadata?.url,
+		audioIds: genStatus.data?.commentary?.map(c => c.timestamp) ?? [],
 		isLoading: genStatus.isLoading || generateMutation.isPending,
 		error: genStatus.error || generateMutation.error,
-
 		generate: generateMutation.mutate,
 	} as const;
 }

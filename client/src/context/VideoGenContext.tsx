@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { VideoGenState, TimestampText, VideoMetadata } from '@shared/types/api/schema';
+import { VideoGenState, TimestampText, VideoMetadata, AudioGenStatus, VideoGenStatus } from '@shared/types/api/schema';
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/types/options';
 import {
 	defaultCommentaryOptions,
@@ -14,12 +14,12 @@ interface VideoGenStateContext {
 	metadata: VideoMetadata | null;
 	description: TimestampText[];
 	commentary: TimestampText[];
-	audioIds: string[];
-	videoId: string | null;
+	audioStatus: AudioGenStatus;
+	videoStatus: VideoGenStatus;
 	updateDescription: (data: TimestampText[]) => void;
 	updateCommentary: (data: TimestampText[]) => void;
-	updateAudioIds: (data: string[]) => void;
-	updateVideoId: (data: string) => void;
+	updateAudioStatus: (data: AudioGenStatus) => void;
+	updateVideoStatus: (data: VideoGenStatus) => void;
 	updateMetadata: (data: VideoMetadata) => void;
 	options: {
 		description: DescriptionOptions;
@@ -39,8 +39,8 @@ export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: st
 	});
 	const [description, setDescription] = useState<TimestampText[]>([]);
 	const [commentary, setCommentary] = useState<TimestampText[]>([]);
-	const [audioIds, setAudioIds] = useState<string[]>([]);
-	const [videoId, setVideoId] = useState<string | null>(null);
+	const [audioStatus, setAudioStatus] = useState<AudioGenStatus>('idle');
+	const [videoStatus, setVideoStatus] = useState<VideoGenStatus>('idle');
 	const [metadata, setMetadata] = useState<VideoMetadata | null>(null);
 	const [options, setOptions] = useState({
 		description: defaultDescriptionOptions,
@@ -49,16 +49,16 @@ export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: st
 	});
 	const updateDescription = (data: TimestampText[]) => setDescription(data);
 	const updateCommentary = (data: TimestampText[]) => setCommentary(data);
-	const updateAudioIds = (data: string[]) => setAudioIds(data);
-	const updateVideoId = (data: string) => setVideoId(data);
+	const updateAudioStatus = (data: AudioGenStatus) => setAudioStatus(data);
+	const updateVideoStatus = (data: VideoGenStatus) => setVideoStatus(data);
 	const updateMetadata = (data: VideoMetadata) => setMetadata(data);
 
 	useEffect(() => {
 		if (data && !isLoading && !error) {
 			setDescription(data.description);
 			setCommentary(data.commentary);
-			setAudioIds(data.audioIds);
-			setVideoId(data.videoId);
+			setAudioStatus(data.audioStatus);
+			setVideoStatus(data.videoStatus);
 			setMetadata(data.metadata);
 			setOptions(data.options);
 		}
@@ -71,12 +71,12 @@ export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: st
 				metadata,
 				description,
 				commentary,
-				audioIds,
-				videoId,
+				audioStatus,
+				videoStatus,
 				updateDescription,
 				updateCommentary,
-				updateAudioIds,
-				updateVideoId,
+				updateAudioStatus,
+				updateVideoStatus,
 				updateMetadata,
 				options,
 				error: error ? error.message : null,

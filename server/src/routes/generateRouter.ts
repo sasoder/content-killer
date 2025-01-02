@@ -45,9 +45,12 @@ const generateRouter = new Hono()
 		const { configId } = c.req.valid('json');
 		const id = generateProjectId();
 
-		let optionConfig;
+		let optionConfig = undefined;
 		if (configId) {
-			optionConfig = await projectStorage.getOptionConfig(configId);
+			const config = await projectStorage.getOptionConfig(configId);
+			if (config) {
+				optionConfig = config;
+			}
 		}
 
 		const project = await projectStorage.createProject(id, optionConfig);
@@ -96,14 +99,18 @@ const generateRouter = new Hono()
 		const id = c.req.param('id');
 
 		try {
-			const audioIds = await generateAudio(id, commentary, options.audio);
-			await generateVideo(id, audioIds, options);
-
 			const project = await projectStorage.getProject(id);
+			if (!project?.metadata?.url) {
+				return c.json({ error: 'No video URL found' }, 400);
+			}
+
+			const audioIds = await generateAudio(id, commentary, options.audio);
+			await generateVideo(id, project.metadata.url, audioIds, options);
+
 			if (project) {
 				project.commentary = commentary;
-				project.audioIds = audioIds;
-				project.videoId = 'output.mp4';
+				project.audioStatus = 'completed';
+				project.videoStatus = 'completed';
 				project.options.video = options;
 				await projectStorage.updateProjectState(project);
 			}

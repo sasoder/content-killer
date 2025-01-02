@@ -20,5 +20,6 @@ export const defaultVideoOptions: VideoOptions = {
 		playSound: true,
 		subtitlesEnabled: true,
 		subtitlesSize: 14,
+		size: '1080p',
 	},
 };

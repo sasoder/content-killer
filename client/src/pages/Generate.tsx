@@ -14,8 +14,8 @@ const GeneratePageContent = () => {
 	const {
 		description,
 		commentary,
-		audioIds,
-		videoId,
+		audioStatus,
+		videoStatus,
 		updateDescription,
 		updateCommentary,
 		metadata,
@@ -70,7 +70,7 @@ const GeneratePageContent = () => {
 						</>
 					)}
 
-					{audioIds.length > 0 && videoId && (
+					{audioStatus !== 'idle' && videoStatus !== 'idle' && (
 						<>
 							<StepTransition data={[]} jsonEditorTitle='' onUpdate={() => {}} />
 
@@ -84,7 +84,7 @@ const GeneratePageContent = () => {
 				</div>
 
 				<div>
-					<p className='text-sm text-gray-500'>
+					<p className='text-muted-foreground text-sm'>
 						This app uses Gemini 1.5 Pro to generate a description of the provided video. The description is then used
 						to create a commentary at all pivotal moments in the video with GPT 4o mini. This commentary is sent to
 						Elevenlabs and made into audio files.
