@@ -5,7 +5,7 @@ import { generateCommentary } from '@/lib/generateCommentary';
 import { generateVideo } from '@/lib/generateVideo';
 import { generateAudio } from '@/lib/generateAudio';
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/types/options';
-import { TimestampText, VideoGenState, VideoMetadata } from '@shared/types/api/schema';
+import { AudioGenStatus, TimestampText, VideoGenState, VideoGenStatus, VideoMetadata } from '@shared/types/api/schema';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { projectStorage } from '@/db/storage';
@@ -58,6 +58,9 @@ const generateRouter = new Hono()
 	})
 	.post('/description/:id', zValidator('json', DescriptionOptionsSchema), async c => {
 		const { url, options } = c.req.valid('json');
+		if (!url && !options.sample) {
+			return c.json({ error: 'No URL provided' }, 400);
+		}
 		const id = c.req.param('id');
 		const description = await generateDescription(url, options);
 		const project = await projectStorage.getProject(id);
@@ -104,19 +107,61 @@ const generateRouter = new Hono()
 				return c.json({ error: 'No video URL found' }, 400);
 			}
 
-			const audioIds = await generateAudio(id, commentary, options.audio);
-			await generateVideo(id, project.metadata.url, audioIds, options);
+			// Set initial status
+			project.videoStatus = VideoGenStatus.STARTING;
+			project.audioStatus = AudioGenStatus.STARTING;
+			await projectStorage.updateProjectState(project);
 
-			if (project) {
-				project.commentary = commentary;
-				project.audioStatus = 'completed';
-				project.videoStatus = 'completed';
-				project.options.video = options;
+			// Generate audio first
+			project.audioStatus = AudioGenStatus.GENERATING;
+			await projectStorage.updateProjectState(project);
+
+			const updateAudioStatus = async (status: AudioGenStatus, errorStep?: AudioGenStatus) => {
+				project.audioStatus = status;
+				if (errorStep) {
+					project.errorStep = { ...project.errorStep, audio: errorStep };
+				} else if (status === AudioGenStatus.COMPLETED) {
+					project.errorStep = { ...project.errorStep, audio: undefined };
+				}
 				await projectStorage.updateProjectState(project);
+			};
+
+			const audioIds = await generateAudio(id, commentary, options.audio, updateAudioStatus);
+			if (audioIds.length === 0) {
+				throw new Error('Failed to generate audio');
 			}
+
+			// Generate video with status updates
+			const updateVideoStatus = async (status: VideoGenStatus, errorStep?: VideoGenStatus) => {
+				project.videoStatus = status;
+				if (errorStep) {
+					project.errorStep = { ...project.errorStep, video: errorStep };
+				} else if (status === VideoGenStatus.COMPLETED) {
+					project.errorStep = { ...project.errorStep, video: undefined };
+				}
+				await projectStorage.updateProjectState(project);
+			};
+
+			await generateVideo(id, project.metadata.url, audioIds, options, updateVideoStatus);
+
+			// Update final state
+			project.commentary = commentary;
+			project.options.video = options;
+			await projectStorage.updateProjectState(project);
 
 			return c.json({ success: true });
 		} catch (error) {
+			// Update error state
+			const project = await projectStorage.getProject(id);
+			if (project) {
+				project.videoStatus = VideoGenStatus.ERROR;
+				project.audioStatus = AudioGenStatus.ERROR;
+				project.errorStep = {
+					video: VideoGenStatus.GENERATING_VIDEO, // Default to last step if unknown
+					audio: AudioGenStatus.GENERATING,
+				};
+				await projectStorage.updateProjectState(project);
+			}
 			console.error('Error generating video:', error);
 			return c.json({ error: 'Failed to generate video' }, 500);
 		}

@@ -29,6 +29,10 @@ const getScaleFilter = (size: string) => {
 			return ',scale=-2:720';
 		case '1080p':
 			return ',scale=-2:1080';
+		case '1440p':
+			return ',scale=-2:1440';
+		case '4k':
+			return ',scale=-2:2160';
 		default:
 			return '';
 	}
@@ -73,6 +77,7 @@ async function addSubtitles(videoPath: string, srtPath: string, outputPath: stri
 		ffmpeg()
 			.input(videoPath)
 			.videoFilters([`subtitles=${srtPath}:force_style='FontSize=${size}'`])
+			.outputOptions(['-c:v', 'libx264', '-c:a', 'copy'])
 			.output(outputPath)
 			.on('end', () => resolve(outputPath))
 			.on('error', (err: Error) => reject(err))
@@ -80,15 +85,24 @@ async function addSubtitles(videoPath: string, srtPath: string, outputPath: stri
 	});
 }
 
-async function downloadVideo(url: string, outputPath: string): Promise<void> {
+async function downloadVideo(url: string, outputPath: string, size: string = 'source'): Promise<void> {
 	try {
+		// Only filter resolution during download if we're downscaling
+		// For upscaling, we want the best quality source
+		const heightFilter =
+			size === '720p' ? 720 : size === '1080p' ? 1080 : size === '1440p' ? 1440 : size === '4k' ? 2160 : null;
+		const formatFilter = heightFilter
+			? `bestvideo[height<=${heightFilter}]+bestaudio/best[height<=${heightFilter}]`
+			: 'bestvideo+bestaudio/best'; // Always get best quality for potential upscaling
+
 		const ytDlOptions = {
-			format: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4',
+			format: formatFilter,
 			output: outputPath,
 			noCheckCertificates: true,
 			noWarnings: true,
 			preferFreeFormats: true,
 			addHeader: ['referer:youtube.com', 'user-agent:googlebot'],
+			mergeOutputFormat: 'mkv',
 		};
 
 		if (process.env.YT_DLP_PATH) {
@@ -102,26 +116,102 @@ async function downloadVideo(url: string, outputPath: string): Promise<void> {
 	}
 }
 
-export async function generateVideo(id: string, url: string, audioIds: string[], options: VideoOptions): Promise<void> {
-	console.log('Starting video generation process...');
-	const projectDir = path.join('data', id);
+async function scaleVideo(inputPath: string, outputPath: string, size: string): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const scaleFilter = getScaleFilter(size);
+		if (!scaleFilter) {
+			// If no scaling needed, just copy the file
+			fs.copyFile(inputPath, outputPath)
+				.then(() => resolve(outputPath))
+				.catch(reject);
+			return;
+		}
 
-	// ensure project directory exists
-	await fs.mkdir(projectDir, { recursive: true });
+		ffmpeg()
+			.input(inputPath)
+			.videoFilters([scaleFilter.substring(1)]) // Remove leading comma
+			.outputOptions(['-c:v', 'libx264', '-c:a', 'copy'])
+			.output(outputPath)
+			.on('end', () => resolve(outputPath))
+			.on('error', (err: Error) => reject(err))
+			.run();
+	});
+}
 
-	const sourceVideoPath = path.join(projectDir, 'source.mp4');
-	const pauseAudioPath = path.join(projectDir, 'pause.mp3');
-	const outputPath = path.join(projectDir, 'output.mp4');
-
+export async function generateVideo(
+	id: string,
+	url: string,
+	audioIds: string[],
+	options: VideoOptions,
+	onStatusUpdate: (status: VideoGenStatus, errorStep?: VideoGenStatus) => Promise<void>,
+): Promise<void> {
 	try {
-		// First download the video
-		console.log('Downloading source video...');
-		await downloadVideo(url, sourceVideoPath);
+		console.log('Generating video...');
+		await onStatusUpdate(VideoGenStatus.DOWNLOADING_SOURCE);
+		const projectDir = path.join('data', id);
+		const videoDir = path.join(projectDir, 'video');
+		const miscDir = path.join(projectDir, 'misc');
 
-		// Then process video with existing video processing logic
-		console.log('Processing video...');
-		await processVideo(sourceVideoPath, audioIds, outputPath, pauseAudioPath, options.video);
-		console.log('Video generation completed successfully');
+		await fs.mkdir(videoDir, { recursive: true });
+		await fs.mkdir(miscDir, { recursive: true });
+
+		// Convert audio IDs to absolute paths (they're in the commentary dir)
+		const audioFiles = audioIds.map(audioId => path.resolve(projectDir, 'commentary', audioId));
+
+		const sourceVideoPath = path.join(videoDir, 'source.mkv');
+		const scaledVideoPath = path.join(videoDir, 'scaled.mkv');
+		const subtitledVideoPath = path.join(videoDir, 'subtitled.mkv');
+		const pauseAudioPath = path.join(miscDir, 'pause.mp3');
+		const outputPath = path.join(videoDir, 'output.mp4');
+
+		try {
+			// Download video (will get best quality if upscaling needed)
+			await downloadVideo(url, sourceVideoPath, options.video.size);
+			console.log('Downloaded video');
+		} catch (error) {
+			await onStatusUpdate(VideoGenStatus.ERROR, VideoGenStatus.DOWNLOADING_SOURCE);
+			throw error;
+		}
+
+		// Scale video to target resolution
+		await scaleVideo(sourceVideoPath, scaledVideoPath, options.video.size);
+		console.log('Scaled video');
+
+		let videoToProcess = scaledVideoPath;
+
+		// Add subtitles if enabled (after scaling)
+		if (options.video.subtitlesEnabled) {
+			console.log('Transcripting source...');
+			await onStatusUpdate(VideoGenStatus.TRANSCRIBING_SOURCE);
+			try {
+				const srtPath = path.join(projectDir, 'subtitles.srt');
+				await generateSubtitles(sourceVideoPath, srtPath);
+				await addSubtitles(scaledVideoPath, srtPath, subtitledVideoPath, options.video.subtitlesSize);
+				videoToProcess = subtitledVideoPath;
+			} catch (error) {
+				await onStatusUpdate(VideoGenStatus.ERROR, VideoGenStatus.TRANSCRIBING_SOURCE);
+				throw error;
+			}
+		}
+
+		console.log('Generating final video...');
+		await onStatusUpdate(VideoGenStatus.GENERATING_VIDEO);
+		try {
+			await processVideo(videoToProcess, audioFiles, outputPath, pauseAudioPath, options.video);
+		} catch (error) {
+			await onStatusUpdate(VideoGenStatus.ERROR, VideoGenStatus.GENERATING_VIDEO);
+			throw error;
+		}
+
+		// Cleanup intermediate files
+		await Promise.all([
+			fs.unlink(sourceVideoPath),
+			fs.unlink(scaledVideoPath),
+			options.video.subtitlesEnabled ? fs.unlink(subtitledVideoPath) : Promise.resolve(),
+		]).catch(console.error); // Don't fail if cleanup fails
+
+		console.log('Video generation complete');
+		await onStatusUpdate(VideoGenStatus.COMPLETED);
 	} catch (error) {
 		console.error('Error in video generation:', error);
 		throw error;

@@ -9,6 +9,7 @@ import { Icons } from '@/components/icons';
 import { Link, useParams } from 'react-router-dom';
 import { HTTPError } from '@/components/HTTPError';
 import { Header } from '@/components/layout/Header';
+import { VideoGenStatus, AudioGenStatus } from '@shared/types/api/schema';
 
 const GeneratePageContent = () => {
 	const {
@@ -70,12 +71,12 @@ const GeneratePageContent = () => {
 						</>
 					)}
 
-					{audioStatus !== 'idle' && videoStatus !== 'idle' && (
+					{audioStatus !== AudioGenStatus.IDLE && videoStatus !== VideoGenStatus.IDLE && (
 						<>
 							<StepTransition data={[]} jsonEditorTitle='' onUpdate={() => {}} />
 
 							<StepCard
-								title='Download'
+								title='Download Files'
 								content={<FileDownloader />}
 								info='This step downloads the generated video and audio files.'
 							/>

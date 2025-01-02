@@ -18,6 +18,10 @@ export type VideoGenState = {
 	commentary: TimestampText[];
 	audioStatus: AudioGenStatus;
 	videoStatus: VideoGenStatus;
+	errorStep?: {
+		video?: VideoGenStatus;
+		audio?: AudioGenStatus;
+	};
 	options: {
 		description: DescriptionOptions;
 		commentary: CommentaryOptions;
@@ -26,12 +30,21 @@ export type VideoGenState = {
 	metadata: VideoMetadata;
 };
 
-export type VideoGenStatus =
-	| 'idle'
-	| 'generating commentary audio'
-	| 'downloading source'
-	| 'transcribing source'
-	| 'generating video'
-	| 'completed'
-	| 'error';
-export type AudioGenStatus = 'idle' | 'generating' | 'completed' | 'error';
+export enum VideoGenStatus {
+	IDLE,
+	STARTING,
+	GENERATING_COMMENTARY_AUDIO,
+	DOWNLOADING_SOURCE,
+	TRANSCRIBING_SOURCE,
+	GENERATING_VIDEO,
+	COMPLETED,
+	ERROR,
+}
+
+export enum AudioGenStatus {
+	IDLE,
+	STARTING,
+	GENERATING,
+	COMPLETED,
+	ERROR,
+}

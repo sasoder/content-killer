@@ -1,7 +1,9 @@
 import { VideoOptions } from '@shared/types/options';
-import { TimestampText } from '@shared/types/api/schema';
+import { TimestampText, AudioGenStatus } from '@shared/types/api/schema';
 import { ElevenLabsClient } from 'elevenlabs';
 import { projectStorage } from '@/db/storage';
+import * as path from 'path';
+import * as fs from 'fs/promises';
 
 const client = new ElevenLabsClient({
 	apiKey: process.env.ELEVENLABS_API_KEY,
@@ -36,23 +38,29 @@ export const generateAudio = async (
 	id: string,
 	commentary: TimestampText[],
 	options: VideoOptions['audio'],
+	onStatusUpdate: (status: AudioGenStatus, errorStep?: AudioGenStatus) => Promise<void>,
 ): Promise<string[]> => {
 	try {
+		const projectDir = path.join('data', id);
+		const commentaryDir = path.join(projectDir, 'commentary');
+		await fs.mkdir(commentaryDir, { recursive: true });
+
 		const audioPromises = commentary.map(async entry => {
-			const timestamp = entry.timestamp.replace(':', '');
-			const filename = `${timestamp}.mp3`;
+			const filename = `${entry.timestamp.replace(':', '')}.mp3`;
+			const filePath = path.join(commentaryDir, filename);
 
 			const buffer = await generateSingleAudio(entry.text, options);
-
-			await projectStorage.saveFile(id, filename, buffer);
+			await fs.writeFile(filePath, buffer);
 
 			return filename;
 		});
 
 		const audioFilenames = await Promise.all(audioPromises);
+		await onStatusUpdate(AudioGenStatus.COMPLETED);
 		return audioFilenames;
 	} catch (error) {
 		console.error('Error generating audio files:', error);
+		await onStatusUpdate(AudioGenStatus.ERROR, AudioGenStatus.GENERATING);
 		return [];
 	}
 };

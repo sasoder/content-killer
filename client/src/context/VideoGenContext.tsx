@@ -16,10 +16,12 @@ interface VideoGenStateContext {
 	commentary: TimestampText[];
 	audioStatus: AudioGenStatus;
 	videoStatus: VideoGenStatus;
+	errorStep: {
+		video?: VideoGenStatus;
+		audio?: AudioGenStatus;
+	};
 	updateDescription: (data: TimestampText[]) => void;
 	updateCommentary: (data: TimestampText[]) => void;
-	updateAudioStatus: (data: AudioGenStatus) => void;
-	updateVideoStatus: (data: VideoGenStatus) => void;
 	updateMetadata: (data: VideoMetadata) => void;
 	options: {
 		description: DescriptionOptions;
@@ -39,8 +41,8 @@ export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: st
 	});
 	const [description, setDescription] = useState<TimestampText[]>([]);
 	const [commentary, setCommentary] = useState<TimestampText[]>([]);
-	const [audioStatus, setAudioStatus] = useState<AudioGenStatus>('idle');
-	const [videoStatus, setVideoStatus] = useState<VideoGenStatus>('idle');
+	const [audioStatus, setAudioStatus] = useState<AudioGenStatus>(AudioGenStatus.IDLE);
+	const [videoStatus, setVideoStatus] = useState<VideoGenStatus>(VideoGenStatus.IDLE);
 	const [metadata, setMetadata] = useState<VideoMetadata | null>(null);
 	const [options, setOptions] = useState({
 		description: defaultDescriptionOptions,
@@ -49,8 +51,6 @@ export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: st
 	});
 	const updateDescription = (data: TimestampText[]) => setDescription(data);
 	const updateCommentary = (data: TimestampText[]) => setCommentary(data);
-	const updateAudioStatus = (data: AudioGenStatus) => setAudioStatus(data);
-	const updateVideoStatus = (data: VideoGenStatus) => setVideoStatus(data);
 	const updateMetadata = (data: VideoMetadata) => setMetadata(data);
 
 	useEffect(() => {
@@ -73,10 +73,9 @@ export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: st
 				commentary,
 				audioStatus,
 				videoStatus,
+				errorStep: {},
 				updateDescription,
 				updateCommentary,
-				updateAudioStatus,
-				updateVideoStatus,
 				updateMetadata,
 				options,
 				error: error ? error.message : null,
