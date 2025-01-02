@@ -1,4 +1,4 @@
-import { DescriptionOptions, CommentaryOptions, VideoOptions } from './';
+import { DescriptionOptions, CommentaryOptions, VideoOptions } from '.';
 import { ProjectConfig } from './config';
 
 export const defaultDescriptionOptions: DescriptionOptions = {

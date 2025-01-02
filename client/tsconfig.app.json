@@ -26,5 +26,5 @@
 		"noUnusedParameters": true,
 		"noFallthroughCasesInSwitch": true
 	},
-	"include": ["src", "../shared/types/options/defaultOptions.ts"]
+	"include": ["src", "../shared/types/options/defaultConfigs.ts"]
 }

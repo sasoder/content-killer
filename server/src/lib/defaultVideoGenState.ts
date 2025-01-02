@@ -4,16 +4,17 @@ import {
 	defaultDescriptionOptions,
 	defaultCommentaryOptions,
 	defaultVideoOptions,
-} from '@shared/types/options/defaultOptions';
-import { OptionConfig } from '@shared/types/options/config';
+} from '@shared/types/options/defaultConfigs';
+import { ProjectConfig } from '@shared/types/options/config';
 
-export const createDefaultVideoGenState = (id: string, optionConfig?: OptionConfig): VideoGenState => {
+export const createDefaultVideoGenState = (id: string, projectConfig?: ProjectConfig): VideoGenState => {
 	return {
 		id,
 		description: [],
 		commentary: [],
 		generationState: {
 			currentStep: GenerationStep.IDLE,
+			completedSteps: [],
 		},
 		metadata: {
 			url: '',
@@ -21,7 +22,7 @@ export const createDefaultVideoGenState = (id: string, optionConfig?: OptionConf
 			duration: '',
 			createdAt: new Date().toISOString(),
 		},
-		options: optionConfig?.options ?? {
+		options: projectConfig?.options ?? {
 			description: defaultDescriptionOptions,
 			commentary: defaultCommentaryOptions,
 			video: defaultVideoOptions,

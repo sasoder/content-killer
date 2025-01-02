@@ -36,7 +36,7 @@ export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: st
 		metadata: data?.metadata ?? null,
 		description: data?.description ?? [],
 		commentary: data?.commentary ?? [],
-		generationState: data?.generationState ?? { currentStep: GenerationStep.IDLE },
+		generationState: data?.generationState ?? { currentStep: GenerationStep.IDLE, completedSteps: [] },
 		updateDescription: (newDescription: TimestampText[]) => {
 			queryClient.setQueryData(['videoGenState', id], (old: any) => ({
 				...old,
@@ -89,7 +89,7 @@ export const useGenerationProgress = () => {
 	const { generationState } = useVideoGen();
 	return {
 		step: generationState.currentStep,
-		progress: generationState.progress,
+		completedSteps: generationState.completedSteps,
 		error: generationState.error,
 		isComplete: generationState.currentStep === GenerationStep.COMPLETED,
 		isError: generationState.currentStep === GenerationStep.ERROR,

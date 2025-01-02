@@ -37,7 +37,7 @@ export const generateAudio = async (
 	id: string,
 	commentary: TimestampText[],
 	options: VideoOptions['audio'],
-): Promise<string[]> => {
+): Promise<void> => {
 	try {
 		const projectDir = path.join('data', id);
 		const commentaryDir = path.join(projectDir, 'commentary');
@@ -53,10 +53,9 @@ export const generateAudio = async (
 			return filename;
 		});
 
-		const audioFilenames = await Promise.all(audioPromises);
-		return audioFilenames;
+		await Promise.all(audioPromises);
 	} catch (error) {
 		console.error('Error generating audio files:', error);
-		return [];
+		throw error;
 	}
 };

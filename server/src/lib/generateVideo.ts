@@ -1,16 +1,43 @@
-import ffmpeg from 'fluent-ffmpeg';
-import fs from 'fs/promises';
-import path from 'path';
+import * as ffmpeg from 'fluent-ffmpeg';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import OpenAI from 'openai';
 import youtubeDl, { create } from 'youtube-dl-exec';
 import { VideoOptions } from '@shared/types/options';
 import type { FfprobeData } from 'fluent-ffmpeg';
-import 'dotenv/config';
 import { GenerationStep } from '@shared/types/api/schema';
+import { projectStorage } from '@/db/storage';
+import 'dotenv/config';
 
 const openai = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
 });
+
+// Helper to update generation state
+const updateState = async (id: string, step: GenerationStep, error?: { step: GenerationStep; message: string }) => {
+	const project = await projectStorage.getProject(id);
+	if (!project) throw new Error('Project not found');
+
+	// Ensure completedSteps is an array
+	if (!project.generationState.completedSteps) {
+		project.generationState.completedSteps = [];
+	}
+
+	// Add previous step to completed steps if not error and not moving to error state
+	if (!error && step !== GenerationStep.ERROR && project.generationState.currentStep !== GenerationStep.IDLE) {
+		if (!project.generationState.completedSteps.includes(project.generationState.currentStep)) {
+			project.generationState.completedSteps.push(project.generationState.currentStep);
+		}
+	}
+
+	project.generationState = {
+		currentStep: step,
+		completedSteps: project.generationState.completedSteps,
+		...(error && { error }),
+	};
+
+	await projectStorage.updateProjectState(project);
+};
 
 async function getMediaDuration(filepath: string): Promise<number> {
 	return new Promise((resolve, reject) => {
@@ -129,7 +156,7 @@ async function scaleVideo(inputPath: string, outputPath: string, size: string): 
 
 		ffmpeg()
 			.input(inputPath)
-			.videoFilters([scaleFilter.substring(1)]) // Remove leading comma
+			.videoFilters([scaleFilter.substring(1)]) // remove leading comma
 			.outputOptions(['-c:v', 'libx264', '-c:a', 'copy'])
 			.output(outputPath)
 			.on('end', () => resolve(outputPath))
@@ -138,16 +165,11 @@ async function scaleVideo(inputPath: string, outputPath: string, size: string): 
 	});
 }
 
-export async function generateVideo(
-	id: string,
-	url: string,
-	audioIds: string[],
-	options: VideoOptions,
-	onStatusUpdate: (status: GenerationStep, errorStep?: GenerationStep) => Promise<void>,
-): Promise<void> {
+export async function generateVideo(id: string, url: string, options: VideoOptions): Promise<void> {
 	try {
 		console.log('Preparing to generate video...');
-		await onStatusUpdate(GenerationStep.PREPARING);
+		await updateState(id, GenerationStep.PREPARING);
+
 		const projectDir = path.join('data', id);
 		const videoDir = path.join(projectDir, 'video');
 		const miscDir = path.join(projectDir, 'misc');
@@ -155,8 +177,8 @@ export async function generateVideo(
 		await fs.mkdir(videoDir, { recursive: true });
 		await fs.mkdir(miscDir, { recursive: true });
 
-		// Convert audio IDs to absolute paths (they're in the commentary dir)
-		const audioFiles = audioIds.map(audioId => path.resolve(projectDir, 'commentary', audioId));
+		// convert audio IDs to absolute paths (they're in the commentary dir)
+		const audioFiles = await fs.readdir(path.join(projectDir, 'commentary'));
 
 		const sourceVideoPath = path.join(videoDir, 'source.mkv');
 		const scaledVideoPath = path.join(videoDir, 'scaled.mkv');
@@ -166,16 +188,19 @@ export async function generateVideo(
 
 		try {
 			console.log('Downloading video...');
-			await onStatusUpdate(GenerationStep.DOWNLOADING_VIDEO);
-			// Download video (will get best quality if upscaling needed)
+			await updateState(id, GenerationStep.DOWNLOADING_VIDEO);
 			await downloadVideo(url, sourceVideoPath, options.video.size);
 			console.log('Downloaded video');
 		} catch (error) {
-			await onStatusUpdate(GenerationStep.ERROR, GenerationStep.DOWNLOADING_VIDEO);
+			await updateState(id, GenerationStep.ERROR, {
+				step: GenerationStep.DOWNLOADING_VIDEO,
+				message: error instanceof Error ? error.message : 'Unknown error',
+			});
 			throw error;
 		}
 
 		// Scale video to target resolution
+		await updateState(id, GenerationStep.PROCESSING_VIDEO);
 		await scaleVideo(sourceVideoPath, scaledVideoPath, options.video.size);
 		console.log('Scaled video');
 
@@ -184,24 +209,30 @@ export async function generateVideo(
 		// Add subtitles if enabled (after scaling)
 		if (options.video.subtitlesEnabled) {
 			console.log('Transcribing source...');
-			await onStatusUpdate(GenerationStep.TRANSCRIBING);
+			await updateState(id, GenerationStep.TRANSCRIBING);
 			try {
 				const srtPath = path.join(projectDir, 'subtitles.srt');
 				await generateSubtitles(sourceVideoPath, srtPath);
 				await addSubtitles(scaledVideoPath, srtPath, subtitledVideoPath, options.video.subtitlesSize);
 				videoToProcess = subtitledVideoPath;
 			} catch (error) {
-				await onStatusUpdate(GenerationStep.ERROR, GenerationStep.TRANSCRIBING);
+				await updateState(id, GenerationStep.ERROR, {
+					step: GenerationStep.TRANSCRIBING,
+					message: error instanceof Error ? error.message : 'Unknown error',
+				});
 				throw error;
 			}
 		}
 
-		console.log('Generating final video...');
-		await onStatusUpdate(GenerationStep.PROCESSING_VIDEO);
+		console.log('Processing final video...');
+		await updateState(id, GenerationStep.PROCESSING_VIDEO);
 		try {
 			await processVideo(videoToProcess, audioFiles, outputPath, pauseAudioPath, options.video);
 		} catch (error) {
-			await onStatusUpdate(GenerationStep.ERROR, GenerationStep.PROCESSING_VIDEO);
+			await updateState(id, GenerationStep.ERROR, {
+				step: GenerationStep.PROCESSING_VIDEO,
+				message: error instanceof Error ? error.message : 'Unknown error',
+			});
 			throw error;
 		}
 
@@ -212,8 +243,8 @@ export async function generateVideo(
 			options.video.subtitlesEnabled ? fs.unlink(subtitledVideoPath) : Promise.resolve(),
 		]).catch(console.error); // Don't fail if cleanup fails
 
+		await updateState(id, GenerationStep.COMPLETED);
 		console.log('Video generation complete');
-		await onStatusUpdate(GenerationStep.COMPLETED);
 	} catch (error) {
 		console.error('Error in video generation:', error);
 		throw error;

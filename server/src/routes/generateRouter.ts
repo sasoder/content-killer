@@ -10,8 +10,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { projectStorage } from '@/db/storage';
 import { generateProjectId } from '@/lib/util';
-import { defaultProjectConfig } from '@shared/types/options/defaultOptions';
-import { ProjectConfig } from '@shared/types/options/config';
+import { defaultProjectConfig } from '@shared/types/options/defaultConfigs';
 
 const DescriptionOptionsSchema = z.object({
 	url: z.string(),
@@ -46,6 +45,7 @@ const generateRouter = new Hono()
 	.post('/project', zValidator('json', ProjectOptionsSchema), async c => {
 		const { configId } = c.req.valid('json');
 		const id = generateProjectId();
+		console.log('configId', configId);
 
 		let optionConfig = undefined;
 		if (configId) {
@@ -56,6 +56,7 @@ const generateRouter = new Hono()
 		}
 
 		const project = await projectStorage.createProject(id, optionConfig);
+		console.log('project', project);
 		return c.json(project);
 	})
 	.post('/projectConfig', async c => {
@@ -128,25 +129,11 @@ const generateRouter = new Hono()
 			await projectStorage.updateProjectState(project);
 			console.log('audio status set');
 
-			// Generate video with status updates
-			const updateGenerationStatus = async (status: GenerationStep, errorStep?: GenerationStep) => {
-				project.generationState.currentStep = status;
-				if (errorStep) {
-					project.generationState.error = { ...project.generationState.error, step: errorStep, message: '' };
-				} else if (status === GenerationStep.COMPLETED) {
-					project.generationState.error = { ...project.generationState.error, step: GenerationStep.IDLE, message: '' };
-				}
-				await projectStorage.updateProjectState(project);
-			};
-
+			await generateAudio(id, commentary, options.audio);
 			console.log('updateAudioStatus set');
-			const audioIds = await generateAudio(id, commentary, options.audio);
-			if (audioIds.length === 0) {
-				throw new Error('Failed to generate audio');
-			}
 
 			console.log('updateVideoStatus set');
-			await generateVideo(id, project.metadata.url, audioIds, options, updateGenerationStatus);
+			await generateVideo(id, project.metadata.url, options);
 			console.log('generateVideo called');
 			// Update final state
 			project.commentary = commentary;

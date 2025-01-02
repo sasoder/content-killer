@@ -26,14 +26,10 @@ export enum GenerationStep {
 
 export type GenerationState = {
 	currentStep: GenerationStep;
+	completedSteps: GenerationStep[];
 	error?: {
 		step: GenerationStep;
 		message: string;
-	};
-	progress?: {
-		current: number;
-		total: number;
-		message?: string;
 	};
 };
 

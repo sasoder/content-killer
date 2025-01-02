@@ -71,10 +71,10 @@ export class ProjectStorage {
 		await mkdir(path.join(DATA_DIR, id, 'misc'), { recursive: true });
 
 		// If there's a pause sound in the config, copy it to the project
-		if (projectConfig) {
-			const pausePath = path.join(PROJECT_CONFIGS_DIR, projectConfig.id, 'pause.mp3');
+		if (projectConfig && projectConfig.pauseSoundFilename) {
+			const pausePath = path.join(PROJECT_CONFIGS_DIR, projectConfig.id, projectConfig.pauseSoundFilename);
 			if (fs.existsSync(pausePath)) {
-				await fs.promises.copyFile(pausePath, path.join(DATA_DIR, id, 'misc', 'pause.mp3'));
+				await fs.promises.copyFile(pausePath, path.join(DATA_DIR, id, 'misc', projectConfig.pauseSoundFilename));
 			}
 		}
 
