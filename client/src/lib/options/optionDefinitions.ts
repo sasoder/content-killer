@@ -90,10 +90,10 @@ export const videoOptionDefinitions: VideoOptionDefinitions = {
 			step: 2,
 		},
 		size: {
-			label: 'Size',
+			label: 'Video Size',
 			description: 'The size of the output video.',
 			type: 'string',
-			options: ['720p', '1080p', 'source'],
+			options: ['720p', '1080p', '1440p', '4k', 'source'],
 		},
 	},
 };

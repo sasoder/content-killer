@@ -18,7 +18,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBackButton = false, b
 				{showBackButton && (
 					<Link to={backTo}>
 						<Button variant='ghost' size='icon'>
-							<Icons.chevronLeft className='h-[1.5rem] w-[1.5rem] -translate-x-[0.075rem]' />
+							<Icons.chevronLeft className='h-[1.5rem] w-[1.5rem] -translate-x-[0.045rem]' />
 						</Button>
 					</Link>
 				)}

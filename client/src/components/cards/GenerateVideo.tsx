@@ -26,7 +26,7 @@ const GenerateVideo = () => {
 		}
 
 		try {
-			await generate({ commentary, options: videoOptions });
+			generate({ commentary, options: videoOptions });
 			toast({
 				title: 'Success',
 				description: 'Video generation started successfully.',
@@ -47,20 +47,8 @@ const GenerateVideo = () => {
 				<QuickInfo data={commentary} type='commentary' />
 			</div>
 			<div className='flex justify-center'>
-				<div className='flex flex-grow flex-col gap-2'>
-					<StepOptions
-						options={videoOptions.video}
-						onOptionChange={newOptions =>
-							setVideoOptions({
-								...videoOptions,
-								video: newOptions as VideoOptions['video'],
-							})
-						}
-						optionDefinitions={videoOptionDefinitions.video}
-						type='video'
-					/>
-
-					<div className='flex flex-col gap-2'>
+				<div className='flex flex-grow flex-col gap-4'>
+					<div className='flex flex-col gap-1'>
 						<StepOptions
 							options={videoOptions.audio}
 							onOptionChange={newOptions =>
@@ -72,7 +60,7 @@ const GenerateVideo = () => {
 							optionDefinitions={videoOptionDefinitions.audio}
 							type='audio'
 						/>
-						<div className='flex flex-col gap-2'>
+						<div className='flex flex-col gap-1'>
 							<label className='text-sm font-medium'>Voice</label>
 							<VoiceSelector
 								value={videoOptions.audio.voiceId}
@@ -88,7 +76,17 @@ const GenerateVideo = () => {
 							/>
 						</div>
 					</div>
-
+					<StepOptions
+						options={videoOptions.video}
+						onOptionChange={newOptions =>
+							setVideoOptions({
+								...videoOptions,
+								video: newOptions as VideoOptions['video'],
+							})
+						}
+						optionDefinitions={videoOptionDefinitions.video}
+						type='video'
+					/>
 					<div className='flex justify-center pt-2'>
 						<Button onClick={handleGenerate} disabled={!commentary || commentary.length === 0 || isLoading}>
 							{isLoading ? (

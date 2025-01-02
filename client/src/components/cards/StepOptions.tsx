@@ -1,6 +1,7 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import SelectField from '@/components/ui/SelectField';
 import { OptionDefinition } from '@/lib/options/optionDefinitions';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -29,7 +30,7 @@ const StepOptions = <T extends Record<string, any>>({
 		<div className='flex flex-col gap-2'>
 			<div className='flex flex-col'>
 				<div className='text-muted-foreground text-sm font-medium capitalize'>{type} Options</div>
-				<Separator className='my-1' />
+				<Separator className='my-1 mb-0' />
 			</div>
 
 			<div className='flex flex-col gap-2'>
@@ -38,10 +39,11 @@ const StepOptions = <T extends Record<string, any>>({
 
 					if (definition.type === 'boolean') {
 						return (
-							<div key={key} className='flex items-center space-x-2'>
+							<div key={key} className='flex items-center gap-2'>
 								<Checkbox
 									id={`${type}-${key}`}
 									checked={value}
+									className='mt-0.5'
 									onCheckedChange={checked => handleOptionChange(key, checked)}
 								/>
 								<Label
@@ -58,11 +60,11 @@ const StepOptions = <T extends Record<string, any>>({
 
 					if (definition.type === 'number') {
 						return (
-							<div key={key} className='flex flex-col gap-0'>
+							<div key={key} className='flex flex-col'>
 								<Label htmlFor={`${type}-${key}`} className='text-sm font-medium'>
 									{definition.label}
 								</Label>
-								<div className='flex items-center gap-4'>
+								<div className='flex items-center gap-1'>
 									<Slider
 										id={`${type}-${key}`}
 										min={definition.min}
@@ -77,7 +79,20 @@ const StepOptions = <T extends Record<string, any>>({
 						);
 					}
 
-					// skip string type options as they are handled separately
+					if (definition.type === 'string' && definition.options) {
+						return (
+							<SelectField
+								key={key}
+								id={`${type}-${key}`}
+								label={definition.label}
+								value={value}
+								options={definition.options}
+								onValueChange={newValue => handleOptionChange(key, newValue)}
+							/>
+						);
+					}
+
+					// skip other string type options that don't have predefined choices
 					return null;
 				})}
 			</div>

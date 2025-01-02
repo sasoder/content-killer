@@ -28,7 +28,7 @@ export async function generateDescription(
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify({ url: url.length > 0 ? url : 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', options }),
+		body: JSON.stringify({ url, options }),
 	});
 	if (!response.ok) {
 		throw new Error('Failed to generate description');
@@ -228,4 +228,27 @@ export async function createProjectWithConfig(configId: string): Promise<VideoGe
 	}
 
 	return response.json();
+}
+
+export async function downloadFile(id: string, type: 'video' | 'audio'): Promise<void> {
+	const response = await fetch(`${API_BASE}/fetch/download/${id}/${type}`);
+	if (!response.ok) {
+		throw new Error(`Failed to download ${type}`);
+	}
+
+	// Get filename from Content-Disposition header or use a default
+	const contentDisposition = response.headers.get('Content-Disposition');
+	const filename = contentDisposition
+		? contentDisposition.split('filename=')[1].replace(/"/g, '')
+		: `${type}-${id}.${type === 'video' ? 'mp4' : 'mp3'}`;
+
+	const blob = await response.blob();
+	const url = window.URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = filename;
+	document.body.appendChild(a);
+	a.click();
+	window.URL.revokeObjectURL(url);
+	document.body.removeChild(a);
 }

@@ -16,6 +16,7 @@ import {
 	AlertTriangle,
 	Settings,
 	Trash2,
+	CheckIcon,
 } from 'lucide-react';
 
 export type IconKeys = keyof typeof icons;
@@ -42,6 +43,7 @@ const icons = {
 	alertTriangle: AlertTriangle,
 	settings: Settings,
 	trash: Trash2,
+	checkbox: CheckIcon,
 };
 
 export const Icons: IconsType = icons;

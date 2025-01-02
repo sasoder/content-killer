@@ -70,10 +70,10 @@ const GenerateDescription = () => {
 					placeholder='https://youtu.be/dQw4w9WgXcQ'
 					value={url}
 					onChange={e => setUrl(e.target.value)}
-					className='mt-1'
+					className='placeholder:text-muted-foreground/50 mt-1'
 				/>
 				<p className='mt-2 text-sm text-gray-500'>
-					Enter the URL of the YouTube video you want to generate a description for.
+					Enter the URL of the YouTube video you want to generate a video for.
 				</p>
 				{metadata?.title && metadata?.duration && (
 					<div className='mt-4'>

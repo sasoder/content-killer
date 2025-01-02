@@ -28,7 +28,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({ value, onValueChange }) =
 
 	return (
 		<Select value={value} onValueChange={onValueChange}>
-			<SelectTrigger className='w-full'>
+			<SelectTrigger className='w-full capitalize'>
 				<SelectValue>
 					{isLoading ? (
 						<div className='flex items-center gap-2'>
@@ -44,7 +44,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({ value, onValueChange }) =
 				<ScrollArea className='h-[200px]'>
 					<SelectGroup>
 						{data?.map((voice: Voice) => (
-							<SelectItem key={voice.id} value={voice.id}>
+							<SelectItem className='capitalize' key={voice.id} value={voice.id}>
 								{voice.name}
 							</SelectItem>
 						))}
