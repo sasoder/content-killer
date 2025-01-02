@@ -97,18 +97,18 @@ const generateRouter = new Hono()
 
 		try {
 			const audioIds = await generateAudio(id, commentary, options.audio);
-			const videoId = await generateVideo(id, commentary, options);
+			await generateVideo(id, audioIds, options);
 
 			const project = await projectStorage.getProject(id);
 			if (project) {
 				project.commentary = commentary;
 				project.audioIds = audioIds;
-				project.videoId = videoId;
+				project.videoId = 'output.mp4';
 				project.options.video = options;
 				await projectStorage.updateProjectState(project);
 			}
 
-			return c.json({ videoId, audioIds });
+			return c.json({ success: true });
 		} catch (error) {
 			console.error('Error generating video:', error);
 			return c.json({ error: 'Failed to generate video' }, 500);

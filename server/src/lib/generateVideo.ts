@@ -2,6 +2,11 @@ import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs/promises';
 import path from 'path';
 import OpenAI from 'openai';
+import youtubeDl, { create } from 'youtube-dl-exec';
+import { TimestampText } from '@shared/types/api/schema';
+import { VideoOptions } from '@shared/types/options';
+import type { FfprobeData } from 'fluent-ffmpeg';
+import 'dotenv/config';
 
 const openai = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
@@ -46,7 +51,7 @@ function parseTimestamp(timestamp: string): number {
 
 async function getMediaDuration(filepath: string): Promise<number> {
 	return new Promise((resolve, reject) => {
-		ffmpeg.ffprobe(filepath, (err, metadata) => {
+		ffmpeg.ffprobe(filepath, (err: Error | null, metadata: FfprobeData) => {
 			if (err) return reject(err);
 			resolve(metadata.format.duration || 0);
 		});
@@ -95,7 +100,7 @@ async function extractAudio(videoPath: string, outputPath: string): Promise<stri
 			.toFormat('mp3')
 			.output(outputPath)
 			.on('end', () => resolve(outputPath))
-			.on('error', err => reject(err))
+			.on('error', (err: Error) => reject(err))
 			.run();
 	});
 }
@@ -137,21 +142,63 @@ async function addSubtitles(videoPath: string, srtPath: string, outputPath: stri
 			.videoFilters([`subtitles=${srtPath}:force_style='FontSize=${size}'`])
 			.output(outputPath)
 			.on('end', () => resolve(outputPath))
-			.on('error', err => reject(err))
+			.on('error', (err: Error) => reject(err))
 			.run();
 	});
 }
 
-export async function generateVideo(
+async function downloadVideo(url: string, outputPath: string): Promise<void> {
+	try {
+		const ytDlOptions = {
+			format: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4',
+			output: outputPath,
+			noCheckCertificates: true,
+			noWarnings: true,
+			preferFreeFormats: true,
+			addHeader: ['referer:youtube.com', 'user-agent:googlebot'],
+		};
+
+		if (process.env.YT_DLP_PATH) {
+			await create(process.env.YT_DLP_PATH as string)(url, ytDlOptions);
+		} else {
+			await youtubeDl(url, ytDlOptions);
+		}
+	} catch (error) {
+		console.error('Error downloading video:', error);
+		throw error;
+	}
+}
+
+export async function generateVideo(id: string, audioIds: string[], options: VideoOptions): Promise<void> {
+	console.log('Starting video generation process...');
+	const projectDir = path.join('data', id);
+
+	// ensure project directory exists
+	await fs.mkdir(projectDir, { recursive: true });
+
+	// Download source video if URL is provided in metadata
+	const sourceVideoPath = path.join(projectDir, 'source.mp4');
+	const pauseAudioPath = path.join(projectDir, 'pause.mp3');
+	const outputPath = path.join(projectDir, 'output.mp4');
+
+	try {
+		// Process video with existing video processing logic
+		await processVideo(sourceVideoPath, audioIds, outputPath, pauseAudioPath, options.video);
+
+		console.log('Video generation completed successfully');
+	} catch (error) {
+		console.error('Error in video generation:', error);
+		throw error;
+	}
+}
+
+// Rename the old generateVideo to processVideo since it handles the actual processing
+async function processVideo(
 	sourceVideo: string,
+	audioIds: string[],
 	outputPath: string,
 	pauseAudio: string,
-	options: {
-		bw: boolean;
-		playSound: boolean;
-		size: '720p' | '1080p' | 'source';
-		subtitlesEnabled: boolean;
-	},
+	options: VideoOptions['video'],
 ) {
 	console.log('Generating video...');
 	const directory = path.dirname(sourceVideo);
@@ -230,7 +277,6 @@ export async function generateVideo(
 			.run();
 	});
 }
-
 async function main() {
 	try {
 		const srtPath = 'subtitles.srt';
@@ -243,7 +289,7 @@ async function main() {
 		await addSubtitles('source.mp4', srtPath, subtitledVideoPath, 26);
 
 		// continue with existing pause/overlay processing
-		const output = await generateVideo(subtitledVideoPath, 'output.mp4', 'pause.wav', {
+		const output = await generateVideo(subtitledVideoPath, 'output.mp4', {
 			bw: true,
 			playSound: true,
 			size: '720p',

@@ -1,8 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useVideoGen } from '@/context/VideoGenContext';
-import { generateDescription, generateMetadata } from '@/api/apiHelper';
-import { VideoMetadata } from '@shared/types/api/schema';
 import { validateUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,13 +9,14 @@ import StepOptions from '@/components/cards/StepOptions';
 import { descriptionOptionDefinitions } from '@/lib/options/optionDefinitions';
 import { Icons } from '@/components/icons';
 import { DescriptionOptions } from '@shared/types/options';
+import { useDescriptionGeneration } from '@/hooks/useDescriptionGeneration';
 
 const GenerateDescription = () => {
 	const { toast } = useToast();
 	const { updateDescription, updateMetadata, metadata, id, options } = useVideoGen();
 	const [url, setUrl] = useState<string>('');
-	const [isLoading, setIsLoading] = useState(false);
 	const [descriptionOptions, setDescriptionOptions] = useState<DescriptionOptions>(options.description);
+	const { generate, isLoading, error } = useDescriptionGeneration(id);
 
 	useEffect(() => {
 		if (metadata?.url) {
@@ -37,14 +36,14 @@ const GenerateDescription = () => {
 			return;
 		}
 
-		setIsLoading(true);
 		try {
-			if (url) {
-				const fetchedMetadata: VideoMetadata = await generateMetadata(id, url);
-				updateMetadata(fetchedMetadata);
+			const result = await generate(url, descriptionOptions);
+			updateDescription(result.description);
+
+			if ('metadata' in result && result.metadata) {
+				updateMetadata(result.metadata);
 			}
-			const newData = await generateDescription(id, url, descriptionOptions);
-			updateDescription(newData);
+
 			toast({
 				title: 'Success',
 				description: 'Description generated successfully.',
@@ -56,21 +55,19 @@ const GenerateDescription = () => {
 				description: 'Failed to generate description. Please try again.',
 				variant: 'destructive',
 			});
-		} finally {
-			setIsLoading(false);
 		}
 	};
 
 	return (
 		<form onSubmit={handleSubmit} className='flex h-full flex-col'>
 			<div className='flex-grow'>
-				<label htmlFor='url' className='block text-sm font-medium text-gray-700'>
+				<label htmlFor='url' className='text-muted-foreground block text-sm font-medium'>
 					YouTube URL
 				</label>
 				<Input
 					id='url'
 					type='text'
-					placeholder='https://www.example.com'
+					placeholder='https://youtu.be/dQw4w9WgXcQ'
 					value={url}
 					onChange={e => setUrl(e.target.value)}
 					className='mt-1'
