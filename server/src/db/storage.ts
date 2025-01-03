@@ -210,6 +210,16 @@ export class ProjectStorage {
 		return readFile(filePath);
 	}
 
+	async deleteProjectCommentary(id: string): Promise<void> {
+		const project = await this.getProject(id);
+		if (project) {
+			const audioDir = path.join(DATA_DIR, id, 'commentary');
+			if (fs.existsSync(audioDir)) {
+				await fs.promises.rm(audioDir, { recursive: true, force: true });
+			}
+		}
+	}
+
 	async ensureDefaultTemplateExists(): Promise<void> {
 		const defaultTemplate = await this.getProjectTemplate(DEFAULT_TEMPLATE_ID);
 		if (!defaultTemplate) {

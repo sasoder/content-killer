@@ -3,6 +3,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { createProjectWithTemplate, fetchAllVideoGenStates, fetchProjectTemplates } from '@/api/apiHelper';
 import { Header } from '@/components/layout/Header';
 import { cn, formatDate } from '@/lib/utils';
@@ -11,10 +12,11 @@ import { ProjectTemplate } from '@shared/types/options/template';
 import { useQuery } from '@tanstack/react-query';
 
 const SelectProject = () => {
-	const { data, isLoading } = useQuery({
+	const { data: videoGenStates, isLoading: isLoadingStates } = useQuery({
 		queryKey: ['videoGenStates'],
 		queryFn: fetchAllVideoGenStates,
 	});
+
 	const navigate = useNavigate();
 	const [selectedId, setSelectedId] = useState('new');
 	const [isFetching, setIsFetching] = useState(false);
@@ -38,106 +40,128 @@ const SelectProject = () => {
 
 	const handleGenerate = async () => {
 		setIsFetching(true);
-		if (selectedId === 'new') {
-			try {
+		try {
+			if (selectedId === 'new') {
 				const videoGenState = await createProjectWithTemplate(selectedTemplateId);
 				navigate(`/generate/${videoGenState.id}`);
-			} catch (error) {
-				console.error('Error creating project:', error);
-			} finally {
-				setIsFetching(false);
+			} else {
+				navigate(`/generate/${selectedId}`);
 			}
-		} else {
-			navigate(`/generate/${selectedId}`);
+		} catch (error) {
+			console.error('Error creating/loading project:', error);
+			// TODO: Add error handling UI feedback
+		} finally {
+			setIsFetching(false);
 		}
-	};
-
-	const handleSelectChange = (id: string) => {
-		setSelectedId(id);
 	};
 
 	const getSelectedTitle = useCallback(() => {
 		if (selectedId === 'new') return 'New Project';
-		const selected = data?.find(item => item.id === selectedId);
+		const selected = videoGenStates?.find(item => item.id === selectedId);
 		return selected ? selected.metadata.title : 'Untitled Project';
-	}, [data, selectedId]);
+	}, [videoGenStates, selectedId]);
+
+	const selectedTemplate = optionTemplates.find(t => t.id === selectedTemplateId);
 
 	return (
 		<>
 			<Header title='Choose Project' showBackButton />
-			<main className='container mx-auto'>
-				<div className='flex flex-grow flex-col items-center justify-center gap-4 pt-6'>
-					<Select value={selectedId} onValueChange={handleSelectChange}>
-						<SelectTrigger className='w-[250px]'>
-							<SelectValue>{getSelectedTitle()}</SelectValue>
-						</SelectTrigger>
-						<SelectContent className='w-[250px]'>
-							<ScrollArea>
-								<SelectGroup>
-									<SelectItem value='new'>New Project</SelectItem>
-								</SelectGroup>
-								{isLoading ? (
-									<SelectGroup>
-										<SelectItem value='loading' disabled>
-											Loading...
-										</SelectItem>
-									</SelectGroup>
-								) : (
-									<SelectGroup>
-										{data?.map(videoGenState => (
-											<SelectItem key={videoGenState.id} value={videoGenState.id}>
-												<div className='flex flex-col'>
-													<div className='font-medium'>{videoGenState.metadata.title}</div>
-													<div className='text-xs text-gray-500'>{formatDate(videoGenState.metadata.createdAt)}</div>
+			<main className='container mx-auto px-4 py-8'>
+				<Card className='mx-auto max-w-xs'>
+					<CardHeader>
+						<CardTitle>Project Selection</CardTitle>
+						<CardDescription>Choose an existing project or create a new one from a template</CardDescription>
+					</CardHeader>
+					<CardContent className='flex flex-col gap-6'>
+						{/* Project Selection */}
+						<div className='space-y-2'>
+							<label className='text-sm font-medium'>Project</label>
+							<Select value={selectedId} onValueChange={setSelectedId}>
+								<SelectTrigger className='w-full'>
+									<SelectValue>{getSelectedTitle()}</SelectValue>
+								</SelectTrigger>
+								<SelectContent>
+									<ScrollArea className='h-72'>
+										<SelectGroup>
+											<SelectItem value='new' className='py-2'>
+												<div className='flex items-center gap-2'>
+													<Icons.plus className='h-4 w-4' />
+													<span>New Project</span>
 												</div>
 											</SelectItem>
-										))}
-									</SelectGroup>
-								)}
-							</ScrollArea>
-						</SelectContent>
-					</Select>
-
-					{selectedId === 'new' && optionTemplates.length > 0 && (
-						<div className='flex flex-row gap-2'>
-							<Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-								<SelectTrigger className='w-[250px]'>
-									<SelectValue>
-										{optionTemplates.find(t => t.id === selectedTemplateId)?.name ?? 'Select Template'}
-									</SelectValue>
-								</SelectTrigger>
-								<SelectContent className='w-[250px]'>
-									<ScrollArea>
-										<SelectGroup>
-											{optionTemplates.map(template => (
-												<SelectItem key={template.id} value={template.id}>
-													<div className='flex flex-col'>
-														<div className='font-medium'>{template.name}</div>
-														<div className='text-xs text-gray-500'>{template.description}</div>
+											{isLoadingStates ? (
+												<SelectItem value='loading' disabled className='py-2'>
+													<div className='flex items-center gap-2'>
+														<Icons.loader className='h-4 w-4 animate-spin' />
+														<span>Loading projects...</span>
 													</div>
 												</SelectItem>
-											))}
+											) : (
+												videoGenStates?.map(state => (
+													<SelectItem key={state.id} value={state.id} className='py-2'>
+														<div className='flex flex-col gap-1'>
+															<span className='font-medium'>{state.metadata.title}</span>
+															<span className='text-muted-foreground text-xs'>
+																Created {formatDate(state.metadata.createdAt)}
+															</span>
+														</div>
+													</SelectItem>
+												))
+											)}
 										</SelectGroup>
 									</ScrollArea>
 								</SelectContent>
 							</Select>
-							<Link to='/templates' className={cn(buttonVariants({ size: 'icon', variant: 'ghost' }))}>
-								<Icons.settings className='h-4 w-4' />
-							</Link>
 						</div>
-					)}
 
-					<Button onClick={handleGenerate} disabled={isFetching || isLoading}>
-						{isFetching ? (
-							<>
-								<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />
-								Fetching...
-							</>
-						) : (
-							'Begin'
+						{/* Template Selection */}
+						{selectedId === 'new' && optionTemplates.length > 0 && (
+							<div className='space-y-2'>
+								<label className='text-sm font-medium'>Template</label>
+								<div className='flex flex-row gap-2'>
+									<Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+										<SelectTrigger className='w-full'>
+											<SelectValue>{selectedTemplate?.name ?? 'Select Template'}</SelectValue>
+										</SelectTrigger>
+										<SelectContent>
+											<ScrollArea className='h-72'>
+												<SelectGroup>
+													{optionTemplates.map(template => (
+														<SelectItem key={template.id} value={template.id} className='py-2'>
+															<div className='flex flex-col gap-1'>
+																<span className='font-medium'>{template.name}</span>
+																<span className='text-muted-foreground text-xs'>{template.description}</span>
+															</div>
+														</SelectItem>
+													))}
+												</SelectGroup>
+											</ScrollArea>
+										</SelectContent>
+									</Select>
+									<Link to='/templates' title='Template Settings'>
+										<Button variant='outline' size='icon'>
+											<Icons.settings className='h-4 w-4' />
+										</Button>
+									</Link>
+								</div>
+							</div>
 						)}
-					</Button>
-				</div>
+
+						{/* Action Button */}
+						<Button onClick={handleGenerate} disabled={isFetching || isLoadingStates} className='mx-auto w-fit'>
+							{isFetching ? (
+								<>
+									<Icons.loader className='mr-2 h-4 w-4 animate-spin' />
+									<span>Creating Project...</span>
+								</>
+							) : (
+								<>
+									<span>Continue</span>
+								</>
+							)}
+						</Button>
+					</CardContent>
+				</Card>
 			</main>
 		</>
 	);

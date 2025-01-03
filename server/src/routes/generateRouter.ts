@@ -108,8 +108,8 @@ const generateRouter = new Hono()
 	.post('/commentary/:id', zValidator('json', CommentaryOptionsSchema), async c => {
 		const { description, options } = c.req.valid('json');
 		const id = c.req.param('id');
-		const commentary = await generateCommentary(description, options);
 		const project = await projectStorage.getProject(id);
+		const commentary = await generateCommentary(description, options);
 		if (project) {
 			project.commentary = commentary;
 			project.description = description;
@@ -133,6 +133,8 @@ const generateRouter = new Hono()
 			project.options.video = options;
 			await updateState(project, GenerationStep.PREPARING);
 			await updateState(project, GenerationStep.GENERATING_AUDIO);
+			// remove existing audio files
+			await projectStorage.deleteProjectCommentary(id);
 			await generateAudio(id, commentary, options.audio);
 			await generateVideo(project, options, (step, error) => updateState(project, step, error));
 			await updateState(project, GenerationStep.COMPLETED);

@@ -8,6 +8,7 @@ const ACTIVE_STEPS = [
 	GenerationStep.PREPARING,
 	GenerationStep.GENERATING_AUDIO,
 	GenerationStep.DOWNLOADING_VIDEO,
+	GenerationStep.SCALING_VIDEO,
 	GenerationStep.PROCESSING_VIDEO,
 	GenerationStep.TRANSCRIBING,
 	GenerationStep.FINALIZING,

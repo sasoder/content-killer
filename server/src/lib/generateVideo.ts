@@ -2,7 +2,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs/promises';
 import path from 'path';
 import OpenAI from 'openai';
-import youtubeDl, { create } from 'youtube-dl-exec';
+import youtubedl, { create } from 'youtube-dl-exec';
 import { ffprobe, type FfprobeData } from 'fluent-ffmpeg';
 import { VideoOptions } from '@shared/types/options';
 import { GenerationStep, VideoGenState } from '@shared/types/api/schema';
@@ -230,7 +230,7 @@ async function processVideoWithOverlays(
 }
 
 async function downloadVideo(url: string, outputPath: string, size: string): Promise<void> {
-	const ytDl = process.env.YT_DLP_PATH ? create(process.env.YT_DLP_PATH) : youtubeDl;
+	const ytDl = process.env.YT_DLP_PATH ? create(process.env.YT_DLP_PATH) : youtubedl;
 	await ytDl(url, {
 		format: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
 		output: outputPath,

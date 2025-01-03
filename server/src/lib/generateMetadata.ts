@@ -1,5 +1,5 @@
 import { VideoMetadata } from '@shared/types/api/schema';
-import youtubeDl, { create } from 'youtube-dl-exec';
+import youtubedl, { create } from 'youtube-dl-exec';
 import 'dotenv/config';
 
 export const generateMetadata = async (url: string): Promise<Partial<VideoMetadata>> => {
@@ -13,21 +13,23 @@ export const generateMetadata = async (url: string): Promise<Partial<VideoMetada
 				preferFreeFormats: true,
 				addHeader: ['referer:youtube.com', 'user-agent:googlebot'],
 			})) as any;
+			console.log('Metadata:', result);
 			return {
 				title: result.title,
-				duration: result.duration_string,
+				duration: result.duration,
 			};
 		} else {
-			const result = (await youtubeDl(url, {
+			const result = (await youtubedl(url, {
 				dumpSingleJson: true,
 				noCheckCertificates: true,
 				noWarnings: true,
 				preferFreeFormats: true,
 				addHeader: ['referer:youtube.com', 'user-agent:googlebot'],
 			})) as any;
+			console.log('Metadata:', result);
 			return {
 				title: result.title,
-				duration: result.duration_string,
+				duration: result.duration,
 			};
 		}
 	} catch (error) {
