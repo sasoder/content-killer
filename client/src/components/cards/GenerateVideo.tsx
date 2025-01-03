@@ -15,7 +15,7 @@ const GenerateVideo = () => {
 	const [videoOptions, setVideoOptions] = useState<VideoOptions>(options.video);
 	const { generate, isLoading, isGenerating, error } = useVideoGeneration(id);
 
-	const handleGenerate = async () => {
+	const handleGenerate = () => {
 		if (!commentary || commentary.length === 0) {
 			toast({
 				title: 'Invalid data',
@@ -25,20 +25,28 @@ const GenerateVideo = () => {
 			return;
 		}
 
-		try {
-			generate({ commentary, options: videoOptions });
-			toast({
-				title: 'Success',
-				description: 'Video generation started successfully.',
-			});
-		} catch (error) {
-			console.error('Error generating content:', error);
-			toast({
-				title: 'Error',
-				description: 'Failed to start video generation. Please try again.',
-				variant: 'destructive',
-			});
-		}
+		generate(
+			{ commentary, options: videoOptions },
+			{
+				onSuccess: () => {
+					toast({
+						title: 'Success',
+						description: 'Video generation started successfully.',
+					});
+				},
+				onError: error => {
+					console.error('Error generating content:', error);
+					const errorMessage =
+						error instanceof Error ? error.message : 'Failed to start video generation. Please try again.';
+
+					toast({
+						title: 'Error',
+						description: errorMessage,
+						variant: 'destructive',
+					});
+				},
+			},
+		);
 	};
 
 	return (

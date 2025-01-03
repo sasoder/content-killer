@@ -1,17 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
 import { Icons } from '@/components/icons';
-import StepOptions from '@/components/cards/StepOptions';
-import {
-	descriptionOptionDefinitions,
-	commentaryOptionDefinitions,
-	videoOptionDefinitions,
-} from '@/lib/options/optionDefinitions';
 import {
 	fetchProjectTemplates,
 	createProjectTemplate,
@@ -22,8 +12,7 @@ import {
 import { ProjectTemplate } from '@shared/types/options/template';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/layout/Header';
-import VoiceSelector from '@/components/VoiceSelector';
-import SoundUpload from '@/components/ui/SoundUpload';
+import { TemplateCard } from '@/components/TemplateCard';
 
 export default function TemplatesPage() {
 	const { toast } = useToast();
@@ -88,7 +77,6 @@ export default function TemplatesPage() {
 
 		try {
 			setIsLoading(true);
-
 			let updatedTemplate = { ...selectedTemplate };
 
 			if (pauseSoundFile) {
@@ -147,6 +135,7 @@ export default function TemplatesPage() {
 			<Header title='Project Templates' showBackButton />
 			<div className='container mx-auto p-6'>
 				<div className='grid grid-cols-12 gap-6'>
+					{/* Templates List - Left Side */}
 					<div className='col-span-full lg:col-span-4'>
 						<Card className='h-fit'>
 							<CardHeader className='flex flex-row items-center justify-between pb-4'>
@@ -193,6 +182,7 @@ export default function TemplatesPage() {
 						</Card>
 					</div>
 
+					{/* Configuration - Right Side */}
 					<div className='col-span-full lg:col-span-8'>
 						{selectedTemplate ? (
 							<Card>
@@ -202,130 +192,13 @@ export default function TemplatesPage() {
 								</CardHeader>
 								<CardContent>
 									<div className='space-y-6'>
-										<div className='grid gap-4 md:grid-cols-2'>
-											<div className='space-y-2'>
-												<Label htmlFor='name'>Name</Label>
-												<Input
-													id='name'
-													value={selectedTemplate.name}
-													onChange={e => setSelectedTemplate({ ...selectedTemplate, name: e.target.value })}
-													placeholder='Template name'
-												/>
-											</div>
-											<SoundUpload
-												currentFileName={selectedTemplate.pauseSoundFilename}
-												onFileSelect={file => setPauseSoundFile(file)}
-											/>
-										</div>
+										<TemplateCard
+											template={selectedTemplate}
+											onChange={setSelectedTemplate}
+											onPauseSoundSelect={setPauseSoundFile}
+										/>
 
-										<div className='space-y-2'>
-											<Label htmlFor='description'>Description</Label>
-											<Textarea
-												id='description'
-												value={selectedTemplate.description}
-												onChange={e =>
-													setSelectedTemplate({
-														...selectedTemplate,
-														description: e.target.value,
-													})
-												}
-												placeholder='Enter a description for this template'
-												className='h-24'
-											/>
-										</div>
-
-										<Separator />
-
-										<div className='space-y-6'>
-											<StepOptions
-												options={selectedTemplate.options.description}
-												onOptionChange={newOptions =>
-													setSelectedTemplate({
-														...selectedTemplate,
-														options: {
-															...selectedTemplate.options,
-															description: newOptions,
-														},
-													})
-												}
-												optionDefinitions={descriptionOptionDefinitions}
-												type='description'
-											/>
-
-											<StepOptions
-												options={selectedTemplate.options.commentary}
-												onOptionChange={newOptions =>
-													setSelectedTemplate({
-														...selectedTemplate,
-														options: {
-															...selectedTemplate.options,
-															commentary: newOptions,
-														},
-													})
-												}
-												optionDefinitions={commentaryOptionDefinitions}
-												type='commentary'
-											/>
-
-											<StepOptions
-												options={selectedTemplate.options.video.video}
-												onOptionChange={newOptions =>
-													setSelectedTemplate({
-														...selectedTemplate,
-														options: {
-															...selectedTemplate.options,
-															video: {
-																...selectedTemplate.options.video,
-																video: newOptions,
-															},
-														},
-													})
-												}
-												optionDefinitions={videoOptionDefinitions.video}
-												type='video'
-											/>
-
-											<StepOptions
-												options={selectedTemplate.options.video.audio}
-												onOptionChange={newOptions =>
-													setSelectedTemplate({
-														...selectedTemplate,
-														options: {
-															...selectedTemplate.options,
-															video: {
-																...selectedTemplate.options.video,
-																audio: newOptions,
-															},
-														},
-													})
-												}
-												optionDefinitions={videoOptionDefinitions.audio}
-												type='audio'
-											/>
-
-											<div className='space-y-2'>
-												<Label>Voice</Label>
-												<VoiceSelector
-													value={selectedTemplate.options.video.audio.voiceId}
-													onValueChange={voiceId =>
-														setSelectedTemplate({
-															...selectedTemplate,
-															options: {
-																...selectedTemplate.options,
-																video: {
-																	...selectedTemplate.options.video,
-																	audio: {
-																		...selectedTemplate.options.video.audio,
-																		voiceId,
-																	},
-																},
-															},
-														})
-													}
-												/>
-											</div>
-										</div>
-
+										{/* Save Button */}
 										<div className='flex justify-end pt-4'>
 											<Button onClick={handleSave} disabled={isLoading || !hasChanges()} className='shadow-sm'>
 												{isLoading ? (

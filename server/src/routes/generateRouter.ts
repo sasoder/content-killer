@@ -69,7 +69,7 @@ const generateRouter = new Hono()
 
 			// Copy the default pause sound to the new template
 			const defaultPauseSound = await projectStorage.getProjectTemplateFile('default', 'pause_default.wav');
-			await projectStorage.saveProjectTemplateFile(template.id, template.pauseSoundFilename, defaultPauseSound);
+			await projectStorage.updateTemplatePauseSound(template.id, template.pauseSoundFilename, defaultPauseSound);
 
 			return c.json(template, 201);
 		} catch (error) {
@@ -134,7 +134,7 @@ const generateRouter = new Hono()
 			await updateState(project, GenerationStep.PREPARING);
 			await updateState(project, GenerationStep.GENERATING_AUDIO);
 			await generateAudio(id, commentary, options.audio);
-			await generateVideo(id, project.metadata.url, options, (step, error) => updateState(project, step, error));
+			await generateVideo(project, options, (step, error) => updateState(project, step, error));
 			await updateState(project, GenerationStep.COMPLETED);
 
 			return c.json({ success: true });

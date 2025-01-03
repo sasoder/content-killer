@@ -239,16 +239,12 @@ async function downloadVideo(url: string, outputPath: string, size: string): Pro
 }
 
 export async function generateVideo(
-	id: string,
-	url: string,
+	project: VideoGenState,
 	options: VideoOptions,
 	updateState: (step: GenerationStep, error?: { step: GenerationStep; message: string }) => Promise<void>,
 ): Promise<void> {
 	try {
-		const project = await projectStorage.getProject(id);
-		if (!project) throw new Error('Project not found');
-
-		const projectDir = path.join('data', id);
+		const projectDir = path.join('data', project.id);
 		const videoDir = path.join(projectDir, 'video');
 		const miscDir = path.join(projectDir, 'misc');
 		const commentaryDir = path.join(projectDir, 'commentary');
@@ -266,7 +262,7 @@ export async function generateVideo(
 		try {
 			console.log('Downloading video...');
 			await updateState(GenerationStep.DOWNLOADING_VIDEO);
-			await downloadVideo(url, sourceVideoPath, options.video.size);
+			await downloadVideo(project.metadata.url, sourceVideoPath, options.video.size);
 			console.log('Downloaded video');
 		} catch (error) {
 			await updateState(GenerationStep.ERROR, {

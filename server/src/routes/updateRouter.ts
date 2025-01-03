@@ -47,7 +47,7 @@ const updateRouter = new Hono()
 
 			const buffer = await file.arrayBuffer();
 			const filename = file.name;
-			await projectStorage.saveProjectTemplateFile(id, filename, Buffer.from(buffer));
+			await projectStorage.updateTemplatePauseSound(id, filename, Buffer.from(buffer));
 
 			return c.json({ filename }, 201);
 		} catch (error) {

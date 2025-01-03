@@ -122,7 +122,7 @@ export class ProjectStorage {
 			description: template.description,
 			createdAt: template.createdAt,
 			options: JSON.stringify(template.options),
-			pauseSoundFilename: template.pauseSoundFilename || '',
+			pauseSoundFilename: template.pauseSoundFilename,
 		});
 	}
 
@@ -160,7 +160,7 @@ export class ProjectStorage {
 				name: template.name,
 				description: template.description,
 				options: JSON.stringify(template.options),
-				pauseSoundFilename: template.pauseSoundFilename || '',
+				pauseSoundFilename: template.pauseSoundFilename,
 			})
 			.where(eq(projectTemplates.id, template.id));
 	}
@@ -179,11 +179,30 @@ export class ProjectStorage {
 		}
 	}
 
-	async saveProjectTemplateFile(id: string, fileName: string, content: Buffer): Promise<void> {
+	async updateTemplatePauseSound(id: string, fileName: string, content: Buffer): Promise<void> {
+		// Get the current template to find the existing pause sound file
+		const template = await this.getProjectTemplate(id);
+		if (!template) {
+			throw new Error('Template not found');
+		}
+
 		const templateDir = path.join(PROJECT_TEMPLATES_DIR, id);
 		await mkdir(templateDir, { recursive: true });
+
+		// Remove the existing pause sound file if it exists and is different
+		if (template.pauseSoundFilename && template.pauseSoundFilename !== fileName) {
+			const existingFilePath = path.join(templateDir, template.pauseSoundFilename);
+			if (fs.existsSync(existingFilePath)) {
+				await fs.promises.unlink(existingFilePath);
+			}
+		}
+
+		// Write the new pause sound file
 		const filePath = path.join(templateDir, fileName);
 		await writeFile(filePath, content);
+
+		// Update the template in the database with the new filename
+		await db.update(projectTemplates).set({ pauseSoundFilename: fileName }).where(eq(projectTemplates.id, id));
 	}
 
 	async getProjectTemplateFile(templateId: string, fileName: string): Promise<Buffer> {
