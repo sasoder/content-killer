@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useVideoGen, useGenerationProgress } from '@/context/VideoGenContext';
 import { Icons } from '@/components/icons';
@@ -5,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { GenerationStep } from '@shared/types/api/schema';
 import { Separator } from '@/components/ui/separator';
 import { downloadFile } from '@/api/apiHelper';
+import { toast } from '@/hooks/use-toast';
 
 const GENERATION_STEPS = [
 	{ step: GenerationStep.PREPARING, label: 'Preparing generation' },
@@ -35,10 +37,44 @@ const StepIndicator = ({
 const FileDownloader = () => {
 	const { id, options } = useVideoGen();
 	const { step: currentStep, completedSteps = [], error, isComplete } = useGenerationProgress();
+	const [isDownloadingAudio, setIsDownloadingAudio] = useState(false);
+	const [isDownloadingVideo, setIsDownloadingVideo] = useState(false);
 
 	if (currentStep === GenerationStep.IDLE) {
 		return null;
 	}
+
+	console.log(completedSteps);
+
+	const handleDownloadAudio = async () => {
+		try {
+			setIsDownloadingAudio(true);
+			await downloadFile(id, 'audio');
+		} catch (error) {
+			toast({
+				title: 'Error',
+				description: 'Failed to download audio files. Please try again.',
+				variant: 'destructive',
+			});
+		} finally {
+			setIsDownloadingAudio(false);
+		}
+	};
+
+	const handleDownloadVideo = async () => {
+		try {
+			setIsDownloadingVideo(true);
+			await downloadFile(id, 'video');
+		} catch (error) {
+			toast({
+				title: 'Error',
+				description: 'Failed to download video file. Please try again.',
+				variant: 'destructive',
+			});
+		} finally {
+			setIsDownloadingVideo(false);
+		}
+	};
 
 	// Filter steps based on options
 	const activeSteps = GENERATION_STEPS.filter(
@@ -83,14 +119,28 @@ const FileDownloader = () => {
 			</div>
 			<div className='flex flex-col items-center gap-4'>
 				<Button
-					onClick={() => downloadFile(id, 'audio')}
+					onClick={handleDownloadAudio}
 					className='w-fit'
-					disabled={!completedSteps.includes(GenerationStep.GENERATING_AUDIO)}
+					disabled={!completedSteps.includes(GenerationStep.GENERATING_AUDIO) || isDownloadingAudio}
 				>
-					Download Audio
+					{isDownloadingAudio ? (
+						<>
+							<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />
+							Downloading Audio...
+						</>
+					) : (
+						'Download Audio'
+					)}
 				</Button>
-				<Button onClick={() => downloadFile(id, 'video')} className='w-fit' disabled={!isComplete}>
-					Download Video
+				<Button onClick={handleDownloadVideo} className='w-fit' disabled={!isComplete || isDownloadingVideo}>
+					{isDownloadingVideo ? (
+						<>
+							<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />
+							Downloading Video...
+						</>
+					) : (
+						'Download Video'
+					)}
 				</Button>
 			</div>
 		</div>

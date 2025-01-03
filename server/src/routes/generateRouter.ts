@@ -163,7 +163,9 @@ const updateState = async (
 		project.generationState.completedSteps = [];
 	}
 
-	if (!error && step !== GenerationStep.ERROR && project.generationState.currentStep !== GenerationStep.IDLE) {
+	if (step === GenerationStep.PREPARING) {
+		project.generationState.completedSteps = [];
+	} else if (!error && step !== GenerationStep.ERROR && project.generationState.currentStep !== GenerationStep.IDLE) {
 		if (!project.generationState.completedSteps.includes(project.generationState.currentStep)) {
 			project.generationState.completedSteps.push(project.generationState.currentStep);
 		}

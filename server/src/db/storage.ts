@@ -192,44 +192,6 @@ export class ProjectStorage {
 		return readFile(filePath);
 	}
 
-	async getVideoCountForDate(date: Date): Promise<number> {
-		const states = await this.getAllVideoGenStates();
-		const targetDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-		let count = 0;
-
-		for (const state of states) {
-			const stateDate = new Date(state.metadata.createdAt).toLocaleDateString('en-US', {
-				month: 'short',
-				day: 'numeric',
-				year: 'numeric',
-			});
-			if (stateDate === targetDate && state.generationState.completedSteps.includes(GenerationStep.COMPLETED)) {
-				count++;
-			}
-		}
-
-		return count;
-	}
-
-	async getAudioCountForDate(date: Date): Promise<number> {
-		const states = await this.getAllVideoGenStates();
-		const targetDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-		let count = 0;
-
-		for (const state of states) {
-			const stateDate = new Date(state.metadata.createdAt).toLocaleDateString('en-US', {
-				month: 'short',
-				day: 'numeric',
-				year: 'numeric',
-			});
-			if (stateDate === targetDate && state.generationState.completedSteps.includes(GenerationStep.GENERATING_AUDIO)) {
-				count++;
-			}
-		}
-
-		return count;
-	}
-
 	async ensureDefaultConfigExists(): Promise<void> {
 		const defaultConfig = await this.getProjectConfig(DEFAULT_CONFIG_ID);
 		if (!defaultConfig) {

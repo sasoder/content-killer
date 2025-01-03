@@ -245,9 +245,6 @@ export async function generateVideo(
 	updateState: (step: GenerationStep, error?: { step: GenerationStep; message: string }) => Promise<void>,
 ): Promise<void> {
 	try {
-		console.log('Preparing to generate video...');
-		await updateState(GenerationStep.PREPARING);
-
 		const project = await projectStorage.getProject(id);
 		if (!project) throw new Error('Project not found');
 

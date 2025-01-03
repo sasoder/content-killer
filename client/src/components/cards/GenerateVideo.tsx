@@ -13,7 +13,7 @@ import VoiceSelector from '@/components/VoiceSelector';
 const GenerateVideo = () => {
 	const { commentary, id, options } = useVideoGen();
 	const [videoOptions, setVideoOptions] = useState<VideoOptions>(options.video);
-	const { generate, isLoading, error } = useVideoGeneration(id);
+	const { generate, isLoading, isGenerating, error } = useVideoGeneration(id);
 
 	const handleGenerate = async () => {
 		if (!commentary || commentary.length === 0) {
@@ -88,8 +88,11 @@ const GenerateVideo = () => {
 						type='video'
 					/>
 					<div className='flex justify-center pt-2'>
-						<Button onClick={handleGenerate} disabled={!commentary || commentary.length === 0 || isLoading}>
-							{isLoading ? (
+						<Button
+							onClick={handleGenerate}
+							disabled={!commentary || commentary.length === 0 || isLoading || isGenerating}
+						>
+							{isLoading || isGenerating ? (
 								<>
 									<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />
 									Generating...

@@ -37,6 +37,7 @@ export function useVideoGeneration(id: string) {
 				generationState: {
 					currentStep: GenerationStep.PREPARING,
 					progress: { current: 0, total: 100 },
+					completedSteps: [],
 				},
 			}));
 
