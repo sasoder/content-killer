@@ -63,13 +63,13 @@ const generateRouter = new Hono()
 		try {
 			const config = {
 				...defaultProjectConfig,
-				pauseSoundFilename: 'pause_default.mp3',
+				pauseSoundFilename: 'pause_default.wav',
 			};
 
 			await projectStorage.createProjectConfig(config);
 
 			// Copy the default pause sound to the new config
-			const defaultPauseSound = await projectStorage.getProjectConfigFile('default', 'pause_default.mp3');
+			const defaultPauseSound = await projectStorage.getProjectConfigFile('default', 'pause_default.wav');
 			await projectStorage.saveProjectConfigFile(config.id, config.pauseSoundFilename, defaultPauseSound);
 
 			return c.json(config, 201);

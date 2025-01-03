@@ -245,22 +245,8 @@ export async function generateVideo(
 
 		const sourceVideoPath = path.join(videoDir, 'source.mkv');
 		const subtitledVideoPath = path.join(videoDir, 'subtitled.mkv');
-		const pauseAudioPath = path.join(miscDir, 'pause.mp3');
+		const pauseAudioPath = path.join(miscDir, project.pauseSoundFilename);
 		const outputPath = path.join(videoDir, 'output.mp4');
-
-		// Copy pause sound file if it exists
-		if (project.pauseSoundFilename) {
-			try {
-				const pauseSound = await projectStorage.getProjectConfigFile(id, project.pauseSoundFilename);
-				await fs.writeFile(pauseAudioPath, pauseSound);
-			} catch (error) {
-				console.error('Error copying pause sound:', error);
-				// Don't throw here, just disable pause sound
-				options.video.playSound = false;
-			}
-		} else {
-			options.video.playSound = false;
-		}
 
 		try {
 			console.log('Downloading video...');
@@ -298,7 +284,7 @@ export async function generateVideo(
 		try {
 			await processVideoWithOverlays(videoToProcess, outputPath, commentaryDir, pauseAudioPath, {
 				bw: options.video.bw,
-				playSound: options.video.playSound && project.pauseSoundFilename !== null,
+				playSound: options.video.playSound,
 				size: options.video.size,
 				subtitlesEnabled: options.video.subtitlesEnabled,
 			});

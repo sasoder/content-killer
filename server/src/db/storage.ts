@@ -36,7 +36,7 @@ sqlite.run(`
 		description TEXT NOT NULL,
 		created_at TEXT NOT NULL,
 		options TEXT NOT NULL,
-		pause_sound_filename TEXT
+		pause_sound_filename TEXT NOT NULL
 	)
 `);
 
@@ -52,7 +52,7 @@ const projectConfigs = sqliteTable('project_configs', {
 	description: text('description').notNull(),
 	createdAt: text('created_at').notNull(),
 	options: text('options').notNull(),
-	pauseSoundFilename: text('pause_sound_filename'),
+	pauseSoundFilename: text('pause_sound_filename').notNull(),
 });
 
 // Initialize Drizzle
@@ -120,7 +120,7 @@ export class ProjectStorage {
 			description: config.description,
 			createdAt: config.createdAt,
 			options: JSON.stringify(config.options),
-			pauseSoundFilename: config.pauseSoundFilename,
+			pauseSoundFilename: config.pauseSoundFilename || '',
 		});
 	}
 
@@ -158,7 +158,7 @@ export class ProjectStorage {
 				name: config.name,
 				description: config.description,
 				options: JSON.stringify(config.options),
-				pauseSoundFilename: config.pauseSoundFilename,
+				pauseSoundFilename: config.pauseSoundFilename || '',
 			})
 			.where(eq(projectConfigs.id, config.id));
 	}

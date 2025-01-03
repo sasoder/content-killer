@@ -5,7 +5,7 @@ export type ProjectConfig = {
 	name: string;
 	description: string;
 	createdAt: string;
-	pauseSoundFilename: string | null;
+	pauseSoundFilename: string;
 	options: {
 		description: DescriptionOptions;
 		commentary: CommentaryOptions;

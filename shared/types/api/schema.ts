@@ -44,5 +44,5 @@ export type VideoGenState = {
 		video: VideoOptions;
 	};
 	metadata: VideoMetadata;
-	pauseSoundFilename: string | null;
+	pauseSoundFilename: string;
 };

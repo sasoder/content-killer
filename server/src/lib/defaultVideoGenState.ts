@@ -26,6 +26,6 @@ export const createDefaultVideoGenState = (id: string, projectConfig?: ProjectCo
 			commentary: defaultCommentaryOptions,
 			video: defaultVideoOptions,
 		},
-		pauseSoundFilename: projectConfig?.pauseSoundFilename ?? null,
+		pauseSoundFilename: projectConfig?.pauseSoundFilename || '',
 	};
 };
