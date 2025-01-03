@@ -1,11 +1,11 @@
-import * as ffmpeg from 'fluent-ffmpeg';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import ffmpeg from 'fluent-ffmpeg';
+import fs from 'fs/promises';
+import path from 'path';
 import OpenAI from 'openai';
 import youtubeDl, { create } from 'youtube-dl-exec';
+import { ffprobe, type FfprobeData } from 'fluent-ffmpeg';
 import { VideoOptions } from '@shared/types/options';
-import type { FfprobeData } from 'fluent-ffmpeg';
-import { GenerationStep } from '@shared/types/api/schema';
+import { GenerationStep, VideoGenState } from '@shared/types/api/schema';
 import { projectStorage } from '@/db/storage';
 import 'dotenv/config';
 
@@ -13,41 +13,51 @@ const openai = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Helper to update generation state
-const updateState = async (id: string, step: GenerationStep, error?: { step: GenerationStep; message: string }) => {
-	const project = await projectStorage.getProject(id);
-	if (!project) throw new Error('Project not found');
+interface AudioOverlay {
+	timestamp: string;
+	timestampSeconds: number;
+	duration: number;
+	filepath: string;
+}
 
-	// Ensure completedSteps is an array
-	if (!project.generationState.completedSteps) {
-		project.generationState.completedSteps = [];
-	}
-
-	// Add previous step to completed steps if not error and not moving to error state
-	if (!error && step !== GenerationStep.ERROR && project.generationState.currentStep !== GenerationStep.IDLE) {
-		if (!project.generationState.completedSteps.includes(project.generationState.currentStep)) {
-			project.generationState.completedSteps.push(project.generationState.currentStep);
-		}
-	}
-
-	project.generationState = {
-		currentStep: step,
-		completedSteps: project.generationState.completedSteps,
-		...(error && { error }),
-	};
-
-	await projectStorage.updateProjectState(project);
-};
+function parseTimestamp(timestamp: string): number {
+	return parseInt(timestamp, 10);
+}
 
 async function getMediaDuration(filepath: string): Promise<number> {
 	return new Promise((resolve, reject) => {
-		ffmpeg.ffprobe(filepath, (err: Error | null, metadata: FfprobeData) => {
+		ffprobe(filepath, (err: Error | null, metadata: FfprobeData) => {
 			if (err) return reject(err);
 			resolve(metadata.format.duration || 0);
 		});
 	});
 }
 
+// Use test version's improved findOverlayAudios
+async function findOverlayAudios(directory: string): Promise<AudioOverlay[]> {
+	console.log('findOverlayAudios', directory);
+	const files = await fs.readdir(directory);
+	const overlays: AudioOverlay[] = [];
+
+	for (const file of files) {
+		if (file.match(/^\d{4}\.mp3$/)) {
+			const timestamp = file.slice(0, 4);
+			const filepath = path.join(directory, file);
+			const duration = await getMediaDuration(filepath);
+			const timestampSeconds = parseTimestamp(timestamp);
+			overlays.push({
+				timestamp,
+				timestampSeconds,
+				duration,
+				filepath,
+			});
+		}
+	}
+
+	return overlays.sort((a, b) => a.timestampSeconds - b.timestampSeconds);
+}
+
+// Keep server's scaling logic
 const getScaleFilter = (size: string) => {
 	switch (size) {
 		case 'source':
@@ -56,10 +66,6 @@ const getScaleFilter = (size: string) => {
 			return ',scale=-2:720';
 		case '1080p':
 			return ',scale=-2:1080';
-		case '1440p':
-			return ',scale=-2:1440';
-		case '4k':
-			return ',scale=-2:2160';
 		default:
 			return '';
 	}
@@ -67,12 +73,11 @@ const getScaleFilter = (size: string) => {
 
 async function extractAudio(videoPath: string, outputPath: string): Promise<string> {
 	return new Promise((resolve, reject) => {
-		ffmpeg()
-			.input(videoPath)
+		ffmpeg(videoPath)
 			.toFormat('mp3')
 			.output(outputPath)
 			.on('end', () => resolve(outputPath))
-			.on('error', (err: Error) => reject(err))
+			.on('error', err => reject(err))
 			.run();
 	});
 }
@@ -101,122 +106,187 @@ async function generateSubtitles(videoPath: string, srtPath: string): Promise<st
 
 async function addSubtitles(videoPath: string, srtPath: string, outputPath: string, size: number): Promise<string> {
 	return new Promise((resolve, reject) => {
-		ffmpeg()
-			.input(videoPath)
+		ffmpeg(videoPath)
 			.videoFilters([`subtitles=${srtPath}:force_style='FontSize=${size}'`])
-			.outputOptions(['-c:v', 'libx264', '-c:a', 'copy'])
 			.output(outputPath)
 			.on('end', () => resolve(outputPath))
-			.on('error', (err: Error) => reject(err))
+			.on('error', err => reject(err))
 			.run();
 	});
 }
 
-async function downloadVideo(url: string, outputPath: string, size: string = 'source'): Promise<void> {
-	try {
-		// Only filter resolution during download if we're downscaling
-		// For upscaling, we want the best quality source
-		const heightFilter =
-			size === '720p' ? 720 : size === '1080p' ? 1080 : size === '1440p' ? 1440 : size === '4k' ? 2160 : null;
-		const formatFilter = heightFilter
-			? `bestvideo[height<=${heightFilter}]+bestaudio/best[height<=${heightFilter}]`
-			: 'bestvideo+bestaudio/best'; // Always get best quality for potential upscaling
+async function processVideoWithOverlays(
+	sourceVideo: string,
+	outputPath: string,
+	commentaryDir: string,
+	pauseAudio: string,
+	options: {
+		bw: boolean;
+		playSound: boolean;
+		size: string;
+		subtitlesEnabled: boolean;
+	},
+): Promise<string> {
+	console.log('Processing video with overlays...');
+	const overlays = await findOverlayAudios(commentaryDir);
+	const originalVideoLength = await getMediaDuration(sourceVideo);
+	console.log('overlays', overlays);
+	console.log('originalVideoLength', originalVideoLength);
+	console.log('pauseAudio', pauseAudio);
+	console.log('directory', commentaryDir);
 
-		const ytDlOptions = {
-			format: formatFilter,
-			output: outputPath,
-			noCheckCertificates: true,
-			noWarnings: true,
-			preferFreeFormats: true,
-			addHeader: ['referer:youtube.com', 'user-agent:googlebot'],
-			mergeOutputFormat: 'mkv',
-		};
-
-		if (process.env.YT_DLP_PATH) {
-			await create(process.env.YT_DLP_PATH as string)(url, ytDlOptions);
-		} else {
-			await youtubeDl(url, ytDlOptions);
-		}
-	} catch (error) {
-		console.error('Error downloading video:', error);
-		throw error;
+	const pauseAudioExt = path.extname(pauseAudio).toLowerCase();
+	if (!pauseAudioExt.match(/\.(mp3|wav|m4a|aac)$/)) {
+		throw new Error('Unsupported pause audio format');
 	}
-}
 
-async function scaleVideo(inputPath: string, outputPath: string, size: string): Promise<string> {
-	return new Promise((resolve, reject) => {
-		const scaleFilter = getScaleFilter(size);
-		if (!scaleFilter) {
-			// If no scaling needed, just copy the file
-			fs.copyFile(inputPath, outputPath)
-				.then(() => resolve(outputPath))
-				.catch(reject);
-			return;
+	return new Promise<string>((resolve, reject) => {
+		const command = ffmpeg(sourceVideo);
+
+		overlays.forEach(o => command.input(o.filepath));
+
+		if (options.playSound) {
+			command.input(pauseAudio);
 		}
 
-		ffmpeg()
-			.input(inputPath)
-			.videoFilters([scaleFilter.substring(1)]) // remove leading comma
-			.outputOptions(['-c:v', 'libx264', '-c:a', 'copy'])
-			.output(outputPath)
-			.on('end', () => resolve(outputPath))
-			.on('error', (err: Error) => reject(err))
-			.run();
+		const filterComplex: string[] = [];
+		const streams: string[] = [];
+		const pauseInputIndex = overlays.length + 1;
+
+		const scaleFilter = getScaleFilter(options.size);
+
+		if (overlays[0]?.timestampSeconds > 0) {
+			filterComplex.push(`[0:v]trim=0:${overlays[0].timestampSeconds},setpts=PTS-STARTPTS${scaleFilter}[v0]`);
+			filterComplex.push(`[0:a]atrim=0:${overlays[0].timestampSeconds},asetpts=PTS-STARTPTS[a0]`);
+			streams.push('[v0][a0]');
+		}
+
+		overlays.forEach((overlay, i) => {
+			filterComplex.push(
+				`[0:v]trim=${overlay.timestampSeconds}:${overlay.timestampSeconds + 0.04},setpts=PTS-STARTPTS,` +
+					`tpad=stop_mode=clone:stop_duration=${overlay.duration + (options.playSound ? 0.5 : 0)}` +
+					`${options.bw ? ',hue=s=0:b=0' : ''}${scaleFilter}[vf${i}]`,
+			);
+
+			if (options.playSound) {
+				filterComplex.push(`[${pauseInputIndex}:a]asetpts=PTS-STARTPTS[pause${i}]`);
+				filterComplex.push(`[${i + 1}:a]asetpts=PTS-STARTPTS,adelay=500|500[delay${i}]`);
+				filterComplex.push(`[pause${i}][delay${i}]amix=inputs=2:duration=longest[af${i}]`);
+			} else {
+				filterComplex.push(`[${i + 1}:a]asetpts=PTS-STARTPTS[af${i}]`);
+			}
+
+			streams.push(`[vf${i}][af${i}]`);
+
+			const nextTs = i < overlays.length - 1 ? overlays[i + 1].timestampSeconds : originalVideoLength;
+			if (nextTs > overlay.timestampSeconds + 0.04) {
+				filterComplex.push(
+					`[0:v]trim=${overlay.timestampSeconds + 0.04}:${nextTs},setpts=PTS-STARTPTS${scaleFilter}[v${i + 1}]`,
+				);
+				filterComplex.push(`[0:a]atrim=${overlay.timestampSeconds + 0.04}:${nextTs},asetpts=PTS-STARTPTS[a${i + 1}]`);
+				streams.push(`[v${i + 1}][a${i + 1}]`);
+			}
+		});
+
+		if (streams.length > 0) {
+			filterComplex.push(`${streams.join('')}concat=n=${streams.length}:v=1:a=1[outv][outa]`);
+
+			command
+				.complexFilter(filterComplex, ['outv', 'outa'])
+				.outputOptions(['-c:v', 'libx264', '-c:a', 'aac', '-vsync', '1', '-y'])
+				.output(outputPath)
+				.on('end', () => resolve(outputPath))
+				.on('error', err => reject(err))
+				.run();
+		} else {
+			command
+				.videoFilters(scaleFilter ? [scaleFilter.substring(1)] : [])
+				.outputOptions(['-c:v', 'libx264', '-c:a', 'aac', '-y'])
+				.output(outputPath)
+				.on('end', () => resolve(outputPath))
+				.on('error', err => reject(err))
+				.run();
+		}
 	});
 }
 
-export async function generateVideo(id: string, url: string, options: VideoOptions): Promise<void> {
+// Keep server's video download function
+async function downloadVideo(url: string, outputPath: string, size: string): Promise<void> {
+	const ytDl = process.env.YT_DLP_PATH ? create(process.env.YT_DLP_PATH) : youtubeDl;
+	await ytDl(url, {
+		format: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+		output: outputPath,
+		mergeOutputFormat: 'mkv',
+	});
+}
+
+// Keep server's main generation function with state management
+export async function generateVideo(
+	id: string,
+	url: string,
+	options: VideoOptions,
+	updateState: (step: GenerationStep, error?: { step: GenerationStep; message: string }) => Promise<void>,
+): Promise<void> {
 	try {
 		console.log('Preparing to generate video...');
-		await updateState(id, GenerationStep.PREPARING);
+		await updateState(GenerationStep.PREPARING);
+
+		const project = await projectStorage.getProject(id);
+		if (!project) throw new Error('Project not found');
 
 		const projectDir = path.join('data', id);
 		const videoDir = path.join(projectDir, 'video');
 		const miscDir = path.join(projectDir, 'misc');
+		const commentaryDir = path.join(projectDir, 'commentary');
 
 		await fs.mkdir(videoDir, { recursive: true });
 		await fs.mkdir(miscDir, { recursive: true });
-
-		// convert audio IDs to absolute paths (they're in the commentary dir)
-		const audioFiles = await fs.readdir(path.join(projectDir, 'commentary'));
+		await fs.mkdir(commentaryDir, { recursive: true });
 
 		const sourceVideoPath = path.join(videoDir, 'source.mkv');
-		const scaledVideoPath = path.join(videoDir, 'scaled.mkv');
 		const subtitledVideoPath = path.join(videoDir, 'subtitled.mkv');
 		const pauseAudioPath = path.join(miscDir, 'pause.mp3');
 		const outputPath = path.join(videoDir, 'output.mp4');
 
+		// Copy pause sound file if it exists
+		if (project.pauseSoundFilename) {
+			try {
+				const pauseSound = await projectStorage.getProjectConfigFile(id, project.pauseSoundFilename);
+				await fs.writeFile(pauseAudioPath, pauseSound);
+			} catch (error) {
+				console.error('Error copying pause sound:', error);
+				// Don't throw here, just disable pause sound
+				options.video.playSound = false;
+			}
+		} else {
+			options.video.playSound = false;
+		}
+
 		try {
 			console.log('Downloading video...');
-			await updateState(id, GenerationStep.DOWNLOADING_VIDEO);
+			await updateState(GenerationStep.DOWNLOADING_VIDEO);
 			await downloadVideo(url, sourceVideoPath, options.video.size);
 			console.log('Downloaded video');
 		} catch (error) {
-			await updateState(id, GenerationStep.ERROR, {
+			await updateState(GenerationStep.ERROR, {
 				step: GenerationStep.DOWNLOADING_VIDEO,
 				message: error instanceof Error ? error.message : 'Unknown error',
 			});
 			throw error;
 		}
 
-		// Scale video to target resolution
-		await updateState(id, GenerationStep.PROCESSING_VIDEO);
-		await scaleVideo(sourceVideoPath, scaledVideoPath, options.video.size);
-		console.log('Scaled video');
+		let videoToProcess = sourceVideoPath;
 
-		let videoToProcess = scaledVideoPath;
-
-		// Add subtitles if enabled (after scaling)
 		if (options.video.subtitlesEnabled) {
 			console.log('Transcribing source...');
-			await updateState(id, GenerationStep.TRANSCRIBING);
+			await updateState(GenerationStep.TRANSCRIBING);
 			try {
-				const srtPath = path.join(projectDir, 'subtitles.srt');
+				const srtPath = path.join(miscDir, 'subtitles.srt');
 				await generateSubtitles(sourceVideoPath, srtPath);
-				await addSubtitles(scaledVideoPath, srtPath, subtitledVideoPath, options.video.subtitlesSize);
+				await addSubtitles(sourceVideoPath, srtPath, subtitledVideoPath, options.video.subtitlesSize);
 				videoToProcess = subtitledVideoPath;
 			} catch (error) {
-				await updateState(id, GenerationStep.ERROR, {
+				await updateState(GenerationStep.ERROR, {
 					step: GenerationStep.TRANSCRIBING,
 					message: error instanceof Error ? error.message : 'Unknown error',
 				});
@@ -224,111 +294,47 @@ export async function generateVideo(id: string, url: string, options: VideoOptio
 			}
 		}
 
-		console.log('Processing final video...');
-		await updateState(id, GenerationStep.PROCESSING_VIDEO);
+		await updateState(GenerationStep.PROCESSING_VIDEO);
 		try {
-			await processVideo(videoToProcess, audioFiles, outputPath, pauseAudioPath, options.video);
+			await processVideoWithOverlays(videoToProcess, outputPath, commentaryDir, pauseAudioPath, {
+				bw: options.video.bw,
+				playSound: options.video.playSound && project.pauseSoundFilename !== null,
+				size: options.video.size,
+				subtitlesEnabled: options.video.subtitlesEnabled,
+			});
 		} catch (error) {
-			await updateState(id, GenerationStep.ERROR, {
+			await updateState(GenerationStep.ERROR, {
 				step: GenerationStep.PROCESSING_VIDEO,
 				message: error instanceof Error ? error.message : 'Unknown error',
 			});
 			throw error;
 		}
 
-		// Cleanup intermediate files
-		await Promise.all([
-			fs.unlink(sourceVideoPath),
-			fs.unlink(scaledVideoPath),
-			options.video.subtitlesEnabled ? fs.unlink(subtitledVideoPath) : Promise.resolve(),
-		]).catch(console.error); // Don't fail if cleanup fails
+		console.log('Finalizing...');
+		await updateState(GenerationStep.FINALIZING);
 
-		await updateState(id, GenerationStep.COMPLETED);
-		console.log('Video generation complete');
+		try {
+			await fs.unlink(sourceVideoPath);
+			if (options.video.subtitlesEnabled) {
+				await fs.unlink(subtitledVideoPath);
+			}
+		} catch (error) {
+			console.error('Error cleaning up files:', error);
+		}
+
+		await updateState(GenerationStep.COMPLETED);
+		console.log('Video generation completed successfully');
 	} catch (error) {
-		console.error('Error in video generation:', error);
+		console.error('Video generation failed:', error);
+		// If we haven't already set an error state, set a generic one
+		if (error instanceof Error) {
+			await updateState(GenerationStep.ERROR, {
+				step: GenerationStep.PROCESSING_VIDEO,
+				message: error.message,
+			}).catch(e => {
+				console.error('Failed to update error state:', e);
+			});
+		}
 		throw error;
 	}
-}
-
-async function processVideo(
-	sourceVideo: string,
-	audioIds: string[],
-	outputPath: string,
-	pauseAudio: string,
-	options: VideoOptions['video'],
-): Promise<void> {
-	console.log('Processing video...');
-	const originalVideoLength = await getMediaDuration(sourceVideo);
-
-	return new Promise((resolve, reject) => {
-		const command = ffmpeg();
-		command.input(sourceVideo);
-
-		// add all overlay audio files as inputs
-		audioIds.forEach(audioId => command.input(audioId));
-
-		// add pause sound as last input if enabled
-		if (options.playSound) {
-			command.input(pauseAudio);
-		}
-
-		const filterComplex: string[] = [];
-		const streams: string[] = [];
-		const pauseInputIndex = audioIds.length + 1;
-
-		// get scale filter based on size option
-		const scaleFilter = getScaleFilter(options.size || 'source');
-
-		// initial segment before first overlay (if there is one)
-		if (audioIds.length > 0) {
-			filterComplex.push(`[0:v]trim=0:0.04,setpts=PTS-STARTPTS${scaleFilter}[v0]`);
-			filterComplex.push(`[0:a]atrim=0:0.04,asetpts=PTS-STARTPTS[a0]`);
-			streams.push('[v0][a0]');
-		}
-
-		// process each overlay and segment after it
-		audioIds.forEach((_, i) => {
-			// freeze frame
-			filterComplex.push(
-				`[0:v]trim=${i * 0.04}:${(i + 1) * 0.04},setpts=PTS-STARTPTS,` +
-					`tpad=stop_mode=clone:stop_duration=${options.playSound ? 1.5 : 1.0}` +
-					`${options.bw ? ',hue=s=0:b=0' : ''}${scaleFilter}[vf${i}]`,
-			);
-
-			if (options.playSound) {
-				// pause sound
-				filterComplex.push(`[${pauseInputIndex}:a]asetpts=PTS-STARTPTS[pause${i}]`);
-				// overlay audio delayed by pause sound duration
-				filterComplex.push(`[${i + 1}:a]asetpts=PTS-STARTPTS,adelay=500|500[delay${i}]`);
-				// mix pause sound and delayed overlay audio
-				filterComplex.push(`[pause${i}][delay${i}]amix=inputs=2:duration=longest[af${i}]`);
-			} else {
-				// just use overlay audio directly if no pause sound
-				filterComplex.push(`[${i + 1}:a]asetpts=PTS-STARTPTS[af${i}]`);
-			}
-
-			streams.push(`[vf${i}][af${i}]`);
-
-			// next segment if not last overlay
-			if (i < audioIds.length - 1) {
-				filterComplex.push(
-					`[0:v]trim=${(i + 1) * 0.04}:${(i + 2) * 0.04},setpts=PTS-STARTPTS${scaleFilter}[v${i + 1}]`,
-				);
-				filterComplex.push(`[0:a]atrim=${(i + 1) * 0.04}:${(i + 2) * 0.04},asetpts=PTS-STARTPTS[a${i + 1}]`);
-				streams.push(`[v${i + 1}][a${i + 1}]`);
-			}
-		});
-
-		// concatenate all segments
-		filterComplex.push(`${streams.join('')}concat=n=${streams.length}:v=1:a=1[outv][outa]`);
-
-		command
-			.complexFilter(filterComplex, ['outv', 'outa'])
-			.outputOptions(['-c:v', 'libx264', '-c:a', 'aac', '-vsync', '1', '-y'])
-			.output(outputPath)
-			.on('end', () => resolve())
-			.on('error', (err: Error) => reject(err))
-			.run();
-	});
 }

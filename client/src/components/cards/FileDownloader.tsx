@@ -26,8 +26,8 @@ const StepIndicator = ({
 	isCompleted: boolean;
 }) => {
 	if (isErrorStep) return <Icons.alertTriangle className='text-destructive h-4 w-4' />;
-	if (isActiveStep) return <Icons.loader className='h-4 w-4 animate-spin' />;
 	if (isCompleted) return <Icons.checkbox className='h-4 w-4 text-green-500' />;
+	if (isActiveStep) return <Icons.loader className='h-4 w-4 animate-spin' />;
 	return <div className='border-muted-foreground/30 h-4 w-4 rounded-full border' />;
 };
 
@@ -52,9 +52,9 @@ const FileDownloader = () => {
 					<Separator className='my-1 mb-2' />
 					<div className='flex flex-col gap-2'>
 						{activeSteps.map(({ step, label }) => {
-							const isCompleted = completedSteps?.includes(step) || false;
+							const isCompleted = completedSteps?.includes(step) || (step === GenerationStep.COMPLETED && isComplete);
 							const isErrorStep = error?.step === step;
-							const isActiveStep = step === currentStep;
+							const isActiveStep = step === currentStep && !isCompleted;
 							const isPending = !isCompleted && !isActiveStep;
 
 							return (
@@ -81,7 +81,11 @@ const FileDownloader = () => {
 				</div>
 			</div>
 			<div className='flex flex-col items-center gap-4'>
-				<Button onClick={() => downloadFile(id, 'audio')} className='w-fit' disabled={!isComplete}>
+				<Button
+					onClick={() => downloadFile(id, 'audio')}
+					className='w-fit'
+					disabled={!completedSteps.includes(GenerationStep.GENERATING_AUDIO)}
+				>
 					Download Audio
 				</Button>
 				<Button onClick={() => downloadFile(id, 'video')} className='w-fit' disabled={!isComplete}>

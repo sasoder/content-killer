@@ -61,8 +61,18 @@ const generateRouter = new Hono()
 	})
 	.post('/projectConfig', async c => {
 		try {
-			await projectStorage.createProjectConfig(defaultProjectConfig);
-			return c.json(defaultProjectConfig, 201);
+			const config = {
+				...defaultProjectConfig,
+				pauseSoundFilename: 'pause_default.mp3',
+			};
+
+			await projectStorage.createProjectConfig(config);
+
+			// Copy the default pause sound to the new config
+			const defaultPauseSound = await projectStorage.getProjectConfigFile('default', 'pause_default.mp3');
+			await projectStorage.saveProjectConfigFile(config.id, config.pauseSoundFilename, defaultPauseSound);
+
+			return c.json(config, 201);
 		} catch (error) {
 			console.error('Error creating project config:', error);
 			return c.json({ message: 'Failed to create project config' }, 500);
@@ -116,7 +126,6 @@ const generateRouter = new Hono()
 
 		try {
 			const project = await projectStorage.getProject(id);
-			console.log('project time', project);
 			if (!project?.metadata?.url && !project?.metadata?.url) {
 				return c.json({ error: 'No video URL found' }, 400);
 			}
@@ -125,20 +134,13 @@ const generateRouter = new Hono()
 			console.log('initial status set');
 
 			// Generate audio first
-			project.generationState.currentStep = GenerationStep.GENERATING_AUDIO;
-			await projectStorage.updateProjectState(project);
-			console.log('audio status set');
-
+			await updateState(project, GenerationStep.PREPARING);
+			await updateState(project, GenerationStep.GENERATING_AUDIO);
 			await generateAudio(id, commentary, options.audio);
-			console.log('updateAudioStatus set');
-
-			console.log('updateVideoStatus set');
-			await generateVideo(id, project.metadata.url, options);
-			console.log('generateVideo called');
-			// Update final state
+			await generateVideo(id, project.metadata.url, options, (step, error) => updateState(project, step, error));
 			project.commentary = commentary;
 			project.options.video = options;
-			await projectStorage.updateProjectState(project);
+			await updateState(project, GenerationStep.COMPLETED);
 
 			return c.json({ success: true });
 		} catch (error) {
@@ -156,5 +158,31 @@ const generateRouter = new Hono()
 			return c.json({ error: 'Failed to generate video' }, 500);
 		}
 	});
+
+const updateState = async (
+	project: VideoGenState,
+	step: GenerationStep,
+	error?: { step: GenerationStep; message: string },
+) => {
+	if (!project) throw new Error('Project not found');
+
+	if (!project.generationState.completedSteps) {
+		project.generationState.completedSteps = [];
+	}
+
+	if (!error && step !== GenerationStep.ERROR && project.generationState.currentStep !== GenerationStep.IDLE) {
+		if (!project.generationState.completedSteps.includes(project.generationState.currentStep)) {
+			project.generationState.completedSteps.push(project.generationState.currentStep);
+		}
+	}
+
+	project.generationState = {
+		currentStep: step,
+		completedSteps: project.generationState.completedSteps,
+		...(error && { error }),
+	};
+
+	await projectStorage.updateProjectState(project);
+};
 
 export { generateRouter };

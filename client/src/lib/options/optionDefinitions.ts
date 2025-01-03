@@ -72,7 +72,7 @@ export const videoOptionDefinitions: VideoOptionDefinitions = {
 			type: 'boolean',
 		},
 		playSound: {
-			label: 'Play Sound',
+			label: 'Play Pause Sound',
 			description: 'Play the original video sound during commentary.',
 			type: 'boolean',
 		},

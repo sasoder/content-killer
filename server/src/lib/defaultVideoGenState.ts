@@ -1,5 +1,4 @@
 import { GenerationStep, VideoGenState } from '@shared/types/api/schema';
-import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/types/options';
 import {
 	defaultDescriptionOptions,
 	defaultCommentaryOptions,
@@ -27,5 +26,6 @@ export const createDefaultVideoGenState = (id: string, projectConfig?: ProjectCo
 			commentary: defaultCommentaryOptions,
 			video: defaultVideoOptions,
 		},
+		pauseSoundFilename: projectConfig?.pauseSoundFilename ?? null,
 	};
 };

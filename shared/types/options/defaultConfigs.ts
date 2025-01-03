@@ -30,7 +30,7 @@ export const defaultProjectConfig: ProjectConfig = {
 	name: 'New Configuration',
 	description: 'A thought-provoking project configuration',
 	createdAt: new Date().toISOString(),
-	pauseSoundFilename: null,
+	pauseSoundFilename: 'pause_default.mp3',
 	options: {
 		description: defaultDescriptionOptions,
 		commentary: defaultCommentaryOptions,
