@@ -1,5 +1,5 @@
 export type DescriptionOptions = {
-	sample: boolean;
+	temperature: number;
 };
 
 export type CommentaryOptions = {
@@ -24,6 +24,6 @@ export type VideoOptions = {
 		playSound: boolean;
 		subtitlesEnabled: boolean;
 		subtitlesSize: number;
-		size: '720p' | '1080p' | 'source';
+		size: '720p' | '1080p' | '4k' | 'source';
 	};
 };

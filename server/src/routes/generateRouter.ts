@@ -79,7 +79,7 @@ const generateRouter = new Hono()
 	})
 	.post('/description/:id', zValidator('json', DescriptionOptionsSchema), async c => {
 		const { url, options } = c.req.valid('json');
-		if (!url && !options.sample) {
+		if (!url) {
 			return c.json({ error: 'No URL provided' }, 400);
 		}
 		const id = c.req.param('id');

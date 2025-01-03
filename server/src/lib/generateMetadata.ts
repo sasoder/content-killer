@@ -1,6 +1,8 @@
 import { VideoMetadata } from '@shared/types/api/schema';
 import youtubedl, { create } from 'youtube-dl-exec';
-import 'dotenv/config';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export const generateMetadata = async (url: string): Promise<Partial<VideoMetadata>> => {
 	try {

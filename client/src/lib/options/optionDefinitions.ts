@@ -21,10 +21,13 @@ export type VideoOptionDefinitions = {
 };
 
 export const descriptionOptionDefinitions: OptionsDefinitionMap<DescriptionOptions> = {
-	sample: {
-		label: 'Sample Data',
-		description: 'Use sample data instead of generating new description',
-		type: 'boolean',
+	temperature: {
+		label: 'Temperature',
+		description: 'Controls randomness in the generated description',
+		type: 'number',
+		min: 0,
+		max: 2,
+		step: 0.01,
 	},
 };
 

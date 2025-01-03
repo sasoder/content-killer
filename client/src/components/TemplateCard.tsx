@@ -1,7 +1,7 @@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { videoOptionDefinitions } from '@/lib/options/optionDefinitions';
+import { descriptionOptionDefinitions, videoOptionDefinitions } from '@/lib/options/optionDefinitions';
 import { ProjectTemplate } from '@shared/types/options/template';
 import StepOptions from '@/components/cards/StepOptions';
 import VoiceSelector from '@/components/VoiceSelector';
@@ -47,7 +47,7 @@ export function TemplateCard({ template, onChange, onPauseSoundSelect }: Templat
 			</div>
 
 			{/* Options Section */}
-			<div className='grid grid-cols-2 gap-6'>
+			<div className='grid grid-cols-3 gap-6'>
 				{/* Video Options */}
 				<div>
 					<StepOptions
@@ -112,6 +112,18 @@ export function TemplateCard({ template, onChange, onPauseSoundSelect }: Templat
 					<div>
 						<SoundUpload currentFileName={template.pauseSoundFilename} onFileSelect={onPauseSoundSelect} />
 					</div>
+				</div>
+
+				{/* Description Options */}
+				<div>
+					<StepOptions
+						options={template.options.description}
+						onOptionChange={newOptions =>
+							onChange({ ...template, options: { ...template.options, description: newOptions } })
+						}
+						optionDefinitions={descriptionOptionDefinitions}
+						type='description'
+					/>
 				</div>
 			</div>
 		</div>

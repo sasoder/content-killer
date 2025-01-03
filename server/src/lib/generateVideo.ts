@@ -6,8 +6,9 @@ import youtubedl, { create } from 'youtube-dl-exec';
 import { ffprobe, type FfprobeData } from 'fluent-ffmpeg';
 import { VideoOptions } from '@shared/types/options';
 import { GenerationStep, VideoGenState } from '@shared/types/api/schema';
-import { projectStorage } from '@/db/storage';
-import 'dotenv/config';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const openai = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,

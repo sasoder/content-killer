@@ -2,7 +2,7 @@ import { DescriptionOptions, CommentaryOptions, VideoOptions } from '.';
 import { ProjectTemplate } from './template';
 
 export const defaultDescriptionOptions: DescriptionOptions = {
-	sample: true,
+	temperature: 1,
 };
 
 export const defaultCommentaryOptions: CommentaryOptions = {

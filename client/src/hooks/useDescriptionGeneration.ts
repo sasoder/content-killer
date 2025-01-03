@@ -32,15 +32,9 @@ export function useDescriptionGeneration(id: string) {
 	});
 
 	const generate = async (url: string, options: DescriptionOptions): Promise<GenerateResult> => {
-		if (url) {
-			const metadata = await metadataMutation.mutateAsync(url);
-			const description = await descriptionMutation.mutateAsync({ url, options });
-			return { metadata, description };
-		} else {
-			// Handle sample generation without metadata
-			const description = await descriptionMutation.mutateAsync({ url: '', options });
-			return { description };
-		}
+		const metadata = await metadataMutation.mutateAsync(url);
+		const description = await descriptionMutation.mutateAsync({ url, options });
+		return { metadata, description };
 	};
 
 	return {
