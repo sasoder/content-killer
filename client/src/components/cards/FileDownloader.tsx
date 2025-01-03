@@ -31,7 +31,7 @@ const StepIndicator = ({
 	if (isErrorStep) return <Icons.alertTriangle className='text-destructive h-4 w-4' />;
 	if (isCompleted) return <Icons.checkbox className='h-4 w-4 text-green-500' />;
 	if (isActiveStep) return <Icons.loader className='h-4 w-4 animate-spin' />;
-	return <div className='border-muted-foreground/30 h-4 w-4 rounded-full border' />;
+	return <Icons.dot className='text-muted-foreground/50 h-4 w-4' />;
 };
 
 const FileDownloader = () => {
@@ -43,8 +43,6 @@ const FileDownloader = () => {
 	if (currentStep === GenerationStep.IDLE) {
 		return null;
 	}
-
-	console.log(completedSteps);
 
 	const handleDownloadAudio = async () => {
 		try {

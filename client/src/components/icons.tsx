@@ -19,6 +19,7 @@ import {
 	CheckIcon,
 	Upload,
 	Music,
+	Dot,
 } from 'lucide-react';
 
 export type IconKeys = keyof typeof icons;
@@ -48,6 +49,7 @@ const icons = {
 	checkbox: CheckIcon,
 	upload: Upload,
 	music: Music,
+	dot: Dot,
 };
 
 export const Icons: IconsType = icons;

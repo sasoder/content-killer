@@ -1,141 +1,128 @@
-import React, { useCallback, useState, useEffect } from 'react';
-import { Button, buttonVariants } from '@/components/ui/button';
+import React from 'react';
+import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { createProjectWithTemplate, fetchAllVideoGenStates, fetchProjectTemplates } from '@/api/apiHelper';
 import { Header } from '@/components/layout/Header';
-import { cn, formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { Icons } from '@/components/icons';
-import { ProjectTemplate } from '@shared/types/options/template';
 import { useQuery } from '@tanstack/react-query';
 
 const SelectProject = () => {
+	const navigate = useNavigate();
 	const { data: videoGenStates, isLoading: isLoadingStates } = useQuery({
 		queryKey: ['videoGenStates'],
 		queryFn: fetchAllVideoGenStates,
 	});
 
-	const navigate = useNavigate();
-	const [selectedId, setSelectedId] = useState('new');
-	const [isFetching, setIsFetching] = useState(false);
-	const [optionTemplates, setOptionTemplates] = useState<ProjectTemplate[]>([]);
-	const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+	const { data: templates = [], isLoading: isLoadingTemplates } = useQuery({
+		queryKey: ['projectTemplates'],
+		queryFn: fetchProjectTemplates,
+	});
 
-	useEffect(() => {
-		const loadOptionTemplates = async () => {
-			try {
-				const templates = await fetchProjectTemplates();
-				setOptionTemplates(templates);
-				if (templates.length > 0) {
-					setSelectedTemplateId(templates[0].id);
-				}
-			} catch (error) {
-				console.error('Error loading option templates:', error);
-			}
-		};
-		loadOptionTemplates();
-	}, []);
+	const [selectedId, setSelectedId] = React.useState('new');
+	const [selectedTemplateId, setSelectedTemplateId] = React.useState('');
+	const [isFetching, setIsFetching] = React.useState(false);
+
+	React.useEffect(() => {
+		if (templates.length > 0) {
+			setSelectedTemplateId(templates[0].id);
+		}
+	}, [templates]);
 
 	const handleGenerate = async () => {
 		setIsFetching(true);
 		try {
 			if (selectedId === 'new') {
-				const videoGenState = await createProjectWithTemplate(selectedTemplateId);
-				navigate(`/generate/${videoGenState.id}`);
+				const state = await createProjectWithTemplate(selectedTemplateId);
+				navigate(`/generate/${state.id}`);
 			} else {
 				navigate(`/generate/${selectedId}`);
 			}
 		} catch (error) {
-			console.error('Error creating/loading project:', error);
-			// TODO: Add error handling UI feedback
+			console.error('Error:', error);
 		} finally {
 			setIsFetching(false);
 		}
 	};
 
-	const getSelectedTitle = useCallback(() => {
+	const selectedTitle = React.useMemo(() => {
 		if (selectedId === 'new') return 'New Project';
 		const selected = videoGenStates?.find(item => item.id === selectedId);
-		return selected ? selected.metadata.title : 'Untitled Project';
-	}, [videoGenStates, selectedId]);
+		return selected?.metadata.title || 'Untitled Project';
+	}, [selectedId, videoGenStates]);
 
-	const selectedTemplate = optionTemplates.find(t => t.id === selectedTemplateId);
+	const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
 
 	return (
 		<>
 			<Header title='Choose Project' showBackButton />
-			<main className='container mx-auto px-4 py-8'>
-				<Card className='mx-auto max-w-xs'>
+			<main className='items-top flex h-screen justify-center'>
+				<Card className='h-fit w-full max-w-[400px]'>
 					<CardHeader>
 						<CardTitle>Project Selection</CardTitle>
-						<CardDescription>Choose an existing project or create a new one from a template</CardDescription>
+						<CardDescription>Choose an existing project or create a new one</CardDescription>
 					</CardHeader>
-					<CardContent className='flex flex-col gap-6'>
-						{/* Project Selection */}
-						<div className='space-y-2'>
+					<CardContent className='flex flex-col gap-4'>
+						<div className='flex flex-col gap-2'>
 							<label className='text-sm font-medium'>Project</label>
 							<Select value={selectedId} onValueChange={setSelectedId}>
-								<SelectTrigger className='w-full'>
-									<SelectValue>{getSelectedTitle()}</SelectValue>
+								<SelectTrigger className='truncate'>
+									<SelectValue className='truncate'>{selectedTitle}</SelectValue>
 								</SelectTrigger>
 								<SelectContent>
-									<ScrollArea className='h-72'>
-										<SelectGroup>
-											<SelectItem value='new' className='py-2'>
-												<div className='flex items-center gap-2'>
-													<Icons.plus className='h-4 w-4' />
-													<span>New Project</span>
-												</div>
+									<SelectGroup>
+										<SelectItem value='new'>
+											<span className='flex items-center gap-2'>
+												<Icons.plus className='h-4 w-4' />
+												New Project
+											</span>
+										</SelectItem>
+
+										{isLoadingStates ? (
+											<SelectItem value='loading' disabled>
+												<span className='flex items-center gap-2'>
+													<Icons.loader className='h-4 w-4 animate-spin' />
+													Loading projects...
+												</span>
 											</SelectItem>
-											{isLoadingStates ? (
-												<SelectItem value='loading' disabled className='py-2'>
-													<div className='flex items-center gap-2'>
-														<Icons.loader className='h-4 w-4 animate-spin' />
-														<span>Loading projects...</span>
+										) : (
+											videoGenStates?.map(state => (
+												<SelectItem key={state.id} value={state.id}>
+													<div className='w-full max-w-[300px]'>
+														<div className='truncate font-medium'>{state.metadata.title}</div>
+														<div className='text-muted-foreground truncate text-xs'>
+															Created {formatDate(state.metadata.createdAt)}
+														</div>
 													</div>
 												</SelectItem>
-											) : (
-												videoGenStates?.map(state => (
-													<SelectItem key={state.id} value={state.id} className='py-2'>
-														<div className='flex flex-col gap-1'>
-															<span className='font-medium'>{state.metadata.title}</span>
-															<span className='text-muted-foreground text-xs'>
-																Created {formatDate(state.metadata.createdAt)}
-															</span>
-														</div>
-													</SelectItem>
-												))
-											)}
-										</SelectGroup>
-									</ScrollArea>
+											))
+										)}
+									</SelectGroup>
 								</SelectContent>
 							</Select>
 						</div>
 
-						{/* Template Selection */}
-						{selectedId === 'new' && optionTemplates.length > 0 && (
+						{selectedId === 'new' && templates.length > 0 && (
 							<div className='space-y-2'>
 								<label className='text-sm font-medium'>Template</label>
-								<div className='flex flex-row gap-2'>
+								<div className='flex gap-2'>
 									<Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-										<SelectTrigger className='w-full'>
-											<SelectValue>{selectedTemplate?.name ?? 'Select Template'}</SelectValue>
+										<SelectTrigger className='truncate'>
+											<SelectValue className='truncate'>{selectedTemplate?.name ?? 'Select Template'}</SelectValue>
 										</SelectTrigger>
 										<SelectContent>
-											<ScrollArea className='h-72'>
-												<SelectGroup>
-													{optionTemplates.map(template => (
-														<SelectItem key={template.id} value={template.id} className='py-2'>
-															<div className='flex flex-col gap-1'>
-																<span className='font-medium'>{template.name}</span>
-																<span className='text-muted-foreground text-xs'>{template.description}</span>
-															</div>
-														</SelectItem>
-													))}
-												</SelectGroup>
-											</ScrollArea>
+											<SelectGroup>
+												{templates.map(template => (
+													<SelectItem key={template.id} value={template.id}>
+														<div className='w-full max-w-[300px]'>
+															<div className='truncate font-medium'>{template.name}</div>
+															<div className='text-muted-foreground truncate text-xs'>{template.description}</div>
+														</div>
+													</SelectItem>
+												))}
+											</SelectGroup>
 										</SelectContent>
 									</Select>
 									<Link to='/templates' title='Template Settings'>
@@ -147,17 +134,14 @@ const SelectProject = () => {
 							</div>
 						)}
 
-						{/* Action Button */}
-						<Button onClick={handleGenerate} disabled={isFetching || isLoadingStates} className='mx-auto w-fit'>
+						<Button onClick={handleGenerate} disabled={isFetching || isLoadingStates} className='w-fit self-center'>
 							{isFetching ? (
 								<>
 									<Icons.loader className='mr-2 h-4 w-4 animate-spin' />
-									<span>Creating Project...</span>
+									Creating Project...
 								</>
 							) : (
-								<>
-									<span>Continue</span>
-								</>
+								'Continue'
 							)}
 						</Button>
 					</CardContent>
@@ -167,6 +151,4 @@ const SelectProject = () => {
 	);
 };
 
-export default function NewPage() {
-	return <SelectProject />;
-}
+export default SelectProject;
