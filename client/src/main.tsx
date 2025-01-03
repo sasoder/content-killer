@@ -4,7 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from '@/App.tsx';
 import Generate from '@/pages/Generate.tsx';
-import New from '@/pages/New';
+import Create from '@/pages/Create';
 import Configurations from '@/pages/Configurations';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
@@ -31,8 +31,8 @@ const router = createBrowserRouter([
 		element: <Generate />,
 	},
 	{
-		path: '/new',
-		element: <New />,
+		path: '/create',
+		element: <Create />,
 	},
 	{
 		path: '/configurations',

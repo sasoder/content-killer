@@ -130,6 +130,10 @@ const generateRouter = new Hono()
 				return c.json({ error: 'No video URL found' }, 400);
 			}
 
+			project.generationState.completedSteps = [];
+			project.generationState.currentStep = GenerationStep.IDLE;
+			await projectStorage.updateProjectState(project);
+
 			// Set initial status
 			console.log('initial status set');
 

@@ -21,7 +21,9 @@ interface AudioOverlay {
 }
 
 function parseTimestamp(timestamp: string): number {
-	return parseInt(timestamp, 10);
+	const minutes = parseInt(timestamp.slice(0, 2), 10);
+	const seconds = parseInt(timestamp.slice(2, 4), 10);
+	return minutes * 60 + seconds;
 }
 
 async function getMediaDuration(filepath: string): Promise<number> {
@@ -33,7 +35,6 @@ async function getMediaDuration(filepath: string): Promise<number> {
 	});
 }
 
-// Use test version's improved findOverlayAudios
 async function findOverlayAudios(directory: string): Promise<AudioOverlay[]> {
 	console.log('findOverlayAudios', directory);
 	const files = await fs.readdir(directory);
@@ -57,7 +58,6 @@ async function findOverlayAudios(directory: string): Promise<AudioOverlay[]> {
 	return overlays.sort((a, b) => a.timestampSeconds - b.timestampSeconds);
 }
 
-// Keep server's scaling logic
 const getScaleFilter = (size: string) => {
 	switch (size) {
 		case 'source':
@@ -66,10 +66,29 @@ const getScaleFilter = (size: string) => {
 			return ',scale=-2:720';
 		case '1080p':
 			return ',scale=-2:1080';
+		case '4k':
+			return ',scale=-2:2160';
 		default:
 			return '';
 	}
 };
+
+async function scaleVideo(inputPath: string, outputPath: string, size: string): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const scaleFilter = getScaleFilter(size);
+		if (!scaleFilter) {
+			return resolve(inputPath);
+		}
+
+		ffmpeg(inputPath)
+			.videoFilters([scaleFilter.substring(1)])
+			.outputOptions(['-c:v', 'libx264', '-c:a', 'copy'])
+			.output(outputPath)
+			.on('end', () => resolve(outputPath))
+			.on('error', err => reject(err))
+			.run();
+	});
+}
 
 async function extractAudio(videoPath: string, outputPath: string): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -210,7 +229,6 @@ async function processVideoWithOverlays(
 	});
 }
 
-// Keep server's video download function
 async function downloadVideo(url: string, outputPath: string, size: string): Promise<void> {
 	const ytDl = process.env.YT_DLP_PATH ? create(process.env.YT_DLP_PATH) : youtubeDl;
 	await ytDl(url, {
@@ -220,7 +238,6 @@ async function downloadVideo(url: string, outputPath: string, size: string): Pro
 	});
 }
 
-// Keep server's main generation function with state management
 export async function generateVideo(
 	id: string,
 	url: string,
@@ -244,6 +261,7 @@ export async function generateVideo(
 		await fs.mkdir(commentaryDir, { recursive: true });
 
 		const sourceVideoPath = path.join(videoDir, 'source.mkv');
+		const scaledVideoPath = path.join(videoDir, 'scaled.mkv');
 		const subtitledVideoPath = path.join(videoDir, 'subtitled.mkv');
 		const pauseAudioPath = path.join(miscDir, project.pauseSoundFilename);
 		const outputPath = path.join(videoDir, 'output.mp4');
@@ -261,15 +279,26 @@ export async function generateVideo(
 			throw error;
 		}
 
-		let videoToProcess = sourceVideoPath;
+		try {
+			await updateState(GenerationStep.SCALING_VIDEO);
+			await scaleVideo(sourceVideoPath, scaledVideoPath, options.video.size);
+		} catch (error) {
+			await updateState(GenerationStep.ERROR, {
+				step: GenerationStep.SCALING_VIDEO,
+				message: error instanceof Error ? error.message : 'Unknown error',
+			});
+			throw error;
+		}
+
+		let videoToProcess = scaledVideoPath;
 
 		if (options.video.subtitlesEnabled) {
 			console.log('Transcribing source...');
 			await updateState(GenerationStep.TRANSCRIBING);
 			try {
 				const srtPath = path.join(miscDir, 'subtitles.srt');
-				await generateSubtitles(sourceVideoPath, srtPath);
-				await addSubtitles(sourceVideoPath, srtPath, subtitledVideoPath, options.video.subtitlesSize);
+				await generateSubtitles(scaledVideoPath, srtPath);
+				await addSubtitles(scaledVideoPath, srtPath, subtitledVideoPath, options.video.subtitlesSize);
 				videoToProcess = subtitledVideoPath;
 			} catch (error) {
 				await updateState(GenerationStep.ERROR, {
@@ -301,6 +330,7 @@ export async function generateVideo(
 
 		try {
 			await fs.unlink(sourceVideoPath);
+			await fs.unlink(scaledVideoPath);
 			if (options.video.subtitlesEnabled) {
 				await fs.unlink(subtitledVideoPath);
 			}
@@ -312,7 +342,6 @@ export async function generateVideo(
 		console.log('Video generation completed successfully');
 	} catch (error) {
 		console.error('Video generation failed:', error);
-		// If we haven't already set an error state, set a generic one
 		if (error instanceof Error) {
 			await updateState(GenerationStep.ERROR, {
 				step: GenerationStep.PROCESSING_VIDEO,

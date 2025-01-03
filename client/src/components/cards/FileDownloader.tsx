@@ -10,6 +10,7 @@ const GENERATION_STEPS = [
 	{ step: GenerationStep.PREPARING, label: 'Preparing generation' },
 	{ step: GenerationStep.GENERATING_AUDIO, label: 'Generating audio with ElevenLabs' },
 	{ step: GenerationStep.DOWNLOADING_VIDEO, label: 'Downloading from YouTube' },
+	{ step: GenerationStep.SCALING_VIDEO, label: 'Scaling video' },
 	{ step: GenerationStep.TRANSCRIBING, label: 'Transcribing with Whisper' },
 	{ step: GenerationStep.PROCESSING_VIDEO, label: 'Processing with ffmpeg' },
 	{ step: GenerationStep.FINALIZING, label: 'Finalizing output' },

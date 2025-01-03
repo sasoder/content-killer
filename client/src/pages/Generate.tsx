@@ -27,8 +27,6 @@ const GeneratePageContent = () => {
 		return <HTTPError error={error} />;
 	}
 
-	console.log(description);
-
 	return (
 		<>
 			<Header title={metadata?.title || 'Content Killer'} showBackButton backTo='/new' />

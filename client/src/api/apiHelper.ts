@@ -1,6 +1,7 @@
 import { VideoGenState, TimestampText, VideoMetadata } from '@shared/types/api/schema';
 import { ProjectConfig } from '@shared/types/options/config';
 import { CommentaryOptions, DescriptionOptions, VideoOptions, Voice } from '@shared/types/options';
+import { saveAs } from 'file-saver';
 
 const API_BASE = import.meta.env.VITE_APP_API_BASE;
 
@@ -88,7 +89,6 @@ export async function fetchVideoGenState(id: string): Promise<VideoGenState> {
 
 export async function fetchAllVideoGenStates(): Promise<VideoGenState[]> {
 	const response = await fetch(`${API_BASE}/fetch/videoGenStates`);
-	console.log('response', response);
 	if (!response.ok) {
 		throw new Error('Failed to fetch video gen states');
 	}
@@ -208,24 +208,20 @@ export async function createProjectWithConfig(configId: string): Promise<VideoGe
 }
 
 export async function downloadFile(id: string, type: 'video' | 'audio'): Promise<void> {
-	const response = await fetch(`${API_BASE}/fetch/download/${id}/${type}`);
-	if (!response.ok) {
-		throw new Error(`Failed to download ${type}`);
+	try {
+		const response = await fetch(`${API_BASE}/fetch/download/${id}/${type}`);
+		if (!response.ok) {
+			throw new Error(`Failed to download ${type}: ${response.status} ${response.statusText}`);
+		}
+
+		const blob = await response.blob();
+		const contentDisposition = response.headers.get('Content-Disposition');
+		const filenameMatch = contentDisposition?.match(/filename="(.+?)"/);
+		const filename = filenameMatch?.[1] || (type === 'video' ? `${id}.mp4` : `commentary-${id}.zip`);
+
+		saveAs(blob, filename);
+	} catch (error) {
+		console.error('Download error:', error);
+		throw error;
 	}
-
-	// Get filename from Content-Disposition header or use a default
-	const contentDisposition = response.headers.get('Content-Disposition');
-	const filename = contentDisposition
-		? contentDisposition.split('filename=')[1].replace(/"/g, '')
-		: `${type}-${id}.${type === 'video' ? 'mp4' : 'mp3'}`;
-
-	const blob = await response.blob();
-	const url = window.URL.createObjectURL(blob);
-	const a = document.createElement('a');
-	a.href = url;
-	a.download = filename;
-	document.body.appendChild(a);
-	a.click();
-	window.URL.revokeObjectURL(url);
-	document.body.removeChild(a);
 }

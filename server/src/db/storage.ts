@@ -8,6 +8,7 @@ import * as path from 'path';
 import { VideoGenState } from '@shared/types/api/schema';
 import { createDefaultVideoGenState } from '@/lib/defaultVideoGenState';
 import { ProjectConfig } from '@shared/types/options/config';
+import { GenerationStep } from '@shared/types/api/schema';
 
 const DATA_DIR = './data';
 const PROJECT_CONFIGS_DIR = path.join(DATA_DIR, 'project-configs');
@@ -183,6 +184,44 @@ export class ProjectStorage {
 	async getProjectConfigFile(configId: string, fileName: string): Promise<Buffer> {
 		const filePath = path.join(PROJECT_CONFIGS_DIR, configId, fileName);
 		return readFile(filePath);
+	}
+
+	async getVideoCountForDate(date: Date): Promise<number> {
+		const states = await this.getAllVideoGenStates();
+		const targetDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+		let count = 0;
+
+		for (const state of states) {
+			const stateDate = new Date(state.metadata.createdAt).toLocaleDateString('en-US', {
+				month: 'short',
+				day: 'numeric',
+				year: 'numeric',
+			});
+			if (stateDate === targetDate && state.generationState.completedSteps.includes(GenerationStep.COMPLETED)) {
+				count++;
+			}
+		}
+
+		return count;
+	}
+
+	async getAudioCountForDate(date: Date): Promise<number> {
+		const states = await this.getAllVideoGenStates();
+		const targetDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+		let count = 0;
+
+		for (const state of states) {
+			const stateDate = new Date(state.metadata.createdAt).toLocaleDateString('en-US', {
+				month: 'short',
+				day: 'numeric',
+				year: 'numeric',
+			});
+			if (stateDate === targetDate && state.generationState.completedSteps.includes(GenerationStep.GENERATING_AUDIO)) {
+				count++;
+			}
+		}
+
+		return count;
 	}
 }
 

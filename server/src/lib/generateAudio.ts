@@ -44,7 +44,8 @@ export const generateAudio = async (
 		await fs.mkdir(commentaryDir, { recursive: true });
 
 		const audioPromises = commentary.map(async entry => {
-			const filename = `${entry.timestamp.replace(':', '')}.mp3`;
+			const timestamp = entry.timestamp.replace(':', '');
+			const filename = `${timestamp}.mp3`;
 			const filePath = path.join(commentaryDir, filename);
 
 			const buffer = await generateSingleAudio(entry.text, options);

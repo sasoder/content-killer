@@ -14,8 +14,8 @@ export default function Home() {
 				</div>
 
 				<div className='flex gap-2'>
-					<Link to='/new' className={cn(buttonVariants({ size: 'default' }))}>
-						New
+					<Link to='/create' className={cn(buttonVariants({ size: 'default' }))}>
+						Create
 					</Link>
 					<Link to='/configurations' className={cn(buttonVariants({ size: 'default' }))}>
 						<Icons.settings className='mr-2 h-4 w-4' />
