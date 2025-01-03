@@ -21,10 +21,10 @@ app.route('/api', router);
 
 const initServer = async () => {
 	try {
-		await projectStorage.ensureDefaultConfigExists();
-		console.log('Default project configuration initialized');
+		await projectStorage.ensureDefaultTemplateExists();
+		console.log('Default project template initialized');
 	} catch (error) {
-		console.error('Failed to initialize default project configuration:', error);
+		console.error('Failed to initialize default project template:', error);
 	}
 };
 

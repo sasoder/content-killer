@@ -12,7 +12,7 @@ interface StepCardProps {
 
 function StepCard({ title, content, info }: StepCardProps) {
 	return (
-		<Card className='flex h-[600px] w-[275px] flex-col' style={{ boxShadow: '0 2px 20px rgba(0, 0, 0, 0.1)' }}>
+		<Card className='flex h-[600px] w-[275px] flex-col'>
 			<CardHeader>
 				<CardTitle className='flex flex-row items-center justify-between'>
 					{title}

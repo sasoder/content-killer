@@ -1,13 +1,13 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Link, useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { createProjectWithConfig, fetchAllVideoGenStates, fetchProjectConfigs } from '@/api/apiHelper';
+import { createProjectWithTemplate, fetchAllVideoGenStates, fetchProjectTemplates } from '@/api/apiHelper';
 import { Header } from '@/components/layout/Header';
-import { formatDate } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { Icons } from '@/components/icons';
-import { ProjectConfig } from '@shared/types/options/config';
+import { ProjectTemplate } from '@shared/types/options/template';
 import { useQuery } from '@tanstack/react-query';
 
 const SelectProject = () => {
@@ -18,29 +18,29 @@ const SelectProject = () => {
 	const navigate = useNavigate();
 	const [selectedId, setSelectedId] = useState('new');
 	const [isFetching, setIsFetching] = useState(false);
-	const [optionConfigs, setOptionConfigs] = useState<ProjectConfig[]>([]);
-	const [selectedConfigId, setSelectedConfigId] = useState<string>('');
+	const [optionTemplates, setOptionTemplates] = useState<ProjectTemplate[]>([]);
+	const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
 
 	useEffect(() => {
-		const loadOptionConfigs = async () => {
+		const loadOptionTemplates = async () => {
 			try {
-				const configs = await fetchProjectConfigs();
-				setOptionConfigs(configs);
-				if (configs.length > 0) {
-					setSelectedConfigId(configs[0].id);
+				const templates = await fetchProjectTemplates();
+				setOptionTemplates(templates);
+				if (templates.length > 0) {
+					setSelectedTemplateId(templates[0].id);
 				}
 			} catch (error) {
-				console.error('Error loading option configs:', error);
+				console.error('Error loading option templates:', error);
 			}
 		};
-		loadOptionConfigs();
+		loadOptionTemplates();
 	}, []);
 
 	const handleGenerate = async () => {
 		setIsFetching(true);
 		if (selectedId === 'new') {
 			try {
-				const videoGenState = await createProjectWithConfig(selectedConfigId);
+				const videoGenState = await createProjectWithTemplate(selectedTemplateId);
 				navigate(`/generate/${videoGenState.id}`);
 			} catch (error) {
 				console.error('Error creating project:', error);
@@ -64,7 +64,7 @@ const SelectProject = () => {
 
 	return (
 		<>
-			<Header title='Choose Project' showBackButton backTo='/' />
+			<Header title='Choose Project' showBackButton />
 			<main className='container mx-auto'>
 				<div className='flex flex-grow flex-col items-center justify-center gap-4 pt-6'>
 					<Select value={selectedId} onValueChange={handleSelectChange}>
@@ -98,28 +98,33 @@ const SelectProject = () => {
 						</SelectContent>
 					</Select>
 
-					{selectedId === 'new' && optionConfigs.length > 0 && (
-						<Select value={selectedConfigId} onValueChange={setSelectedConfigId}>
-							<SelectTrigger className='w-[250px]'>
-								<SelectValue>
-									{optionConfigs.find(c => c.id === selectedConfigId)?.name ?? 'Select Configuration'}
-								</SelectValue>
-							</SelectTrigger>
-							<SelectContent className='w-[250px]'>
-								<ScrollArea>
-									<SelectGroup>
-										{optionConfigs.map(config => (
-											<SelectItem key={config.id} value={config.id}>
-												<div className='flex flex-col'>
-													<div className='font-medium'>{config.name}</div>
-													<div className='text-xs text-gray-500'>{config.description}</div>
-												</div>
-											</SelectItem>
-										))}
-									</SelectGroup>
-								</ScrollArea>
-							</SelectContent>
-						</Select>
+					{selectedId === 'new' && optionTemplates.length > 0 && (
+						<div className='flex flex-row gap-2'>
+							<Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+								<SelectTrigger className='w-[250px]'>
+									<SelectValue>
+										{optionTemplates.find(t => t.id === selectedTemplateId)?.name ?? 'Select Template'}
+									</SelectValue>
+								</SelectTrigger>
+								<SelectContent className='w-[250px]'>
+									<ScrollArea>
+										<SelectGroup>
+											{optionTemplates.map(template => (
+												<SelectItem key={template.id} value={template.id}>
+													<div className='flex flex-col'>
+														<div className='font-medium'>{template.name}</div>
+														<div className='text-xs text-gray-500'>{template.description}</div>
+													</div>
+												</SelectItem>
+											))}
+										</SelectGroup>
+									</ScrollArea>
+								</SelectContent>
+							</Select>
+							<Link to='/templates' className={cn(buttonVariants({ size: 'icon', variant: 'ghost' }))}>
+								<Icons.settings className='h-4 w-4' />
+							</Link>
+						</div>
 					)}
 
 					<Button onClick={handleGenerate} disabled={isFetching || isLoading}>

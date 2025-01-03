@@ -1,36 +1,36 @@
 import { Hono } from 'hono';
 import { projectStorage } from '@/db/storage';
-import { ProjectConfig } from '@shared/types/options/config';
+import { ProjectTemplate } from '@shared/types/options/template';
 import * as fs from 'fs';
 
 const ALLOWED_AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'aac'];
 
 const updateRouter = new Hono()
-	.put('/projectConfig/:id', async c => {
+	.put('/projectTemplate/:id', async c => {
 		try {
 			const id = c.req.param('id');
-			const config = await c.req.json<ProjectConfig>();
-			if (id !== config.id) {
+			const template = await c.req.json<ProjectTemplate>();
+			if (id !== template.id) {
 				return c.json({ message: 'ID mismatch' }, 400);
 			}
-			await projectStorage.updateProjectConfig(config);
-			return c.json(config);
+			await projectStorage.updateProjectTemplate(template);
+			return c.json(template);
 		} catch (error) {
-			console.error('Error updating project config:', error);
-			return c.json({ message: 'Failed to update project config' }, 500);
+			console.error('Error updating project template:', error);
+			return c.json({ message: 'Failed to update project template' }, 500);
 		}
 	})
-	.delete('/projectConfig/:id', async c => {
+	.delete('/projectTemplate/:id', async c => {
 		try {
 			const id = c.req.param('id');
-			await projectStorage.deleteProjectConfig(id);
-			return c.json({ message: 'Project config deleted successfully' });
+			await projectStorage.deleteProjectTemplate(id);
+			return c.json({ message: 'Project template deleted successfully' });
 		} catch (error) {
-			console.error('Error deleting project config:', error);
-			return c.json({ message: 'Failed to delete project config' }, 500);
+			console.error('Error deleting project template:', error);
+			return c.json({ message: 'Failed to delete project template' }, 500);
 		}
 	})
-	.post('/projectConfig/:id/pauseSound', async c => {
+	.post('/projectTemplate/:id/pauseSound', async c => {
 		try {
 			const id = c.req.param('id');
 			const formData = await c.req.formData();
@@ -47,7 +47,7 @@ const updateRouter = new Hono()
 
 			const buffer = await file.arrayBuffer();
 			const filename = file.name;
-			await projectStorage.saveProjectConfigFile(id, filename, Buffer.from(buffer));
+			await projectStorage.saveProjectTemplateFile(id, filename, Buffer.from(buffer));
 
 			return c.json({ filename }, 201);
 		} catch (error) {

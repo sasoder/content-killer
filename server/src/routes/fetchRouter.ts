@@ -22,21 +22,21 @@ const fetchRouter = new Hono()
 		if (!project) return c.json({ message: 'Project not found' }, 404);
 		return c.json(project);
 	})
-	.get('/projectConfigs', async c => {
+	.get('/projectTemplates', async c => {
 		try {
 			return c.json(
-				(await projectStorage.getAllProjectConfigs()).sort(
+				(await projectStorage.getAllProjectTemplates()).sort(
 					(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
 				),
 			);
 		} catch (error) {
-			return c.json({ message: 'Failed to fetch project configs' }, 500);
+			return c.json({ message: 'Failed to fetch project templates' }, 500);
 		}
 	})
-	.get('/projectConfig/:id', async c => {
-		const config = await projectStorage.getProjectConfig(c.req.param('id'));
-		if (!config) return c.json({ message: 'Project config not found' }, 404);
-		return c.json(config);
+	.get('/projectTemplate/:id', async c => {
+		const template = await projectStorage.getProjectTemplate(c.req.param('id'));
+		if (!template) return c.json({ message: 'Project template not found' }, 404);
+		return c.json(template);
 	})
 	.get('/voices', async c => {
 		try {

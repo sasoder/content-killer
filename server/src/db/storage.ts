@@ -7,21 +7,20 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { VideoGenState } from '@shared/types/api/schema';
 import { createDefaultVideoGenState } from '@/lib/defaultVideoGenState';
-import { ProjectConfig } from '@shared/types/options/config';
-import { GenerationStep } from '@shared/types/api/schema';
-import { defaultProjectConfig } from '@shared/types/options/defaultConfigs';
+import { ProjectTemplate } from '@shared/types/options/template';
+import { defaultProjectTemplate } from '@shared/types/options/defaultTemplates';
 
 const DATA_DIR = './data';
-const PROJECT_CONFIGS_DIR = path.join(DATA_DIR, 'project-configs');
+const PROJECT_TEMPLATES_DIR = path.join(DATA_DIR, 'project-templates');
 const DB_PATH = path.join(DATA_DIR, 'projects.db');
-const DEFAULT_CONFIG_ID = 'default';
+const DEFAULT_TEMPLATE_ID = 'default';
 
 // Ensure directories exist
 if (!fs.existsSync(DATA_DIR)) {
 	fs.mkdirSync(DATA_DIR);
 }
-if (!fs.existsSync(PROJECT_CONFIGS_DIR)) {
-	fs.mkdirSync(PROJECT_CONFIGS_DIR);
+if (!fs.existsSync(PROJECT_TEMPLATES_DIR)) {
+	fs.mkdirSync(PROJECT_TEMPLATES_DIR);
 }
 
 // Initialize database and tables
@@ -33,7 +32,7 @@ sqlite.run(`
 	)
 `);
 sqlite.run(`
-	CREATE TABLE IF NOT EXISTS project_configs (
+	CREATE TABLE IF NOT EXISTS project_templates (
 		id TEXT PRIMARY KEY,
 		name TEXT NOT NULL,
 		description TEXT NOT NULL,
@@ -49,7 +48,7 @@ const projects = sqliteTable('projects', {
 	state: text('state').notNull(),
 });
 
-const projectConfigs = sqliteTable('project_configs', {
+const projectTemplates = sqliteTable('project_templates', {
 	id: text('id').primaryKey(),
 	name: text('name').notNull(),
 	description: text('description').notNull(),
@@ -62,8 +61,8 @@ const projectConfigs = sqliteTable('project_configs', {
 const db = drizzle(sqlite);
 
 export class ProjectStorage {
-	async createProject(id: string, projectConfig?: ProjectConfig): Promise<VideoGenState> {
-		const defaultState = createDefaultVideoGenState(id, projectConfig);
+	async createProject(id: string, projectTemplate?: ProjectTemplate): Promise<VideoGenState> {
+		const defaultState = createDefaultVideoGenState(id, projectTemplate);
 
 		await db.insert(projects).values({
 			id,
@@ -73,11 +72,11 @@ export class ProjectStorage {
 		await mkdir(path.join(DATA_DIR, id), { recursive: true });
 		await mkdir(path.join(DATA_DIR, id, 'misc'), { recursive: true });
 
-		// If there's a pause sound in the config, copy it to the project
-		if (projectConfig && projectConfig.pauseSoundFilename) {
-			const pausePath = path.join(PROJECT_CONFIGS_DIR, projectConfig.id, projectConfig.pauseSoundFilename);
+		// If there's a pause sound in the template, copy it to the project
+		if (projectTemplate && projectTemplate.pauseSoundFilename) {
+			const pausePath = path.join(PROJECT_TEMPLATES_DIR, projectTemplate.id, projectTemplate.pauseSoundFilename);
 			if (fs.existsSync(pausePath)) {
-				await fs.promises.copyFile(pausePath, path.join(DATA_DIR, id, 'misc', projectConfig.pauseSoundFilename));
+				await fs.promises.copyFile(pausePath, path.join(DATA_DIR, id, 'misc', projectTemplate.pauseSoundFilename));
 			}
 		}
 
@@ -113,98 +112,98 @@ export class ProjectStorage {
 		return readFile(filePath);
 	}
 
-	async createProjectConfig(config: ProjectConfig): Promise<void> {
-		const configDir = path.join(PROJECT_CONFIGS_DIR, config.id);
-		await mkdir(configDir, { recursive: true });
+	async createProjectTemplate(template: ProjectTemplate): Promise<void> {
+		const templateDir = path.join(PROJECT_TEMPLATES_DIR, template.id);
+		await mkdir(templateDir, { recursive: true });
 
-		await db.insert(projectConfigs).values({
-			id: config.id,
-			name: config.name,
-			description: config.description,
-			createdAt: config.createdAt,
-			options: JSON.stringify(config.options),
-			pauseSoundFilename: config.pauseSoundFilename || '',
+		await db.insert(projectTemplates).values({
+			id: template.id,
+			name: template.name,
+			description: template.description,
+			createdAt: template.createdAt,
+			options: JSON.stringify(template.options),
+			pauseSoundFilename: template.pauseSoundFilename || '',
 		});
 	}
 
-	async getProjectConfig(id: string): Promise<ProjectConfig | null> {
-		const result = await db.select().from(projectConfigs).where(eq(projectConfigs.id, id)).limit(1);
-		const config = result[0];
-		if (!config) return null;
+	async getProjectTemplate(id: string): Promise<ProjectTemplate | null> {
+		const result = await db.select().from(projectTemplates).where(eq(projectTemplates.id, id)).limit(1);
+		const template = result[0];
+		if (!template) return null;
 
 		return {
-			id: config.id,
-			name: config.name,
-			description: config.description,
-			createdAt: config.createdAt,
-			options: JSON.parse(config.options),
-			pauseSoundFilename: config.pauseSoundFilename,
+			id: template.id,
+			name: template.name,
+			description: template.description,
+			createdAt: template.createdAt,
+			options: JSON.parse(template.options),
+			pauseSoundFilename: template.pauseSoundFilename,
 		};
 	}
 
-	async getAllProjectConfigs(): Promise<ProjectConfig[]> {
-		const results = await db.select().from(projectConfigs);
-		return results.map(config => ({
-			id: config.id,
-			name: config.name,
-			description: config.description,
-			createdAt: config.createdAt,
-			options: JSON.parse(config.options),
-			pauseSoundFilename: config.pauseSoundFilename,
+	async getAllProjectTemplates(): Promise<ProjectTemplate[]> {
+		const results = await db.select().from(projectTemplates);
+		return results.map(template => ({
+			id: template.id,
+			name: template.name,
+			description: template.description,
+			createdAt: template.createdAt,
+			options: JSON.parse(template.options),
+			pauseSoundFilename: template.pauseSoundFilename,
 		}));
 	}
 
-	async updateProjectConfig(config: ProjectConfig): Promise<void> {
+	async updateProjectTemplate(template: ProjectTemplate): Promise<void> {
 		await db
-			.update(projectConfigs)
+			.update(projectTemplates)
 			.set({
-				name: config.name,
-				description: config.description,
-				options: JSON.stringify(config.options),
-				pauseSoundFilename: config.pauseSoundFilename || '',
+				name: template.name,
+				description: template.description,
+				options: JSON.stringify(template.options),
+				pauseSoundFilename: template.pauseSoundFilename || '',
 			})
-			.where(eq(projectConfigs.id, config.id));
+			.where(eq(projectTemplates.id, template.id));
 	}
 
-	async deleteProjectConfig(id: string): Promise<void> {
-		if (id === DEFAULT_CONFIG_ID) {
-			throw new Error('Cannot delete the default configuration');
+	async deleteProjectTemplate(id: string): Promise<void> {
+		if (id === DEFAULT_TEMPLATE_ID) {
+			throw new Error('Cannot delete the default template');
 		}
 
-		await db.delete(projectConfigs).where(eq(projectConfigs.id, id));
+		await db.delete(projectTemplates).where(eq(projectTemplates.id, id));
 
-		// Delete the config directory and all its contents
-		const configDir = path.join(PROJECT_CONFIGS_DIR, id);
-		if (fs.existsSync(configDir)) {
-			await fs.promises.rm(configDir, { recursive: true, force: true });
+		// Delete the template directory and all its contents
+		const templateDir = path.join(PROJECT_TEMPLATES_DIR, id);
+		if (fs.existsSync(templateDir)) {
+			await fs.promises.rm(templateDir, { recursive: true, force: true });
 		}
 	}
 
-	async saveProjectConfigFile(id: string, fileName: string, content: Buffer): Promise<void> {
-		const configDir = path.join(PROJECT_CONFIGS_DIR, id);
-		await mkdir(configDir, { recursive: true });
-		const filePath = path.join(configDir, fileName);
+	async saveProjectTemplateFile(id: string, fileName: string, content: Buffer): Promise<void> {
+		const templateDir = path.join(PROJECT_TEMPLATES_DIR, id);
+		await mkdir(templateDir, { recursive: true });
+		const filePath = path.join(templateDir, fileName);
 		await writeFile(filePath, content);
 	}
 
-	async getProjectConfigFile(configId: string, fileName: string): Promise<Buffer> {
-		const filePath = path.join(PROJECT_CONFIGS_DIR, configId, fileName);
+	async getProjectTemplateFile(templateId: string, fileName: string): Promise<Buffer> {
+		const filePath = path.join(PROJECT_TEMPLATES_DIR, templateId, fileName);
 		return readFile(filePath);
 	}
 
-	async ensureDefaultConfigExists(): Promise<void> {
-		const defaultConfig = await this.getProjectConfig(DEFAULT_CONFIG_ID);
-		if (!defaultConfig) {
-			const config = {
-				...defaultProjectConfig,
-				id: DEFAULT_CONFIG_ID,
-				name: 'Default Configuration',
-				description: 'A project configuration with sensible defaults',
+	async ensureDefaultTemplateExists(): Promise<void> {
+		const defaultTemplate = await this.getProjectTemplate(DEFAULT_TEMPLATE_ID);
+		if (!defaultTemplate) {
+			const template = {
+				...defaultProjectTemplate,
+				id: DEFAULT_TEMPLATE_ID,
+				name: 'Default Template',
+				description: 'A project template with sensible defaults',
 				createdAt: new Date().toISOString(),
 				pauseSoundFilename: 'pause_default.wav',
 			};
 
-			await this.createProjectConfig(config);
+			await this.createProjectTemplate(template);
 		}
 	}
 }

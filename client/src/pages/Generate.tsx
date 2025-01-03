@@ -29,7 +29,7 @@ const GeneratePageContent = () => {
 
 	return (
 		<>
-			<Header title={metadata?.title || 'Content Killer'} showBackButton backTo='/create' />
+			<Header title={metadata?.title || 'Content Killer'} showBackButton />
 			<main className='container mx-auto space-y-8 p-4'>
 				<div className='flex flex-row items-stretch justify-center gap-4'>
 					<StepCard

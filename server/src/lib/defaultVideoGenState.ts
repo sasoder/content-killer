@@ -3,10 +3,10 @@ import {
 	defaultDescriptionOptions,
 	defaultCommentaryOptions,
 	defaultVideoOptions,
-} from '@shared/types/options/defaultConfigs';
-import { ProjectConfig } from '@shared/types/options/config';
+} from '@shared/types/options/defaultTemplates';
+import { ProjectTemplate } from '@shared/types/options/template';
 
-export const createDefaultVideoGenState = (id: string, projectConfig?: ProjectConfig): VideoGenState => {
+export const createDefaultVideoGenState = (id: string, projectTemplate?: ProjectTemplate): VideoGenState => {
 	return {
 		id,
 		description: [],
@@ -21,11 +21,11 @@ export const createDefaultVideoGenState = (id: string, projectConfig?: ProjectCo
 			duration: '',
 			createdAt: new Date().toISOString(),
 		},
-		options: projectConfig?.options ?? {
+		options: projectTemplate?.options ?? {
 			description: defaultDescriptionOptions,
 			commentary: defaultCommentaryOptions,
 			video: defaultVideoOptions,
 		},
-		pauseSoundFilename: projectConfig?.pauseSoundFilename || '',
+		pauseSoundFilename: projectTemplate?.pauseSoundFilename || '',
 	};
 };

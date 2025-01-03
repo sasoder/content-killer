@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from '@/App.tsx';
 import Generate from '@/pages/Generate.tsx';
 import Create from '@/pages/Create';
-import Configurations from '@/pages/Configurations';
+import Templates from '@/pages/Templates';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import '@fontsource/nunito';
@@ -35,8 +35,8 @@ const router = createBrowserRouter([
 		element: <Create />,
 	},
 	{
-		path: '/configurations',
-		element: <Configurations />,
+		path: '/templates',
+		element: <Templates />,
 	},
 	{
 		path: '*',

@@ -17,6 +17,8 @@ import {
 	Settings,
 	Trash2,
 	CheckIcon,
+	Upload,
+	Music,
 } from 'lucide-react';
 
 export type IconKeys = keyof typeof icons;
@@ -44,6 +46,8 @@ const icons = {
 	settings: Settings,
 	trash: Trash2,
 	checkbox: CheckIcon,
+	upload: Upload,
+	music: Music,
 };
 
 export const Icons: IconsType = icons;

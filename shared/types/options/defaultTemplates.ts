@@ -1,5 +1,5 @@
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from '.';
-import { ProjectConfig } from './config';
+import { ProjectTemplate } from './template';
 
 export const defaultDescriptionOptions: DescriptionOptions = {
 	sample: true,
@@ -25,10 +25,10 @@ export const defaultVideoOptions: VideoOptions = {
 	},
 };
 
-export const defaultProjectConfig: ProjectConfig = {
+export const defaultProjectTemplate: ProjectTemplate = {
 	id: crypto.randomUUID(),
-	name: 'New Configuration',
-	description: 'A thought-provoking project configuration',
+	name: 'New Template',
+	description: 'A thought-provoking project template',
 	createdAt: new Date().toISOString(),
 	pauseSoundFilename: 'pause_default.wav',
 	options: {

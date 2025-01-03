@@ -10,7 +10,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { projectStorage } from '@/db/storage';
 import { generateProjectId } from '@/lib/util';
-import { defaultProjectConfig } from '@shared/types/options/defaultConfigs';
+import { defaultProjectTemplate } from '@shared/types/options/defaultTemplates';
 
 const DescriptionOptionsSchema = z.object({
 	url: z.string(),
@@ -38,41 +38,43 @@ const VideoOptionsSchema = z.object({
 });
 
 const ProjectOptionsSchema = z.object({
-	configId: z.string().optional(),
+	templateId: z.string().optional(),
 });
 
 const generateRouter = new Hono()
 	.post('/project', zValidator('json', ProjectOptionsSchema), async c => {
-		const { configId } = c.req.valid('json');
+		const { templateId } = c.req.valid('json');
 		const id = generateProjectId();
-		let optionConfig = undefined;
-		if (configId) {
-			const config = await projectStorage.getProjectConfig(configId);
-			if (config) {
-				optionConfig = config;
+		let optionTemplate = undefined;
+		if (templateId) {
+			const template = await projectStorage.getProjectTemplate(templateId);
+			if (template) {
+				optionTemplate = template;
 			}
 		}
 
-		const project = await projectStorage.createProject(id, optionConfig);
-		return c.json(project);
+		const project = await projectStorage.createProject(id, optionTemplate);
+		return c.json(project, 201);
 	})
-	.post('/projectConfig', async c => {
+	.post('/projectTemplate', async c => {
 		try {
-			const config = {
-				...defaultProjectConfig,
+			const template = {
+				...defaultProjectTemplate,
+				id: crypto.randomUUID(),
+				createdAt: new Date().toISOString(),
 				pauseSoundFilename: 'pause_default.wav',
 			};
 
-			await projectStorage.createProjectConfig(config);
+			await projectStorage.createProjectTemplate(template);
 
-			// Copy the default pause sound to the new config
-			const defaultPauseSound = await projectStorage.getProjectConfigFile('default', 'pause_default.wav');
-			await projectStorage.saveProjectConfigFile(config.id, config.pauseSoundFilename, defaultPauseSound);
+			// Copy the default pause sound to the new template
+			const defaultPauseSound = await projectStorage.getProjectTemplateFile('default', 'pause_default.wav');
+			await projectStorage.saveProjectTemplateFile(template.id, template.pauseSoundFilename, defaultPauseSound);
 
-			return c.json(config, 201);
+			return c.json(template, 201);
 		} catch (error) {
-			console.error('Error creating project config:', error);
-			return c.json({ message: 'Failed to create project config' }, 500);
+			console.error('Error creating project template:', error);
+			return c.json({ message: 'Failed to create project template' }, 500);
 		}
 	})
 	.post('/description/:id', zValidator('json', DescriptionOptionsSchema), async c => {

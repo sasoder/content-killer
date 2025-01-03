@@ -1,5 +1,5 @@
 import { VideoGenState, TimestampText, VideoMetadata } from '@shared/types/api/schema';
-import { ProjectConfig } from '@shared/types/options/config';
+import { ProjectTemplate } from '@shared/types/options/template';
 import { CommentaryOptions, DescriptionOptions, VideoOptions, Voice } from '@shared/types/options';
 import { saveAs } from 'file-saver';
 
@@ -109,18 +109,18 @@ export async function fetchFiles(fileNames: string[]): Promise<File[]> {
 	return files;
 }
 
-export async function fetchProjectConfigs(): Promise<ProjectConfig[]> {
-	const response = await fetch(`${API_BASE}/fetch/projectConfigs`);
+export async function fetchProjectTemplates(): Promise<ProjectTemplate[]> {
+	const response = await fetch(`${API_BASE}/fetch/projectTemplates`);
 	if (!response.ok) {
-		throw new Error('Failed to fetch project configs');
+		throw new Error('Failed to fetch project templates');
 	}
 	return response.json();
 }
 
-export async function fetchProjectConfig(id: string): Promise<ProjectConfig> {
-	const response = await fetch(`${API_BASE}/fetch/projectConfig/${id}`);
+export async function fetchProjectTemplate(id: string): Promise<ProjectTemplate> {
+	const response = await fetch(`${API_BASE}/fetch/projectTemplate/${id}`);
 	if (!response.ok) {
-		throw new Error('Failed to fetch project config');
+		throw new Error('Failed to fetch project template');
 	}
 	return response.json();
 }
@@ -133,8 +133,11 @@ export async function fetchVoices(): Promise<Voice[]> {
 	return response.json();
 }
 
-export async function createProjectConfig(params?: { name?: string; description?: string }): Promise<ProjectConfig> {
-	const response = await fetch(`${API_BASE}/generate/projectConfig`, {
+export async function createProjectTemplate(params?: {
+	name?: string;
+	description?: string;
+}): Promise<ProjectTemplate> {
+	const response = await fetch(`${API_BASE}/generate/projectTemplate`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -143,43 +146,43 @@ export async function createProjectConfig(params?: { name?: string; description?
 	});
 
 	if (!response.ok) {
-		throw new Error('Failed to create project config');
+		throw new Error('Failed to create project template');
 	}
 
 	return response.json();
 }
 
-export async function updateProjectConfig(config: ProjectConfig): Promise<ProjectConfig> {
-	const response = await fetch(`${API_BASE}/update/projectConfig/${config.id}`, {
+export async function updateProjectTemplate(template: ProjectTemplate): Promise<ProjectTemplate> {
+	const response = await fetch(`${API_BASE}/update/projectTemplate/${template.id}`, {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify(config),
+		body: JSON.stringify(template),
 	});
 
 	if (!response.ok) {
-		throw new Error('Failed to update project config');
+		throw new Error('Failed to update project template');
 	}
 
 	return response.json();
 }
 
-export async function deleteProjectConfig(id: string): Promise<void> {
-	const response = await fetch(`${API_BASE}/update/projectConfig/${id}`, {
+export async function deleteProjectTemplate(id: string): Promise<void> {
+	const response = await fetch(`${API_BASE}/update/projectTemplate/${id}`, {
 		method: 'DELETE',
 	});
 
 	if (!response.ok) {
-		throw new Error('Failed to delete project config');
+		throw new Error('Failed to delete project template');
 	}
 }
 
-export async function uploadPauseSound(configId: string, file: File): Promise<{ filename: string }> {
+export async function uploadPauseSound(templateId: string, file: File): Promise<{ filename: string }> {
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const response = await fetch(`${API_BASE}/update/projectConfig/${configId}/pauseSound`, {
+	const response = await fetch(`${API_BASE}/update/projectTemplate/${templateId}/pauseSound`, {
 		method: 'POST',
 		body: formData,
 	});
@@ -191,13 +194,13 @@ export async function uploadPauseSound(configId: string, file: File): Promise<{ 
 	return response.json();
 }
 
-export async function createProjectWithConfig(configId: string): Promise<VideoGenState> {
+export async function createProjectWithTemplate(templateId: string): Promise<VideoGenState> {
 	const response = await fetch(`${API_BASE}/generate/project`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify({ configId }),
+		body: JSON.stringify({ templateId }),
 	});
 
 	if (!response.ok) {

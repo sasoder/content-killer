@@ -1,6 +1,6 @@
 import { CommentaryOptions, DescriptionOptions, VideoOptions } from '.';
 
-export type ProjectConfig = {
+export type ProjectTemplate = {
 	id: string;
 	name: string;
 	description: string;
