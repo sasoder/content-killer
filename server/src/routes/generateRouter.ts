@@ -45,8 +45,6 @@ const generateRouter = new Hono()
 	.post('/project', zValidator('json', ProjectOptionsSchema), async c => {
 		const { configId } = c.req.valid('json');
 		const id = generateProjectId();
-		console.log('configId', configId);
-
 		let optionConfig = undefined;
 		if (configId) {
 			const config = await projectStorage.getProjectConfig(configId);
@@ -56,7 +54,6 @@ const generateRouter = new Hono()
 		}
 
 		const project = await projectStorage.createProject(id, optionConfig);
-		console.log('project', project);
 		return c.json(project);
 	})
 	.post('/projectConfig', async c => {
@@ -85,7 +82,6 @@ const generateRouter = new Hono()
 		}
 		const id = c.req.param('id');
 		const description = await generateDescription(url, options);
-		console.log('description', description);
 		const project = await projectStorage.getProject(id);
 		if (project) {
 			project.description = description;
@@ -131,19 +127,12 @@ const generateRouter = new Hono()
 			}
 
 			project.generationState.completedSteps = [];
-			project.generationState.currentStep = GenerationStep.IDLE;
-			await projectStorage.updateProjectState(project);
-
-			// Set initial status
-			console.log('initial status set');
-
-			// Generate audio first
+			project.commentary = commentary;
+			project.options.video = options;
 			await updateState(project, GenerationStep.PREPARING);
 			await updateState(project, GenerationStep.GENERATING_AUDIO);
 			await generateAudio(id, commentary, options.audio);
 			await generateVideo(id, project.metadata.url, options, (step, error) => updateState(project, step, error));
-			project.commentary = commentary;
-			project.options.video = options;
 			await updateState(project, GenerationStep.COMPLETED);
 
 			return c.json({ success: true });

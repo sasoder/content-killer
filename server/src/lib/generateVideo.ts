@@ -279,9 +279,12 @@ export async function generateVideo(
 			throw error;
 		}
 
+		const needsScaling = options.video.size !== 'source';
 		try {
 			await updateState(GenerationStep.SCALING_VIDEO);
-			await scaleVideo(sourceVideoPath, scaledVideoPath, options.video.size);
+			if (needsScaling) {
+				await scaleVideo(sourceVideoPath, scaledVideoPath, options.video.size);
+			}
 		} catch (error) {
 			await updateState(GenerationStep.ERROR, {
 				step: GenerationStep.SCALING_VIDEO,
@@ -290,15 +293,15 @@ export async function generateVideo(
 			throw error;
 		}
 
-		let videoToProcess = scaledVideoPath;
+		let videoToProcess = needsScaling ? scaledVideoPath : sourceVideoPath;
 
 		if (options.video.subtitlesEnabled) {
 			console.log('Transcribing source...');
 			await updateState(GenerationStep.TRANSCRIBING);
 			try {
 				const srtPath = path.join(miscDir, 'subtitles.srt');
-				await generateSubtitles(scaledVideoPath, srtPath);
-				await addSubtitles(scaledVideoPath, srtPath, subtitledVideoPath, options.video.subtitlesSize);
+				await generateSubtitles(videoToProcess, srtPath);
+				await addSubtitles(videoToProcess, srtPath, subtitledVideoPath, options.video.subtitlesSize);
 				videoToProcess = subtitledVideoPath;
 			} catch (error) {
 				await updateState(GenerationStep.ERROR, {
@@ -330,7 +333,9 @@ export async function generateVideo(
 
 		try {
 			await fs.unlink(sourceVideoPath);
-			await fs.unlink(scaledVideoPath);
+			if (options.video.size !== 'source') {
+				await fs.unlink(scaledVideoPath);
+			}
 			if (options.video.subtitlesEnabled) {
 				await fs.unlink(subtitledVideoPath);
 			}

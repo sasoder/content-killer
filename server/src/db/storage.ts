@@ -9,10 +9,12 @@ import { VideoGenState } from '@shared/types/api/schema';
 import { createDefaultVideoGenState } from '@/lib/defaultVideoGenState';
 import { ProjectConfig } from '@shared/types/options/config';
 import { GenerationStep } from '@shared/types/api/schema';
+import { defaultProjectConfig } from '@shared/types/options/defaultConfigs';
 
 const DATA_DIR = './data';
 const PROJECT_CONFIGS_DIR = path.join(DATA_DIR, 'project-configs');
 const DB_PATH = path.join(DATA_DIR, 'projects.db');
+const DEFAULT_CONFIG_ID = 'default';
 
 // Ensure directories exist
 if (!fs.existsSync(DATA_DIR)) {
@@ -165,6 +167,10 @@ export class ProjectStorage {
 	}
 
 	async deleteProjectConfig(id: string): Promise<void> {
+		if (id === DEFAULT_CONFIG_ID) {
+			throw new Error('Cannot delete the default configuration');
+		}
+
 		await db.delete(projectConfigs).where(eq(projectConfigs.id, id));
 
 		// Delete the config directory and all its contents
@@ -222,6 +228,22 @@ export class ProjectStorage {
 		}
 
 		return count;
+	}
+
+	async ensureDefaultConfigExists(): Promise<void> {
+		const defaultConfig = await this.getProjectConfig(DEFAULT_CONFIG_ID);
+		if (!defaultConfig) {
+			const config = {
+				...defaultProjectConfig,
+				id: DEFAULT_CONFIG_ID,
+				name: 'Default Configuration',
+				description: 'A project configuration with sensible defaults',
+				createdAt: new Date().toISOString(),
+				pauseSoundFilename: 'pause_default.wav',
+			};
+
+			await this.createProjectConfig(config);
+		}
 	}
 }
 

@@ -169,16 +169,18 @@ export default function ConfigurationsPage() {
 											onClick={() => handleConfigSelect(config)}
 										>
 											<span className='font-medium'>{config.name}</span>
-											<Button
-												variant='ghost'
-												size='sm'
-												onClick={e => {
-													e.stopPropagation();
-													handleDelete(config.id);
-												}}
-											>
-												<Icons.trash className='h-4 w-4' />
-											</Button>
+											{config.id !== 'default' && (
+												<Button
+													variant='ghost'
+													size='sm'
+													onClick={e => {
+														e.stopPropagation();
+														handleDelete(config.id);
+													}}
+												>
+													<Icons.trash className='h-4 w-4' />
+												</Button>
+											)}
 										</div>
 									))}
 								</div>
