@@ -1,28 +1,60 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useVideoGen } from '@/context/VideoGenContext';
+import { useVideoGen, useIsDescriptionGenerating, useDescriptionGenerationProgress } from '@/context/VideoGenContext';
 import { validateUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 import StepOptions from '@/components/cards/StepOptions';
 import { descriptionOptionDefinitions } from '@/lib/options/optionDefinitions';
 import { Icons } from '@/components/icons';
 import { DescriptionOptions } from '@shared/types/options';
 import { useDescriptionGeneration } from '@/hooks/useDescriptionGeneration';
+import { DescriptionGenerationStep } from '@shared/types/api/schema';
+import { generateMetadata } from '@/api/apiHelper';
 
 const GenerateDescription = () => {
 	const { toast } = useToast();
-	const { updateDescription, updateMetadata, metadata, id, options } = useVideoGen();
-	const [url, setUrl] = useState<string>('');
+	const { metadata, id, options, updateMetadata } = useVideoGen();
+	const isGenerating = useIsDescriptionGenerating();
+	const { step, completedSteps, progress, error } = useDescriptionGenerationProgress();
+	const [url, setUrl] = useState<string>(metadata?.url ?? '');
 	const [descriptionOptions, setDescriptionOptions] = useState<DescriptionOptions>(options.description);
-	const { generate, isLoading, error } = useDescriptionGeneration(id);
+	const { generate, isLoading } = useDescriptionGeneration(id);
 
 	useEffect(() => {
 		if (metadata?.url) {
 			setUrl(metadata.url);
 		}
 	}, [metadata]);
+
+	const getStepDetails = (step: DescriptionGenerationStep) => {
+		switch (step) {
+			case DescriptionGenerationStep.DOWNLOADING:
+				return {
+					label: 'Downloading video...',
+					icon: <Icons.upload className='h-4 w-4 animate-pulse' />,
+				};
+			case DescriptionGenerationStep.UPLOADING:
+				return {
+					label: 'Uploading video...',
+					icon: <Icons.upload className='h-4 w-4 animate-pulse' />,
+				};
+			case DescriptionGenerationStep.PROCESSING:
+				return {
+					label: 'Processing with Gemini...',
+					icon: <Icons.bot className='h-4 w-4 animate-pulse' />,
+				};
+			case DescriptionGenerationStep.GENERATING:
+				return {
+					label: 'Generating description...',
+					icon: <Icons.pencil className='h-4 w-4 animate-pulse' />,
+				};
+			default:
+				return { label: '', icon: null };
+		}
+	};
 
 	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -37,16 +69,15 @@ const GenerateDescription = () => {
 		}
 
 		try {
-			const result = await generate(url, descriptionOptions);
-			updateDescription(result.description);
-
-			if ('metadata' in result && result.metadata) {
-				updateMetadata(result.metadata);
-			}
+			// Then start the description generation
+			generate(url, descriptionOptions);
+			// First update metadata so we have the video info
+			const metadata = await generateMetadata(id, url);
+			updateMetadata(metadata);
 
 			toast({
 				title: 'Success',
-				description: 'Description generated successfully.',
+				description: 'Description generation started.',
 			});
 		} catch (error) {
 			console.error('Error generating content:', error);
@@ -83,20 +114,54 @@ const GenerateDescription = () => {
 					</div>
 				)}
 			</div>
+
 			<div className='flex justify-center'>
 				<div className='flex flex-grow flex-col gap-4'>
+					{isGenerating && (
+						<div className='w-full space-y-4'>
+							{/* Current step */}
+							<div className='space-y-2'>
+								<div className='flex items-center justify-between text-sm'>
+									<div className='flex items-center gap-2'>
+										{getStepDetails(step).icon}
+										<span className='text-muted-foreground'>{getStepDetails(step).label}</span>
+									</div>
+									{progress != null && <span className='text-muted-foreground'>{Math.round(progress)}%</span>}
+								</div>
+								{progress != null && <Progress value={progress} className='w-full' />}
+							</div>
+
+							{/* Completed steps */}
+							{completedSteps.map((completedStep: DescriptionGenerationStep) => (
+								<div key={completedStep} className='text-muted-foreground flex items-center gap-2 text-sm'>
+									<Icons.checkbox className='h-4 w-4 text-green-500' />
+									<span>{getStepDetails(completedStep).label}</span>
+								</div>
+							))}
+
+							{/* Error state */}
+							{error && (
+								<div className='text-destructive flex items-center gap-2 text-sm'>
+									<Icons.alertTriangle className='h-4 w-4' />
+									<span>{error.message}</span>
+								</div>
+							)}
+						</div>
+					)}
+
 					<StepOptions
 						options={descriptionOptions}
 						onOptionChange={setDescriptionOptions}
 						optionDefinitions={descriptionOptionDefinitions}
 						type='description'
 					/>
+
 					<div className='flex justify-center'>
-						<Button type='submit' disabled={isLoading}>
+						<Button type='submit' disabled={isLoading || isGenerating}>
 							{isLoading ? (
 								<>
-									<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />
-									Generating...
+									<Icons.loader className='mr-2 h-4 w-4 animate-spin' />
+									Processing...
 								</>
 							) : (
 								'Generate Description'
