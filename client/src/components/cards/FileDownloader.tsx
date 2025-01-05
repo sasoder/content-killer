@@ -1,22 +1,22 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useVideoGen, useGenerationProgress } from '@/context/VideoGenContext';
+import { useVideoGen, useVideoGenerationProgress } from '@/context/VideoGenContext';
 import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
-import { GenerationStep } from '@shared/types/api/schema';
+import { VideoGenerationStep } from '@shared/types/api/schema';
 import { Separator } from '@/components/ui/separator';
 import { downloadFile } from '@/api/apiHelper';
 import { toast } from '@/hooks/use-toast';
 
 const GENERATION_STEPS = [
-	{ step: GenerationStep.PREPARING, label: 'Preparing generation' },
-	{ step: GenerationStep.GENERATING_AUDIO, label: 'Generating audio with ElevenLabs' },
-	{ step: GenerationStep.DOWNLOADING_VIDEO, label: 'Downloading from YouTube' },
-	{ step: GenerationStep.SCALING_VIDEO, label: 'Scaling video' },
-	{ step: GenerationStep.TRANSCRIBING, label: 'Transcribing with Whisper' },
-	{ step: GenerationStep.PROCESSING_VIDEO, label: 'Processing with ffmpeg' },
-	{ step: GenerationStep.FINALIZING, label: 'Finalizing output' },
-	{ step: GenerationStep.COMPLETED, label: 'Generation complete' },
+	{ step: VideoGenerationStep.PREPARING, label: 'Preparing generation' },
+	{ step: VideoGenerationStep.GENERATING_AUDIO, label: 'Generating audio with ElevenLabs' },
+	{ step: VideoGenerationStep.DOWNLOADING_VIDEO, label: 'Downloading from YouTube' },
+	{ step: VideoGenerationStep.SCALING_VIDEO, label: 'Scaling video' },
+	{ step: VideoGenerationStep.TRANSCRIBING, label: 'Transcribing with Whisper' },
+	{ step: VideoGenerationStep.PROCESSING_VIDEO, label: 'Processing with ffmpeg' },
+	{ step: VideoGenerationStep.FINALIZING, label: 'Finalizing output' },
+	{ step: VideoGenerationStep.COMPLETED, label: 'Generation complete' },
 ] as const;
 
 const StepIndicator = ({
@@ -36,11 +36,11 @@ const StepIndicator = ({
 
 const FileDownloader = () => {
 	const { id, options } = useVideoGen();
-	const { step: currentStep, completedSteps = [], error, isComplete } = useGenerationProgress();
+	const { step: currentStep, completedSteps = [], error, isComplete } = useVideoGenerationProgress();
 	const [isDownloadingAudio, setIsDownloadingAudio] = useState(false);
 	const [isDownloadingVideo, setIsDownloadingVideo] = useState(false);
 
-	if (currentStep === GenerationStep.IDLE) {
+	if (currentStep === VideoGenerationStep.IDLE) {
 		return null;
 	}
 
@@ -76,7 +76,7 @@ const FileDownloader = () => {
 
 	// Filter steps based on options
 	const activeSteps = GENERATION_STEPS.filter(
-		step => step.step !== GenerationStep.TRANSCRIBING || options?.video.video.subtitlesEnabled,
+		step => step.step !== VideoGenerationStep.TRANSCRIBING || options?.video.video.subtitlesEnabled,
 	);
 
 	return (
@@ -87,7 +87,8 @@ const FileDownloader = () => {
 					<Separator className='my-1 mb-2' />
 					<div className='flex flex-col gap-2'>
 						{activeSteps.map(({ step, label }) => {
-							const isCompleted = completedSteps?.includes(step) || (step === GenerationStep.COMPLETED && isComplete);
+							const isCompleted =
+								completedSteps?.includes(step) || (step === VideoGenerationStep.COMPLETED && isComplete);
 							const isErrorStep = error?.step === step;
 							const isActiveStep = step === currentStep && !isCompleted;
 							const isPending = !isCompleted && !isActiveStep;
@@ -119,7 +120,7 @@ const FileDownloader = () => {
 				<Button
 					onClick={handleDownloadAudio}
 					className='w-fit'
-					disabled={!completedSteps.includes(GenerationStep.GENERATING_AUDIO) || isDownloadingAudio}
+					disabled={!completedSteps.includes(VideoGenerationStep.GENERATING_AUDIO) || isDownloadingAudio}
 				>
 					{isDownloadingAudio ? (
 						<>
