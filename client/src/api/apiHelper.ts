@@ -1,26 +1,49 @@
-import { VideoGenState, TimestampText, VideoMetadata } from '@shared/types/api/schema';
+import { VideoGenState, TimestampText, VideoMetadata, DescriptionGenerationStep } from '@shared/types/api/schema';
 import { ProjectTemplate } from '@shared/types/options/template';
 import { CommentaryOptions, DescriptionOptions, VideoOptions, Voice } from '@shared/types/options';
 import { saveAs } from 'file-saver';
 
 const API_BASE = import.meta.env.VITE_APP_API_BASE;
 
-export async function generateDescription(
-	id: string,
-	url: string,
-	options: DescriptionOptions,
-): Promise<TimestampText[]> {
-	const response = await fetch(`${API_BASE}/generate/description/${id}`, {
+interface DescriptionGenerationProgress {
+	type: 'progress' | 'complete' | 'error';
+	step?: DescriptionGenerationStep;
+	progress?: number;
+	error?: string;
+}
+
+export async function startDescriptionGeneration(id: string, url: string, options: DescriptionOptions): Promise<void> {
+	const response = await fetch(`${API_BASE}/generate/description/${id}/start`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
 		},
 		body: JSON.stringify({ url, options }),
 	});
+
 	if (!response.ok) {
-		throw new Error('Failed to generate description');
+		throw new Error('Failed to start description generation');
 	}
-	return response.json();
+}
+
+export function subscribeToDescriptionProgress(
+	id: string,
+	onProgress: (data: DescriptionGenerationProgress) => void,
+): () => void {
+	const eventSource = new EventSource(`${API_BASE}/generate/description/${id}/status`);
+
+	eventSource.onmessage = event => {
+		const data = JSON.parse(event.data);
+		onProgress(data);
+	};
+
+	eventSource.onerror = () => {
+		eventSource.close();
+		onProgress({ type: 'error', error: 'EventSource connection failed' });
+	};
+
+	// Return cleanup function
+	return () => eventSource.close();
 }
 
 export async function generateMetadata(id: string, url: string): Promise<VideoMetadata> {

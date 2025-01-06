@@ -2,10 +2,10 @@ import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs/promises';
 import path from 'path';
 import OpenAI from 'openai';
-import youtubedl, { create } from 'youtube-dl-exec';
 import { ffprobe, type FfprobeData } from 'fluent-ffmpeg';
 import { VideoOptions } from '@shared/types/options';
-import { GenerationStep, VideoGenState } from '@shared/types/api/schema';
+import { VideoGenerationStep, VideoGenState } from '@shared/types/api/schema';
+import { downloadVideo } from './downloadVideo';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -149,9 +149,9 @@ async function processVideoWithOverlays(
 ): Promise<string> {
 	console.log('Processing video with overlays...');
 	const overlays = await findOverlayAudios(commentaryDir);
-	const originalVideoLength = await getMediaDuration(sourceVideo);
+	const originalVideoDuration = await getMediaDuration(sourceVideo);
 	console.log('overlays', overlays);
-	console.log('originalVideoLength', originalVideoLength);
+	console.log('originalVideoDuration', originalVideoDuration);
 	console.log('pauseAudio', pauseAudio);
 	console.log('directory', commentaryDir);
 
@@ -198,7 +198,7 @@ async function processVideoWithOverlays(
 
 			streams.push(`[vf${i}][af${i}]`);
 
-			const nextTs = i < overlays.length - 1 ? overlays[i + 1].timestampSeconds : originalVideoLength;
+			const nextTs = i < overlays.length - 1 ? overlays[i + 1].timestampSeconds : originalVideoDuration;
 			if (nextTs > overlay.timestampSeconds + 0.04) {
 				filterComplex.push(
 					`[0:v]trim=${overlay.timestampSeconds + 0.04}:${nextTs},setpts=PTS-STARTPTS${scaleFilter}[v${i + 1}]`,
@@ -230,19 +230,10 @@ async function processVideoWithOverlays(
 	});
 }
 
-async function downloadVideo(url: string, outputPath: string, size: string): Promise<void> {
-	const ytDl = process.env.YT_DLP_PATH ? create(process.env.YT_DLP_PATH) : youtubedl;
-	await ytDl(url, {
-		format: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-		output: outputPath,
-		mergeOutputFormat: 'mkv',
-	});
-}
-
 export async function generateVideo(
 	project: VideoGenState,
 	options: VideoOptions,
-	updateState: (step: GenerationStep, error?: { step: GenerationStep; message: string }) => Promise<void>,
+	updateState: (step: VideoGenerationStep, error?: { step: VideoGenerationStep; message: string }) => Promise<void>,
 ): Promise<void> {
 	try {
 		const projectDir = path.join('data', project.id);
@@ -262,12 +253,12 @@ export async function generateVideo(
 
 		try {
 			console.log('Downloading video...');
-			await updateState(GenerationStep.DOWNLOADING_VIDEO);
-			await downloadVideo(project.metadata.url, sourceVideoPath, options.video.size);
+			await updateState(VideoGenerationStep.DOWNLOADING_VIDEO);
+			await downloadVideo(project.metadata.url ?? '', sourceVideoPath);
 			console.log('Downloaded video');
 		} catch (error) {
-			await updateState(GenerationStep.ERROR, {
-				step: GenerationStep.DOWNLOADING_VIDEO,
+			await updateState(VideoGenerationStep.ERROR, {
+				step: VideoGenerationStep.DOWNLOADING_VIDEO,
 				message: error instanceof Error ? error.message : 'Unknown error',
 			});
 			throw error;
@@ -275,13 +266,13 @@ export async function generateVideo(
 
 		const needsScaling = options.video.size !== 'source';
 		try {
-			await updateState(GenerationStep.SCALING_VIDEO);
+			await updateState(VideoGenerationStep.SCALING_VIDEO);
 			if (needsScaling) {
 				await scaleVideo(sourceVideoPath, scaledVideoPath, options.video.size);
 			}
 		} catch (error) {
-			await updateState(GenerationStep.ERROR, {
-				step: GenerationStep.SCALING_VIDEO,
+			await updateState(VideoGenerationStep.ERROR, {
+				step: VideoGenerationStep.SCALING_VIDEO,
 				message: error instanceof Error ? error.message : 'Unknown error',
 			});
 			throw error;
@@ -291,22 +282,22 @@ export async function generateVideo(
 
 		if (options.video.subtitlesEnabled) {
 			console.log('Transcribing source...');
-			await updateState(GenerationStep.TRANSCRIBING);
+			await updateState(VideoGenerationStep.TRANSCRIBING);
 			try {
 				const srtPath = path.join(miscDir, 'subtitles.srt');
 				await generateSubtitles(videoToProcess, srtPath);
 				await addSubtitles(videoToProcess, srtPath, subtitledVideoPath, options.video.subtitlesSize);
 				videoToProcess = subtitledVideoPath;
 			} catch (error) {
-				await updateState(GenerationStep.ERROR, {
-					step: GenerationStep.TRANSCRIBING,
+				await updateState(VideoGenerationStep.ERROR, {
+					step: VideoGenerationStep.TRANSCRIBING,
 					message: error instanceof Error ? error.message : 'Unknown error',
 				});
 				throw error;
 			}
 		}
 
-		await updateState(GenerationStep.PROCESSING_VIDEO);
+		await updateState(VideoGenerationStep.PROCESSING_VIDEO);
 		try {
 			await processVideoWithOverlays(videoToProcess, outputPath, commentaryDir, pauseAudioPath, {
 				bw: options.video.bw,
@@ -315,15 +306,15 @@ export async function generateVideo(
 				subtitlesEnabled: options.video.subtitlesEnabled,
 			});
 		} catch (error) {
-			await updateState(GenerationStep.ERROR, {
-				step: GenerationStep.PROCESSING_VIDEO,
+			await updateState(VideoGenerationStep.ERROR, {
+				step: VideoGenerationStep.PROCESSING_VIDEO,
 				message: error instanceof Error ? error.message : 'Unknown error',
 			});
 			throw error;
 		}
 
 		console.log('Finalizing...');
-		await updateState(GenerationStep.FINALIZING);
+		await updateState(VideoGenerationStep.FINALIZING);
 
 		try {
 			await fs.unlink(sourceVideoPath);
@@ -337,13 +328,13 @@ export async function generateVideo(
 			console.error('Error cleaning up files:', error);
 		}
 
-		await updateState(GenerationStep.COMPLETED);
+		await updateState(VideoGenerationStep.COMPLETED);
 		console.log('Video generation completed successfully');
 	} catch (error) {
 		console.error('Video generation failed:', error);
 		if (error instanceof Error) {
-			await updateState(GenerationStep.ERROR, {
-				step: GenerationStep.PROCESSING_VIDEO,
+			await updateState(VideoGenerationStep.ERROR, {
+				step: VideoGenerationStep.PROCESSING_VIDEO,
 				message: error.message,
 			}).catch(e => {
 				console.error('Failed to update error state:', e);

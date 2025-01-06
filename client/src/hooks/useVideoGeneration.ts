@@ -1,17 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { generateVideo, fetchVideoGenState } from '@/api/apiHelper';
 import type { VideoOptions } from '@shared/types/options';
-import { VideoGenState, GenerationStep } from '@shared/types/api/schema';
+import { VideoGenState, VideoGenerationStep } from '@shared/types/api/schema';
 import type { TimestampText } from '@shared/types/api/schema';
 
 const ACTIVE_STEPS = [
-	GenerationStep.PREPARING,
-	GenerationStep.GENERATING_AUDIO,
-	GenerationStep.DOWNLOADING_VIDEO,
-	GenerationStep.SCALING_VIDEO,
-	GenerationStep.PROCESSING_VIDEO,
-	GenerationStep.TRANSCRIBING,
-	GenerationStep.FINALIZING,
+	VideoGenerationStep.PREPARING,
+	VideoGenerationStep.GENERATING_AUDIO,
+	VideoGenerationStep.DOWNLOADING_VIDEO,
+	VideoGenerationStep.SCALING_VIDEO,
+	VideoGenerationStep.PROCESSING_VIDEO,
+	VideoGenerationStep.TRANSCRIBING,
+	VideoGenerationStep.FINALIZING,
 ];
 
 export function useVideoGeneration(id: string) {
@@ -21,7 +21,7 @@ export function useVideoGeneration(id: string) {
 		queryKey: ['videoGenState', id],
 		queryFn: () => fetchVideoGenState(id),
 		refetchInterval: query => {
-			const currentStep = (query.state.data as VideoGenState | undefined)?.generationState?.currentStep;
+			const currentStep = (query.state.data as VideoGenState | undefined)?.videoGenerationState?.currentStep;
 			return currentStep && ACTIVE_STEPS.includes(currentStep) ? 1000 : false;
 		},
 	});
@@ -35,9 +35,8 @@ export function useVideoGeneration(id: string) {
 
 			queryClient.setQueryData<VideoGenState>(['videoGenState', id], old => ({
 				...(old as VideoGenState),
-				generationState: {
-					currentStep: GenerationStep.PREPARING,
-					progress: { current: 0, total: 100 },
+				videoGenerationState: {
+					currentStep: VideoGenerationStep.PREPARING,
 					completedSteps: [],
 				},
 			}));
@@ -55,7 +54,7 @@ export function useVideoGeneration(id: string) {
 		},
 	});
 
-	const currentStep = genStatus.data?.generationState?.currentStep ?? GenerationStep.IDLE;
+	const currentStep = genStatus.data?.videoGenerationState?.currentStep ?? VideoGenerationStep.IDLE;
 	const isGenerating = ACTIVE_STEPS.includes(currentStep);
 
 	return {

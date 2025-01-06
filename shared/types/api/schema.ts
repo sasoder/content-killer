@@ -6,13 +6,13 @@ export type TimestampText = {
 };
 
 export type VideoMetadata = {
-	url: string;
-	title: string;
-	duration: string;
+	url?: string;
+	title?: string;
+	duration?: number;
 	createdAt: string;
 };
 
-export enum GenerationStep {
+export enum VideoGenerationStep {
 	IDLE = 'IDLE',
 	PREPARING = 'PREPARING',
 	GENERATING_AUDIO = 'GENERATING_AUDIO',
@@ -25,20 +25,43 @@ export enum GenerationStep {
 	ERROR = 'ERROR',
 }
 
-export type GenerationState = {
-	currentStep: GenerationStep;
-	completedSteps: GenerationStep[];
+export enum DescriptionGenerationStep {
+	PREPARING = 'PREPARING',
+	DOWNLOADING = 'DOWNLOADING',
+	UPLOADING = 'UPLOADING',
+	PROCESSING = 'PROCESSING',
+	GENERATING = 'GENERATING',
+	COMPLETED = 'COMPLETED',
+	ERROR = 'ERROR',
+	IDLE = 'IDLE',
+}
+
+export interface VideoGenerationState {
+	currentStep: VideoGenerationStep;
+	completedSteps: VideoGenerationStep[];
+	progress?: number;
 	error?: {
-		step: GenerationStep;
+		step: VideoGenerationStep;
 		message: string;
 	};
-};
+}
+
+export interface DescriptionGenerationState {
+	currentStep: DescriptionGenerationStep;
+	completedSteps: DescriptionGenerationStep[];
+	progress?: number;
+	error?: {
+		step: DescriptionGenerationStep;
+		message: string;
+	};
+}
 
 export type VideoGenState = {
 	id: string;
 	description: TimestampText[];
 	commentary: TimestampText[];
-	generationState: GenerationState;
+	videoGenerationState: VideoGenerationState;
+	descriptionGenerationState: DescriptionGenerationState;
 	options: {
 		description: DescriptionOptions;
 		commentary: CommentaryOptions;

@@ -9,11 +9,19 @@ import { Icons } from '@/components/icons';
 import { useParams } from 'react-router-dom';
 import { HTTPError } from '@/components/HTTPError';
 import { Header } from '@/components/layout/Header';
-import { GenerationStep } from '@shared/types/api/schema';
+import { VideoGenerationStep } from '@shared/types/api/schema';
 
 const GeneratePageContent = () => {
-	const { description, commentary, generationState, updateDescription, updateCommentary, metadata, isLoading, error } =
-		useVideoGen();
+	const {
+		description,
+		commentary,
+		videoGenerationState,
+		updateDescription,
+		updateCommentary,
+		metadata,
+		isLoading,
+		error,
+	} = useVideoGen();
 
 	if (isLoading) {
 		return (
@@ -62,7 +70,7 @@ const GeneratePageContent = () => {
 						</>
 					)}
 
-					{generationState.currentStep !== GenerationStep.IDLE && (
+					{videoGenerationState.currentStep !== VideoGenerationStep.IDLE && (
 						<>
 							<StepTransition data={[]} jsonEditorTitle='' onUpdate={() => {}} />
 

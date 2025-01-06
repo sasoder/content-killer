@@ -1,14 +1,14 @@
-import { CommentaryOptions, DescriptionOptions, VideoOptions } from '.';
+import { DescriptionOptions, CommentaryOptions, VideoOptions } from '.';
 
-export type ProjectTemplate = {
+export interface ProjectTemplate {
 	id: string;
-	name: string;
-	description: string;
+	name?: string;
+	description?: string;
 	createdAt: string;
-	pauseSoundFilename: string;
 	options: {
 		description: DescriptionOptions;
 		commentary: CommentaryOptions;
 		video: VideoOptions;
 	};
-};
+	pauseSoundFilename: string;
+}

@@ -1,4 +1,4 @@
-import { GenerationStep, VideoGenState } from '@shared/types/api/schema';
+import { DescriptionGenerationStep, VideoGenerationStep, VideoGenState } from '@shared/types/api/schema';
 import {
 	defaultDescriptionOptions,
 	defaultCommentaryOptions,
@@ -11,14 +11,17 @@ export const createDefaultVideoGenState = (id: string, projectTemplate?: Project
 		id,
 		description: [],
 		commentary: [],
-		generationState: {
-			currentStep: GenerationStep.IDLE,
+		videoGenerationState: {
+			currentStep: VideoGenerationStep.IDLE,
+			completedSteps: [],
+		},
+		descriptionGenerationState: {
+			currentStep: DescriptionGenerationStep.IDLE,
+			progress: 0,
 			completedSteps: [],
 		},
 		metadata: {
-			url: '',
 			title: 'New Project',
-			duration: '',
 			createdAt: new Date().toISOString(),
 		},
 		options: projectTemplate?.options ?? {

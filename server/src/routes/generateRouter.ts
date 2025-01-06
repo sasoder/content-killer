@@ -1,14 +1,14 @@
 import { Hono } from 'hono';
-import { generateDescription } from '@/lib/generateDescription';
+import { generateDescription, getGenerationProgress } from '@/lib/generateDescription';
 import { generateMetadata } from '@/lib/generateMetadata';
 import { generateCommentary } from '@/lib/generateCommentary';
 import { generateVideo } from '@/lib/generateVideo';
 import { generateAudio } from '@/lib/generateAudio';
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/types/options';
-import { GenerationStep, TimestampText, VideoGenState, VideoMetadata } from '@shared/types/api/schema';
+import { VideoGenerationStep, DescriptionGenerationStep, VideoGenState, VideoMetadata } from '@shared/types/api/schema';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { projectStorage } from '@/db/storage';
+import { projectStorage, updateVideoGenerationState } from '@/db/storage';
 import { generateProjectId } from '@/lib/util';
 import { defaultProjectTemplate } from '@shared/types/options/defaultTemplates';
 
@@ -53,7 +53,20 @@ const generateRouter = new Hono()
 			}
 		}
 
+		// Create project with template first
 		const project = await projectStorage.createProject(id, optionTemplate);
+
+		// Then initialize the generation states
+		project.descriptionGenerationState = {
+			currentStep: DescriptionGenerationStep.IDLE,
+			completedSteps: [],
+		};
+		project.videoGenerationState = {
+			currentStep: VideoGenerationStep.IDLE,
+			completedSteps: [],
+		};
+		await projectStorage.updateProjectState(project);
+
 		return c.json(project, 201);
 	})
 	.post('/projectTemplate', async c => {
@@ -77,31 +90,16 @@ const generateRouter = new Hono()
 			return c.json({ message: 'Failed to create project template' }, 500);
 		}
 	})
-	.post('/description/:id', zValidator('json', DescriptionOptionsSchema), async c => {
-		const { url, options } = c.req.valid('json');
-		if (!url) {
-			return c.json({ error: 'No URL provided' }, 400);
-		}
-		const id = c.req.param('id');
-		const description = await generateDescription(url, options);
-		const project = await projectStorage.getProject(id);
-		if (project) {
-			project.description = description;
-			project.options.description = options;
-			project.metadata = { ...project.metadata, url };
-			await projectStorage.updateProjectState(project);
-		}
-		return c.json(description ?? []);
-	})
 	.post('/metadata/:id', zValidator('json', z.object({ url: z.string() })), async c => {
 		const { url } = c.req.valid('json');
 		const id = c.req.param('id');
 		const project = await projectStorage.getProject(id);
 		if (project) {
 			const metadata: Partial<VideoMetadata> = await generateMetadata(url);
-			project.metadata = { ...project.metadata, ...metadata };
+			const fullMetadata = { ...metadata, url };
+			project.metadata = { ...project.metadata, ...fullMetadata };
 			await projectStorage.updateProjectState(project);
-			return c.json(metadata);
+			return c.json(fullMetadata);
 		}
 		return c.json({ error: 'Project not found' }, 404);
 	})
@@ -128,60 +126,118 @@ const generateRouter = new Hono()
 				return c.json({ error: 'No video URL found' }, 400);
 			}
 
-			project.generationState.completedSteps = [];
 			project.commentary = commentary;
 			project.options.video = options;
-			await updateState(project, GenerationStep.PREPARING);
-			await updateState(project, GenerationStep.GENERATING_AUDIO);
+			await updateVideoGenerationState(project, VideoGenerationStep.PREPARING);
+			await updateVideoGenerationState(project, VideoGenerationStep.GENERATING_AUDIO);
 			// remove existing audio files
 			await projectStorage.deleteProjectCommentary(id);
 			await generateAudio(id, commentary, options.audio);
-			await generateVideo(project, options, (step, error) => updateState(project, step, error));
-			await updateState(project, GenerationStep.COMPLETED);
+			await generateVideo(project, options, (step, error) => updateVideoGenerationState(project, step, error));
+			await updateVideoGenerationState(project, VideoGenerationStep.COMPLETED);
 
 			return c.json({ success: true });
 		} catch (error) {
 			// Update error state
 			const project = await projectStorage.getProject(id);
 			if (project) {
-				project.generationState.currentStep = GenerationStep.ERROR;
-				project.generationState.error = {
-					step: GenerationStep.FINALIZING,
+				await updateVideoGenerationState(project, VideoGenerationStep.ERROR, {
+					step: VideoGenerationStep.FINALIZING,
 					message: error instanceof Error ? error.message : 'Unknown error',
-				};
-				await projectStorage.updateProjectState(project);
+				});
 			}
 			console.error('Error generating video:', error);
 			return c.json({ error: 'Failed to generate video' }, 500);
 		}
-	});
+	})
+	.post('/description/:id/start', zValidator('json', DescriptionOptionsSchema), async c => {
+		const { url, options } = c.req.valid('json');
+		console.log('url', url);
+		const id = c.req.param('id');
 
-const updateState = async (
-	project: VideoGenState,
-	step: GenerationStep,
-	error?: { step: GenerationStep; message: string },
-) => {
-	if (!project) throw new Error('Project not found');
+		try {
+			const project = await projectStorage.getProject(id);
+			if (!project) {
+				return c.json({ error: 'Project not found' }, 404);
+			}
 
-	if (!project.generationState.completedSteps) {
-		project.generationState.completedSteps = [];
-	}
+			// Start the process in the background
+			generateDescription(id, url, options, async (step, progress, error) => {
+				const currentProject = await projectStorage.getProject(id);
+				if (currentProject) {
+					currentProject.descriptionGenerationState = {
+						currentStep: step,
+						completedSteps: [...(currentProject.descriptionGenerationState.completedSteps || [])],
+						progress,
+						...(error && { error }),
+					};
+					await projectStorage.updateProjectState(currentProject);
+				}
+			}).catch(error => {
+				console.error('Error in description generation:', error);
+			});
 
-	if (step === GenerationStep.PREPARING) {
-		project.generationState.completedSteps = [];
-	} else if (!error && step !== GenerationStep.ERROR && project.generationState.currentStep !== GenerationStep.IDLE) {
-		if (!project.generationState.completedSteps.includes(project.generationState.currentStep)) {
-			project.generationState.completedSteps.push(project.generationState.currentStep);
+			return c.json({ message: 'Generation started' });
+		} catch (error) {
+			console.error('Error starting generation:', error);
+			return c.json({ error: 'Failed to start generation' }, 500);
 		}
-	}
+	})
+	.get('/description/:id/status', async c => {
+		const id = c.req.param('id');
 
-	project.generationState = {
-		currentStep: step,
-		completedSteps: project.generationState.completedSteps,
-		...(error && { error }),
-	};
+		// Set up SSE headers
+		c.header('Content-Type', 'text/event-stream');
+		c.header('Cache-Control', 'no-cache');
+		c.header('Connection', 'keep-alive');
 
-	await projectStorage.updateProjectState(project);
-};
+		// Create SSE stream
+		const stream = new ReadableStream({
+			async start(controller) {
+				const sendProgress = () => {
+					const progress = getGenerationProgress(id);
+					console.log('progress', progress);
+					if (!progress) return false;
+
+					const data = JSON.stringify({
+						type: 'progress',
+						...progress,
+					});
+					controller.enqueue(`data: ${data}\n\n`);
+
+					// If we're done or have an error, stop sending updates
+					return (
+						progress.step !== DescriptionGenerationStep.COMPLETED && progress.step !== DescriptionGenerationStep.ERROR
+					);
+				};
+
+				// Send updates every second until complete
+				while (sendProgress()) {
+					await new Promise(resolve => setTimeout(resolve, 1000));
+				}
+
+				// Send final state
+				const finalProgress = getGenerationProgress(id);
+				if (finalProgress?.step === DescriptionGenerationStep.ERROR) {
+					controller.enqueue(
+						`data: ${JSON.stringify({
+							type: 'error',
+							error: finalProgress.error,
+						})}\n\n`,
+					);
+				} else {
+					controller.enqueue(
+						`data: ${JSON.stringify({
+							type: 'complete',
+						})}\n\n`,
+					);
+				}
+
+				controller.close();
+			},
+		});
+
+		return new Response(stream);
+	});
 
 export { generateRouter };

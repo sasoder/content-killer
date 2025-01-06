@@ -23,6 +23,8 @@ const GenerateDescription = () => {
 	const [descriptionOptions, setDescriptionOptions] = useState<DescriptionOptions>(options.description);
 	const { generate, isLoading } = useDescriptionGeneration(id);
 
+	console.log(step, progress);
+
 	useEffect(() => {
 		if (metadata?.url) {
 			setUrl(metadata.url);
@@ -110,7 +112,9 @@ const GenerateDescription = () => {
 					<div className='mt-4'>
 						<Separator />
 						<p className='text-sm text-gray-500'>Title: {metadata.title}</p>
-						<p className='text-sm text-gray-500'>Duration: {metadata.duration}</p>
+						<p className='text-sm text-gray-500'>
+							Length: {Math.floor(metadata.duration / 60)}:{(metadata.duration % 60).toString().padStart(2, '0')}
+						</p>
 					</div>
 				)}
 			</div>

@@ -1,10 +1,4 @@
-import os
-import sys
-import json
-from vertexai.generative_models import GenerativeModel, Part, GenerationConfig
-import vertexai
-
-prompt = f"""Provide a detailed description of the police bodycam video. The description should be comprehensive enough to generate insightful commentary in the style of JCS Criminal Psychology, with a focus on behavioral analysis and psychological insights. 
+export const DESCRIPTION_PROMPT = `Provide a detailed description of the police bodycam video. The description should be comprehensive enough to generate insightful commentary in the style of JCS Criminal Psychology, with a focus on behavioral analysis and psychological insights. 
 
 **Guidelines**:
 - **Pivotal Moments**: Identify a pivotal moment at least every 30-60 seconds, focusing on key interactions between the officers and subjects, changes in the situation, or important/bizarre/absurd statements.
@@ -24,57 +18,9 @@ prompt = f"""Provide a detailed description of the police bodycam video. The des
 - **Never provide timestamps that are not in the video.**
 
 **Format**:
-    {{
+    {
         timestamp: "MM:SS",
-        description: "Description of the event, including exact dialogue and context of behavior"
-    }}
-
-Focus on **behavioral analysis** and **key dialogues**, capturing pivotal moments that reveal the psychology of the suspect or the tactics of the officers.
-"""
-
-def generate_description(url: str, options: dict) -> list:
-    vertexai.init(project=os.getenv("VERTEXAI_PROJECT_ID"))
-    
-    video_file = Part.from_uri(
-        uri=url,
-        mime_type="video/mp4"
-    )
-
-    schema = {
-        "type": "array",
-        "items": {
-            "type": "object",
-            "properties": {
-                "timestamp": {"type": "string"},
-                "text": {"type": "string"}
-            },
-            "required": ["timestamp", "text"]
-        }
+        text: "Description of the event, including exact dialogue and context of behavior"
     }
 
-    model = GenerativeModel("gemini-1.5-flash-002")
-    response = model.generate_content(
-        [video_file, prompt],
-        generation_config=GenerationConfig(
-            response_mime_type="application/json",
-            response_schema=schema
-        )
-    )
-
-    try:
-        result = json.loads(response.text)
-        if not isinstance(result, list):
-            raise ValueError("Expected array response from model")
-        return result
-    except Exception as e:
-        raise ValueError(f"Error processing model response: {str(e)}")
-
-if __name__ == "__main__":
-    try:
-        url = sys.argv[1]
-        options = json.loads(sys.argv[2])
-        result = generate_description(url, options)
-        print(json.dumps(result))
-    except Exception as e:
-        json.dump({"error": str(e)}, sys.stderr)
-        sys.exit(1)
+Focus on **behavioral analysis** and **key dialogues**, capturing pivotal moments that reveal the psychology of the suspect or the tactics of the officers.`;

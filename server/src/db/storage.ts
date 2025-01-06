@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { writeFile, readFile, mkdir } from 'fs/promises';
 import * as fs from 'fs';
 import * as path from 'path';
-import { VideoGenState } from '@shared/types/api/schema';
+import { VideoGenerationStep, DescriptionGenerationStep, VideoGenState } from '@shared/types/api/schema';
 import { createDefaultVideoGenState } from '@/lib/defaultVideoGenState';
 import { ProjectTemplate } from '@shared/types/options/template';
 import { defaultProjectTemplate } from '@shared/types/options/defaultTemplates';
@@ -63,6 +63,7 @@ const db = drizzle(sqlite);
 export class ProjectStorage {
 	async createProject(id: string, projectTemplate?: ProjectTemplate): Promise<VideoGenState> {
 		const defaultState = createDefaultVideoGenState(id, projectTemplate);
+		defaultState.metadata.createdAt = new Date().toISOString();
 
 		await db.insert(projects).values({
 			id,
@@ -238,3 +239,69 @@ export class ProjectStorage {
 }
 
 export const projectStorage = new ProjectStorage();
+
+export const updateVideoGenerationState = async (
+	project: VideoGenState,
+	step: VideoGenerationStep,
+	error?: { step: VideoGenerationStep; message: string },
+) => {
+	if (!project) throw new Error('Project not found');
+
+	if (!project.videoGenerationState.completedSteps) {
+		project.videoGenerationState.completedSteps = [];
+	}
+
+	if (step === VideoGenerationStep.PREPARING) {
+		project.videoGenerationState.completedSteps = [];
+	} else if (
+		!error &&
+		step !== VideoGenerationStep.ERROR &&
+		project.videoGenerationState.currentStep !== VideoGenerationStep.IDLE
+	) {
+		if (!project.videoGenerationState.completedSteps.includes(project.videoGenerationState.currentStep)) {
+			project.videoGenerationState.completedSteps.push(project.videoGenerationState.currentStep);
+		}
+	}
+
+	project.videoGenerationState = {
+		currentStep: step,
+		completedSteps: project.videoGenerationState.completedSteps,
+		...(error && { error }),
+	};
+
+	await projectStorage.updateProjectState(project);
+};
+
+export const updateDescriptionGenerationState = async (
+	project: VideoGenState,
+	step: DescriptionGenerationStep,
+	progress?: number,
+	error?: { step: DescriptionGenerationStep; message: string },
+) => {
+	if (!project) throw new Error('Project not found');
+
+	if (!project.descriptionGenerationState.completedSteps) {
+		project.descriptionGenerationState.completedSteps = [];
+	}
+
+	if (step === DescriptionGenerationStep.PREPARING) {
+		project.descriptionGenerationState.completedSteps = [];
+	} else if (
+		!error &&
+		step !== DescriptionGenerationStep.ERROR &&
+		project.descriptionGenerationState.currentStep !== DescriptionGenerationStep.IDLE
+	) {
+		if (!project.descriptionGenerationState.completedSteps.includes(project.descriptionGenerationState.currentStep)) {
+			project.descriptionGenerationState.completedSteps.push(project.descriptionGenerationState.currentStep);
+		}
+	}
+
+	project.descriptionGenerationState = {
+		currentStep: step,
+		completedSteps: project.descriptionGenerationState.completedSteps,
+		progress,
+		...(error && { error }),
+	};
+
+	await projectStorage.updateProjectState(project);
+};
