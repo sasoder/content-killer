@@ -4,6 +4,12 @@ import type { DescriptionOptions } from '@shared/types/options';
 import { DescriptionGenerationState, DescriptionGenerationStep } from '@shared/types/api/schema';
 import { useEffect, useRef } from 'react';
 
+const inactiveStates = [
+	DescriptionGenerationStep.IDLE,
+	DescriptionGenerationStep.ERROR,
+	DescriptionGenerationStep.COMPLETED,
+];
+
 export function useDescriptionGeneration(id: string) {
 	const queryClient = useQueryClient();
 	const sseRef = useRef<EventSource | null>(null);
@@ -21,11 +27,7 @@ export function useDescriptionGeneration(id: string) {
 
 	// Connect SSE when state is active
 	useEffect(() => {
-		if (
-			state?.currentStep === DescriptionGenerationStep.COMPLETED ||
-			state?.currentStep === DescriptionGenerationStep.ERROR ||
-			state?.currentStep === DescriptionGenerationStep.IDLE
-		) {
+		if (inactiveStates.includes(state?.currentStep ?? DescriptionGenerationStep.IDLE)) {
 			sseRef.current?.close();
 			sseRef.current = null;
 			if (retryTimeoutRef.current) {
@@ -45,7 +47,6 @@ export function useDescriptionGeneration(id: string) {
 
 			sse.onmessage = event => {
 				try {
-					console.log('Received SSE message:', event.data);
 					const data = JSON.parse(event.data);
 					queryClient.setQueryData(['descriptionGeneration', id], (prev: DescriptionGenerationState) => ({
 						...prev,
@@ -60,6 +61,10 @@ export function useDescriptionGeneration(id: string) {
 						data.currentStep === DescriptionGenerationStep.IDLE
 					) {
 						console.log('Closing SSE connection due to final state:', data.currentStep);
+						// Invalidate the project data to trigger a fresh fetch when complete
+						if (data.currentStep === DescriptionGenerationStep.COMPLETED) {
+							queryClient.invalidateQueries({ queryKey: ['videoGenState', id] });
+						}
 						sse.close();
 						sseRef.current = null;
 					}
@@ -128,7 +133,7 @@ export function useDescriptionGeneration(id: string) {
 
 	return {
 		generate: (url: string, options: DescriptionOptions) => mutation.mutate({ url, options }),
-		isLoading: mutation.isPending,
+		isLoading: mutation.isPending || !inactiveStates.includes(state?.currentStep ?? DescriptionGenerationStep.IDLE),
 		state,
 	};
 }

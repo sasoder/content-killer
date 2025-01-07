@@ -75,7 +75,7 @@ export const downloadVideo = async (
 
 			// Check for merger phase
 			if (line.includes('[Merger]')) {
-				if (onProgress) onProgress(95);
+				if (onProgress) onProgress(100);
 				return;
 			}
 

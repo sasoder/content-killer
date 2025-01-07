@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useVideoGen, useIsDescriptionGenerating, useDescriptionGenerationProgress } from '@/context/VideoGenContext';
+import { useVideoGen } from '@/context/VideoGenContext';
 import { validateUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,13 +17,14 @@ import { generateMetadata } from '@/api/apiHelper';
 const GenerateDescription = () => {
 	const { toast } = useToast();
 	const { metadata, id, options, updateMetadata } = useVideoGen();
-	const isGenerating = useIsDescriptionGenerating();
-	const { step, completedSteps, progress, error } = useDescriptionGenerationProgress();
 	const [url, setUrl] = useState<string>(metadata?.url ?? '');
 	const [descriptionOptions, setDescriptionOptions] = useState<DescriptionOptions>(options.description);
-	const { generate, isLoading } = useDescriptionGeneration(id);
+	const { generate, isLoading, state } = useDescriptionGeneration(id);
 
-	console.log(step, progress);
+	const step = state?.currentStep || DescriptionGenerationStep.IDLE;
+	const completedSteps = state?.completedSteps || [];
+	const progress = state?.progress || 0;
+	const error = state?.error;
 
 	useEffect(() => {
 		if (metadata?.url) {
@@ -33,24 +34,29 @@ const GenerateDescription = () => {
 
 	const getStepDetails = (step: DescriptionGenerationStep) => {
 		switch (step) {
+			case DescriptionGenerationStep.PREPARING:
+				return {
+					label: 'Sending generation request',
+					icon: <Icons.loader className='h-4 w-4 animate-spin' />,
+				};
 			case DescriptionGenerationStep.DOWNLOADING:
 				return {
-					label: 'Downloading video...',
+					label: 'Downloading video',
 					icon: <Icons.upload className='h-4 w-4 animate-pulse' />,
 				};
 			case DescriptionGenerationStep.UPLOADING:
 				return {
-					label: 'Uploading video...',
+					label: 'Uploading video to Gemini',
 					icon: <Icons.upload className='h-4 w-4 animate-pulse' />,
 				};
 			case DescriptionGenerationStep.PROCESSING:
 				return {
-					label: 'Processing with Gemini...',
+					label: 'File API processing video',
 					icon: <Icons.bot className='h-4 w-4 animate-pulse' />,
 				};
 			case DescriptionGenerationStep.GENERATING:
 				return {
-					label: 'Generating description...',
+					label: 'Generating description',
 					icon: <Icons.pencil className='h-4 w-4 animate-pulse' />,
 				};
 			default:
@@ -121,37 +127,35 @@ const GenerateDescription = () => {
 
 			<div className='flex justify-center'>
 				<div className='flex flex-grow flex-col gap-4'>
-					{isGenerating && (
-						<div className='w-full space-y-4'>
-							{/* Current step */}
-							<div className='space-y-2'>
-								<div className='flex items-center justify-between text-sm'>
-									<div className='flex items-center gap-2'>
-										{getStepDetails(step).icon}
-										<span className='text-muted-foreground'>{getStepDetails(step).label}</span>
-									</div>
-									{progress != null && <span className='text-muted-foreground'>{Math.round(progress)}%</span>}
-								</div>
-								{progress != null && <Progress value={progress} className='w-full' />}
+					<div className='w-full space-y-4'>
+						{/* Completed steps */}
+						{completedSteps.map((completedStep: DescriptionGenerationStep) => (
+							<div key={completedStep} className='text-muted-foreground flex items-center gap-2 text-sm'>
+								<Icons.checkbox className='h-4 w-4 text-green-500' />
+								<span>{getStepDetails(completedStep).label}</span>
 							</div>
+						))}
 
-							{/* Completed steps */}
-							{completedSteps.map((completedStep: DescriptionGenerationStep) => (
-								<div key={completedStep} className='text-muted-foreground flex items-center gap-2 text-sm'>
-									<Icons.checkbox className='h-4 w-4 text-green-500' />
-									<span>{getStepDetails(completedStep).label}</span>
+						{/* Current step */}
+						<div className='space-y-2'>
+							<div className='flex items-center justify-between text-sm'>
+								<div className='flex items-center gap-2'>
+									{getStepDetails(step).icon}
+									<span className='text-muted-foreground'>{getStepDetails(step).label}</span>
 								</div>
-							))}
-
-							{/* Error state */}
-							{error && (
-								<div className='text-destructive flex items-center gap-2 text-sm'>
-									<Icons.alertTriangle className='h-4 w-4' />
-									<span>{error.message}</span>
-								</div>
-							)}
+								{!!progress && <span className='text-muted-foreground'>{Math.round(progress)}%</span>}
+							</div>
+							{!!progress && <Progress value={progress} className='w-full' />}
 						</div>
-					)}
+
+						{/* Error state */}
+						{error && (
+							<div className='text-destructive flex items-center gap-2 text-sm'>
+								<Icons.alertTriangle className='h-4 w-4' />
+								<span>{error.message}</span>
+							</div>
+						)}
+					</div>
 
 					<StepOptions
 						options={descriptionOptions}
@@ -161,7 +165,7 @@ const GenerateDescription = () => {
 					/>
 
 					<div className='flex justify-center'>
-						<Button type='submit' disabled={isLoading || isGenerating}>
+						<Button type='submit' disabled={isLoading}>
 							{isLoading ? (
 								<>
 									<Icons.loader className='mr-2 h-4 w-4 animate-spin' />

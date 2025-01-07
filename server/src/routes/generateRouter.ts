@@ -8,7 +8,6 @@ import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/typ
 import {
 	VideoGenerationStep,
 	DescriptionGenerationStep,
-	VideoGenState,
 	VideoMetadata,
 	DescriptionGenerationState,
 } from '@shared/types/api/schema';
@@ -183,16 +182,22 @@ const generateRouter = new Hono()
 	.get('/description/:id/status', async c => {
 		const id = c.req.param('id');
 
-		// For regular state checks (polling fallback)
-		if (!c.req.header('Accept')?.includes('text/event-stream')) {
-			const progress = getGenerationProgress(id);
-			return c.json(
-				progress || {
-					currentStep: DescriptionGenerationStep.IDLE,
-					completedSteps: [],
-					progress: 0,
-				},
-			);
+		const progress = getGenerationProgress(id);
+		const currentState = progress || {
+			currentStep: DescriptionGenerationStep.IDLE,
+			completedSteps: [],
+			progress: 0,
+		};
+
+		// For regular state checks or if state is IDLE/ERROR/COMPLETED,
+		// just return current state without streaming
+		if (
+			!c.req.header('Accept')?.includes('text/event-stream') ||
+			currentState.currentStep === DescriptionGenerationStep.IDLE ||
+			currentState.currentStep === DescriptionGenerationStep.ERROR ||
+			currentState.currentStep === DescriptionGenerationStep.COMPLETED
+		) {
+			return c.json(currentState);
 		}
 
 		return streamSSE(
