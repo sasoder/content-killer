@@ -5,12 +5,20 @@ import { generateCommentary } from '@/lib/generateCommentary';
 import { generateVideo } from '@/lib/generateVideo';
 import { generateAudio } from '@/lib/generateAudio';
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/types/options';
-import { VideoGenerationStep, DescriptionGenerationStep, VideoGenState, VideoMetadata } from '@shared/types/api/schema';
+import {
+	VideoGenerationStep,
+	DescriptionGenerationStep,
+	VideoGenState,
+	VideoMetadata,
+	DescriptionGenerationState,
+} from '@shared/types/api/schema';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { projectStorage, updateVideoGenerationState } from '@/db/storage';
 import { generateProjectId } from '@/lib/util';
 import { defaultProjectTemplate } from '@shared/types/options/defaultTemplates';
+import { streamSSE } from 'hono/streaming';
+import type { SSEStreamingApi } from 'hono/streaming';
 
 const DescriptionOptionsSchema = z.object({
 	url: z.string(),
@@ -162,18 +170,7 @@ const generateRouter = new Hono()
 			}
 
 			// Start the process in the background
-			generateDescription(id, url, options, async (step, progress, error) => {
-				const currentProject = await projectStorage.getProject(id);
-				if (currentProject) {
-					currentProject.descriptionGenerationState = {
-						currentStep: step,
-						completedSteps: [...(currentProject.descriptionGenerationState.completedSteps || [])],
-						progress,
-						...(error && { error }),
-					};
-					await projectStorage.updateProjectState(currentProject);
-				}
-			}).catch(error => {
+			generateDescription(id, url, options).catch(error => {
 				console.error('Error in description generation:', error);
 			});
 
@@ -186,58 +183,94 @@ const generateRouter = new Hono()
 	.get('/description/:id/status', async c => {
 		const id = c.req.param('id');
 
-		// Set up SSE headers
-		c.header('Content-Type', 'text/event-stream');
-		c.header('Cache-Control', 'no-cache');
-		c.header('Connection', 'keep-alive');
+		// For regular state checks (polling fallback)
+		if (!c.req.header('Accept')?.includes('text/event-stream')) {
+			const progress = getGenerationProgress(id);
+			return c.json(
+				progress || {
+					currentStep: DescriptionGenerationStep.IDLE,
+					completedSteps: [],
+					progress: 0,
+				},
+			);
+		}
 
-		// Create SSE stream
-		const stream = new ReadableStream({
-			async start(controller) {
-				const sendProgress = () => {
-					const progress = getGenerationProgress(id);
-					console.log('progress', progress);
-					if (!progress) return false;
+		return streamSSE(
+			c,
+			async (stream: SSEStreamingApi) => {
+				let lastState: DescriptionGenerationState | null = null;
+				let retryCount = 0;
+				const MAX_RETRIES = 100; // 10 seconds with 100ms sleep
 
-					const data = JSON.stringify({
-						type: 'progress',
-						...progress,
+				while (retryCount < MAX_RETRIES) {
+					console.log('Getting progress for', id);
+					const state = getGenerationProgress(id);
+
+					if (!state) {
+						await stream.sleep(100);
+						retryCount++;
+						continue;
+					}
+
+					// Reset retry count when we get valid state
+					retryCount = 0;
+
+					// Only send if state changed
+					if (JSON.stringify(state) !== JSON.stringify(lastState)) {
+						console.log('Sending progress for', id, state);
+						await stream.writeSSE({
+							data: JSON.stringify(state),
+							// Remove event type to match client expectation
+							id: `${id}-${Date.now()}`,
+						});
+						lastState = { ...state };
+					}
+
+					// Check if we should stop streaming
+					if (
+						state.currentStep === DescriptionGenerationStep.COMPLETED ||
+						state.currentStep === DescriptionGenerationStep.ERROR ||
+						state.currentStep === DescriptionGenerationStep.IDLE
+					) {
+						// Send final state
+						await stream.writeSSE({
+							data: JSON.stringify(state),
+							id: `${id}-final-${Date.now()}`,
+						});
+						break;
+					}
+
+					await stream.sleep(100);
+				}
+
+				// Handle timeout
+				if (retryCount >= MAX_RETRIES) {
+					await stream.writeSSE({
+						data: JSON.stringify({
+							currentStep: DescriptionGenerationStep.ERROR,
+							error: {
+								step: DescriptionGenerationStep.ERROR,
+								message: 'Generation timed out',
+							},
+						}),
+						id: `${id}-timeout-${Date.now()}`,
 					});
-					controller.enqueue(`data: ${data}\n\n`);
-
-					// If we're done or have an error, stop sending updates
-					return (
-						progress.step !== DescriptionGenerationStep.COMPLETED && progress.step !== DescriptionGenerationStep.ERROR
-					);
-				};
-
-				// Send updates every second until complete
-				while (sendProgress()) {
-					await new Promise(resolve => setTimeout(resolve, 1000));
 				}
-
-				// Send final state
-				const finalProgress = getGenerationProgress(id);
-				if (finalProgress?.step === DescriptionGenerationStep.ERROR) {
-					controller.enqueue(
-						`data: ${JSON.stringify({
-							type: 'error',
-							error: finalProgress.error,
-						})}\n\n`,
-					);
-				} else {
-					controller.enqueue(
-						`data: ${JSON.stringify({
-							type: 'complete',
-						})}\n\n`,
-					);
-				}
-
-				controller.close();
 			},
-		});
-
-		return new Response(stream);
+			async (err: Error, stream: SSEStreamingApi) => {
+				console.error('SSE Stream error:', err);
+				await stream.writeSSE({
+					data: JSON.stringify({
+						currentStep: DescriptionGenerationStep.ERROR,
+						error: {
+							step: DescriptionGenerationStep.ERROR,
+							message: err.message,
+						},
+					}),
+					id: `${id}-error-${Date.now()}`,
+				});
+			},
+		);
 	});
 
 export { generateRouter };
