@@ -236,12 +236,20 @@ export const createProjectWithTemplate = async (templateId: string): Promise<Pro
 	return handleResponse<Project>(response);
 };
 
-export const updateData = async (id: string, data: any): Promise<void> => {
-	const response = await client.update.project[':id'].$put({
+export const updateProjectDescription = async (id: string, description: TimestampText[]): Promise<void> => {
+	const response = await client.update.project[':id'].description.$put({
 		param: { id },
-		json: { data },
+		json: description,
 	});
-	await handleResponse<{ success: true }>(response);
+	return handleResponse<void>(response);
+};
+
+export const updateProjectCommentary = async (id: string, commentary: TimestampText[]): Promise<void> => {
+	const response = await client.update.project[':id'].commentary.$put({
+		param: { id },
+		json: commentary,
+	});
+	return handleResponse<void>(response);
 };
 
 export const downloadFile = async (id: string, type: 'video' | 'audio'): Promise<Blob> => {

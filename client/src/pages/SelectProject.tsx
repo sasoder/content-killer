@@ -36,9 +36,9 @@ const SelectProject = () => {
 		try {
 			if (selectedId === 'new') {
 				const state = await createProjectWithTemplate(selectedTemplateId);
-				navigate(`/generate/${state.id}`);
+				navigate(`/project/${state.id}`);
 			} else {
-				navigate(`/generate/${selectedId}`);
+				navigate(`/project/${selectedId}`);
 			}
 		} catch (error) {
 			console.error('Error:', error);

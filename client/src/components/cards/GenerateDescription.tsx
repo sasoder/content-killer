@@ -9,10 +9,8 @@ import { Progress } from '@/components/ui/progress';
 import StepOptions from '@/components/cards/StepOptions';
 import { descriptionOptionDefinitions } from '@/lib/options/optionDefinitions';
 import { Icons } from '@/components/icons';
-import { DescriptionOptions } from '@shared/types/options';
 import { useDescriptionGeneration } from '@/hooks/useDescriptionGeneration';
 import { DescriptionGenerationStep } from '@shared/types/api/schema';
-import { generateMetadata } from '@/api/honoClient';
 
 const GenerateDescription = () => {
 	const { toast } = useToast();
@@ -78,8 +76,7 @@ const GenerateDescription = () => {
 
 		try {
 			// First update metadata so we have the video info
-			const metadata = await generateMetadata(id, url);
-			updateMetadata(metadata);
+			updateMetadata(url);
 
 			// Then start the description generation
 			generate(url, descriptionOptions, {

@@ -1,8 +1,8 @@
 import { createContext, useContext } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { TimestampText, Metadata, Project } from '@shared/types/api/schema';
 import type { CommentaryOptions, DescriptionOptions, VideoOptions } from '@shared/types/options';
-import { fetchProject } from '@/api/honoClient';
+import { fetchProject, updateProjectDescription, updateProjectCommentary, generateMetadata } from '@/api/honoClient';
 
 interface ProjectContext {
 	id: string;
@@ -18,7 +18,7 @@ interface ProjectContext {
 	error: Error | null;
 	updateDescription: (description: TimestampText[]) => void;
 	updateCommentary: (commentary: TimestampText[]) => void;
-	updateMetadata: (metadata: Metadata) => void;
+	updateMetadata: (url: string) => void;
 	updateDescriptionOptions: (options: DescriptionOptions) => void;
 	updateCommentaryOptions: (options: CommentaryOptions) => void;
 	updateVideoOptions: (options: VideoOptions) => void;
@@ -36,6 +36,27 @@ export function ProjectProvider({ id, children }: { id: string; children: React.
 		queryFn: () => fetchProject(id),
 	});
 
+	const descriptionMutation = useMutation({
+		mutationFn: (description: TimestampText[]) => updateProjectDescription(id, description),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['project', id] });
+		},
+	});
+
+	const commentaryMutation = useMutation({
+		mutationFn: (commentary: TimestampText[]) => updateProjectCommentary(id, commentary),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['project', id] });
+		},
+	});
+
+	const metadataMutation = useMutation({
+		mutationFn: (url: string) => generateMetadata(id, url),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['project', id] });
+		},
+	});
+
 	const value: ProjectContext = {
 		id,
 		description: project?.description ?? [],
@@ -49,22 +70,13 @@ export function ProjectProvider({ id, children }: { id: string; children: React.
 		isLoading,
 		error,
 		updateDescription: (description: TimestampText[]) => {
-			queryClient.setQueryData(['project', id], (old: any) => ({
-				...old,
-				description,
-			}));
+			descriptionMutation.mutate(description);
 		},
 		updateCommentary: (commentary: TimestampText[]) => {
-			queryClient.setQueryData(['project', id], (old: any) => ({
-				...old,
-				commentary,
-			}));
+			commentaryMutation.mutate(commentary);
 		},
-		updateMetadata: (metadata: Metadata) => {
-			queryClient.setQueryData(['project', id], (old: any) => ({
-				...old,
-				metadata,
-			}));
+		updateMetadata: (url: string) => {
+			metadataMutation.mutate(url);
 		},
 		updateDescriptionOptions: (options: DescriptionOptions) => {
 			queryClient.setQueryData(['project', id], (old: any) => ({

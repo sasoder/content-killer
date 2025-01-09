@@ -26,7 +26,7 @@ const GenerateCommentary = () => {
 
 		try {
 			generate(
-				{ description, options: commentaryOptions },
+				{ options: commentaryOptions },
 				{
 					onSuccess: () => {
 						toast({

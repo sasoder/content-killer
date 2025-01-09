@@ -2,10 +2,10 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import App from '@/App.tsx';
-import Generate from '@/pages/Generate.tsx';
-import Create from '@/pages/Create';
-import Templates from '@/pages/Templates';
+import App from '@/App';
+import ProjectPage from '@/pages/Project';
+import TemplatePage from '@/pages/Templates';
+import SelectProjectPage from '@/pages/SelectProject';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import '@fontsource/nunito';
@@ -27,16 +27,16 @@ const router = createBrowserRouter([
 		element: <App />,
 	},
 	{
-		path: '/generate/:id',
-		element: <Generate />,
+		path: '/project/:id',
+		element: <ProjectPage />,
 	},
 	{
 		path: '/create',
-		element: <Create />,
+		element: <SelectProjectPage />,
 	},
 	{
 		path: '/templates',
-		element: <Templates />,
+		element: <TemplatePage />,
 	},
 	{
 		path: '*',

@@ -12,7 +12,7 @@ import { Header } from '@/components/layout/Header';
 import { useVideoGeneration } from '@/hooks/useVideoGeneration';
 import { VideoGenerationStep } from '@shared/types/api/schema';
 
-const GeneratePageContent = () => {
+const ProjectPageContent = () => {
 	const { description, commentary, updateDescription, updateCommentary, metadata, isLoading, error, id } = useProject();
 	const { state } = useVideoGeneration(id);
 
@@ -88,12 +88,12 @@ const GeneratePageContent = () => {
 	);
 };
 
-export default function GeneratePage() {
+export default function ProjectPage() {
 	const { id } = useParams();
 
 	return (
 		<ProjectProvider id={id as string}>
-			<GeneratePageContent />
+			<ProjectPageContent />
 		</ProjectProvider>
 	);
 }
