@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { createProjectWithTemplate, fetchAllVideoGenStates, fetchProjectTemplates } from '@/api/apiHelper';
+import { createProjectWithTemplate, fetchVideoGenStates, fetchProjectTemplates } from '@/api/honoClient';
 import { Header } from '@/components/layout/Header';
 import { formatDate } from '@/lib/utils';
 import { Icons } from '@/components/icons';
@@ -13,7 +13,7 @@ const SelectProject = () => {
 	const navigate = useNavigate();
 	const { data: videoGenStates, isLoading: isLoadingStates } = useQuery({
 		queryKey: ['videoGenStates'],
-		queryFn: fetchAllVideoGenStates,
+		queryFn: fetchVideoGenStates,
 	});
 
 	const { data: templates = [], isLoading: isLoadingTemplates } = useQuery({

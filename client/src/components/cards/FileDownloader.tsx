@@ -5,7 +5,7 @@ import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { VideoGenerationStep } from '@shared/types/api/schema';
 import { Separator } from '@/components/ui/separator';
-import { downloadFile } from '@/api/apiHelper';
+import { downloadFile } from '@/api/honoClient';
 import { toast } from '@/hooks/use-toast';
 
 const GENERATION_STEPS = [

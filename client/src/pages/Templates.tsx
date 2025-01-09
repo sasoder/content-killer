@@ -8,7 +8,7 @@ import {
 	updateProjectTemplate,
 	deleteProjectTemplate,
 	uploadPauseSound,
-} from '@/api/apiHelper';
+} from '@/api/honoClient';
 import { ProjectTemplate } from '@shared/types/options/template';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/layout/Header';
@@ -18,40 +18,28 @@ export default function TemplatesPage() {
 	const { toast } = useToast();
 	const [templates, setTemplates] = useState<ProjectTemplate[]>([]);
 	const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate | null>(null);
-	const [originalTemplate, setOriginalTemplate] = useState<ProjectTemplate | null>(null);
-	const [isLoading, setIsLoading] = useState(false);
-	const [pauseSoundFile, setPauseSoundFile] = useState<File | null>(null);
-
-	useEffect(() => {
-		loadTemplates();
-	}, []);
+	const [loading, setLoading] = useState(false);
 
 	const handleTemplateSelect = (template: ProjectTemplate) => {
 		setSelectedTemplate(template);
-		setOriginalTemplate(template);
-		setPauseSoundFile(null);
 	};
 
 	const hasChanges = () => {
-		if (!selectedTemplate || !originalTemplate) return false;
-		if (pauseSoundFile) return true;
-
-		return (
-			selectedTemplate.name !== originalTemplate.name ||
-			selectedTemplate.description !== originalTemplate.description ||
-			JSON.stringify(selectedTemplate.options) !== JSON.stringify(originalTemplate.options)
-		);
+		if (!selectedTemplate) return false;
+		const original = templates.find(t => t.id === selectedTemplate.id);
+		if (!original) return true;
+		return JSON.stringify(original) !== JSON.stringify(selectedTemplate);
 	};
 
 	const loadTemplates = async () => {
 		try {
-			const fetchedTemplates = await fetchProjectTemplates();
-			setTemplates(fetchedTemplates);
+			const data = await fetchProjectTemplates();
+			setTemplates(data);
 		} catch (error) {
-			console.error('Error loading templates:', error);
+			console.error('Failed to load templates:', error);
 			toast({
 				title: 'Error',
-				description: 'Failed to load project templates',
+				description: 'Failed to load templates',
 				variant: 'destructive',
 			});
 		}
@@ -60,10 +48,10 @@ export default function TemplatesPage() {
 	const handleCreateNew = async () => {
 		try {
 			const newTemplate = await createProjectTemplate();
-			setTemplates([newTemplate, ...templates]);
-			handleTemplateSelect(newTemplate);
+			setTemplates(prev => [...prev, newTemplate]);
+			setSelectedTemplate(newTemplate);
 		} catch (error) {
-			console.error('Error creating template:', error);
+			console.error('Failed to create template:', error);
 			toast({
 				title: 'Error',
 				description: 'Failed to create template',
@@ -76,43 +64,41 @@ export default function TemplatesPage() {
 		if (!selectedTemplate) return;
 
 		try {
-			setIsLoading(true);
-			let updatedTemplate = { ...selectedTemplate };
+			setLoading(true);
+			let updatedTemplate = await updateProjectTemplate(selectedTemplate);
 
-			if (pauseSoundFile) {
-				const response = await uploadPauseSound(selectedTemplate.id, pauseSoundFile);
+			const pauseSound = (selectedTemplate as any).pauseSound;
+			if (pauseSound instanceof File) {
+				const { filename } = await uploadPauseSound(selectedTemplate.id, pauseSound);
 				updatedTemplate = {
 					...updatedTemplate,
-					pauseSoundFilename: response.filename,
+					pauseSoundFilename: filename,
 				};
 			}
 
-			const savedTemplate = await updateProjectTemplate(updatedTemplate);
-			setTemplates(templates.map(t => (t.id === savedTemplate.id ? savedTemplate : t)));
-			setSelectedTemplate(savedTemplate);
-			setOriginalTemplate(savedTemplate);
-			setPauseSoundFile(null);
+			setTemplates(prev => prev.map(t => (t.id === updatedTemplate.id ? updatedTemplate : t)));
+			setSelectedTemplate(updatedTemplate);
 
 			toast({
 				title: 'Success',
 				description: 'Template saved successfully',
 			});
 		} catch (error) {
-			console.error('Error saving template:', error);
+			console.error('Failed to save template:', error);
 			toast({
 				title: 'Error',
 				description: 'Failed to save template',
 				variant: 'destructive',
 			});
 		} finally {
-			setIsLoading(false);
+			setLoading(false);
 		}
 	};
 
 	const handleDelete = async (id: string) => {
 		try {
 			await deleteProjectTemplate(id);
-			setTemplates(templates.filter(t => t.id !== id));
+			setTemplates(prev => prev.filter(t => t.id !== id));
 			if (selectedTemplate?.id === id) {
 				setSelectedTemplate(null);
 			}
@@ -121,7 +107,7 @@ export default function TemplatesPage() {
 				description: 'Template deleted successfully',
 			});
 		} catch (error) {
-			console.error('Error deleting template:', error);
+			console.error('Failed to delete template:', error);
 			toast({
 				title: 'Error',
 				description: 'Failed to delete template',
@@ -129,6 +115,10 @@ export default function TemplatesPage() {
 			});
 		}
 	};
+
+	useEffect(() => {
+		loadTemplates();
+	}, []);
 
 	return (
 		<div className='bg-background min-h-screen'>
@@ -195,13 +185,20 @@ export default function TemplatesPage() {
 										<TemplateCard
 											template={selectedTemplate}
 											onChange={setSelectedTemplate}
-											onPauseSoundSelect={setPauseSoundFile}
+											onPauseSoundSelect={(file: File) => {
+												if (selectedTemplate) {
+													setSelectedTemplate({
+														...selectedTemplate,
+														pauseSound: file,
+													} as ProjectTemplate);
+												}
+											}}
 										/>
 
 										{/* Save Button */}
 										<div className='flex justify-end pt-4'>
-											<Button onClick={handleSave} disabled={isLoading || !hasChanges()} className='shadow-sm'>
-												{isLoading ? (
+											<Button onClick={handleSave} disabled={loading || !hasChanges()} className='shadow-sm'>
+												{loading ? (
 													<>
 														<Icons.loader className='mr-2 h-4 w-4 animate-spin' />
 														Saving...

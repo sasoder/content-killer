@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { useQuery } from '@tanstack/react-query';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Icons } from '@/components/icons';
-import { fetchVoices } from '@/api/apiHelper';
+import { fetchVoices } from '@/api/honoClient';
 import { Voice } from '@shared/types/options';
 
 interface VoiceSelectorProps {

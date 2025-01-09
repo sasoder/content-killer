@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { generateCommentary } from '@/api/apiHelper';
+import { generateCommentary } from '@/api/honoClient';
 import type { CommentaryOptions } from '@shared/types/options';
 import type { TimestampText } from '@shared/types/api/schema';
 

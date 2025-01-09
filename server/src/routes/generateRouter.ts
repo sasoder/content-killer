@@ -18,35 +18,13 @@ import { generateProjectId } from '@/lib/util';
 import { defaultProjectTemplate } from '@shared/types/options/defaultTemplates';
 import { streamSSE } from 'hono/streaming';
 import type { SSEStreamingApi } from 'hono/streaming';
-
-const DescriptionOptionsSchema = z.object({
-	url: z.string(),
-	options: z.custom<DescriptionOptions>(),
-});
-
-const CommentaryOptionsSchema = z.object({
-	description: z.array(
-		z.object({
-			timestamp: z.string(),
-			text: z.string(),
-		}),
-	),
-	options: z.custom<CommentaryOptions>(),
-});
-
-const VideoOptionsSchema = z.object({
-	commentary: z.array(
-		z.object({
-			timestamp: z.string(),
-			text: z.string(),
-		}),
-	),
-	options: z.custom<VideoOptions>(),
-});
-
-const ProjectOptionsSchema = z.object({
-	templateId: z.string().optional(),
-});
+import {
+	ProjectOptionsSchema,
+	TimestampTextSchema,
+	DescriptionOptionsSchema,
+	CommentaryOptionsSchema,
+	VideoOptionsSchema,
+} from '@/lib/serverSchema';
 
 const generateRouter = new Hono()
 	.post('/project', zValidator('json', ProjectOptionsSchema), async c => {

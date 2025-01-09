@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
 import { projectStorage } from '@/db/storage';
-import { Voice } from '@shared/types/options';
 import { ElevenLabsClient } from 'elevenlabs';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -68,8 +67,8 @@ const fetchRouter = new Hono()
 				return c.json({ error: 'Project not found' }, 404);
 			}
 
-			const sanitizedTitle = project.metadata.title
-				.replace(/[^a-zA-Z0-9\s-]/g, '')
+			const sanitizedTitle = project.metadata?.title
+				?.replace(/[^a-zA-Z0-9\s-]/g, '')
 				.replace(/\s+/g, '-')
 				.toLowerCase();
 

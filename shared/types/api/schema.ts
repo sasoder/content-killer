@@ -1,5 +1,11 @@
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from '../options';
 
+export type Voice = {
+	id: string;
+	name: string;
+	previewUrl?: string;
+};
+
 export type TimestampText = {
 	timestamp: string;
 	text: string;

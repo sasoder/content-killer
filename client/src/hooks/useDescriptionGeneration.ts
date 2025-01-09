@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { startDescriptionGeneration } from '@/api/apiHelper';
+import { startDescriptionGeneration, createSSEConnection, client } from '@/api/honoClient';
 import type { DescriptionOptions } from '@shared/types/options';
 import { DescriptionGenerationState, DescriptionGenerationStep } from '@shared/types/api/schema';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
 const inactiveStates = [
 	DescriptionGenerationStep.IDLE,
@@ -12,15 +12,13 @@ const inactiveStates = [
 
 export function useDescriptionGeneration(id: string) {
 	const queryClient = useQueryClient();
-	const sseRef = useRef<EventSource | null>(null);
-	const retryTimeoutRef = useRef<NodeJS.Timeout>();
 
-	// Query for initial state
+	// Query for initial state and SSE updates
 	const { data: state } = useQuery({
 		queryKey: ['descriptionGeneration', id],
 		queryFn: async () => {
-			const res = await fetch(`${import.meta.env.VITE_APP_API_BASE}/generate/description/${id}/status`);
-			return res.json() as Promise<DescriptionGenerationState>;
+			const response = await client.generate.description[':id'].status.$get({ param: { id } });
+			return response.json() as Promise<DescriptionGenerationState>;
 		},
 		staleTime: 30000,
 	});
@@ -28,79 +26,36 @@ export function useDescriptionGeneration(id: string) {
 	// Connect SSE when state is active
 	useEffect(() => {
 		if (inactiveStates.includes(state?.currentStep ?? DescriptionGenerationStep.IDLE)) {
-			sseRef.current?.close();
-			sseRef.current = null;
-			if (retryTimeoutRef.current) {
-				clearTimeout(retryTimeoutRef.current);
-			}
 			return;
 		}
 
-		const connectSSE = () => {
-			if (sseRef.current) return;
+		const connection = createSSEConnection(`${import.meta.env.VITE_APP_API_BASE}/generate/description/${id}/status`, {
+			onMessage: data => {
+				queryClient.setQueryData(['descriptionGeneration', id], (prev: DescriptionGenerationState) => ({
+					...prev,
+					...data,
+					progress: data.progress > (prev?.progress ?? 0) ? data.progress : (prev?.progress ?? 0),
+				}));
 
-			const sse = new EventSource(`${import.meta.env.VITE_APP_API_BASE}/generate/description/${id}/status`, {
-				withCredentials: true,
-			});
-
-			sseRef.current = sse;
-
-			sse.onmessage = event => {
-				try {
-					const data = JSON.parse(event.data);
-					queryClient.setQueryData(['descriptionGeneration', id], (prev: DescriptionGenerationState) => ({
-						...prev,
-						...data,
-						progress: prev ? Math.max(prev.progress ?? 0, data.progress ?? 0) : (data.progress ?? 0),
-					}));
-
-					// Add explicit handling for connection close
-					if (
-						data.currentStep === DescriptionGenerationStep.COMPLETED ||
-						data.currentStep === DescriptionGenerationStep.ERROR ||
-						data.currentStep === DescriptionGenerationStep.IDLE
-					) {
-						console.log('Closing SSE connection due to final state:', data.currentStep);
-						// Invalidate the project data to trigger a fresh fetch when complete
-						if (data.currentStep === DescriptionGenerationStep.COMPLETED) {
-							queryClient.invalidateQueries({ queryKey: ['videoGenState', id] });
-						}
-						sse.close();
-						sseRef.current = null;
-					}
-				} catch (error) {
-					console.error('Error processing SSE message:', error);
-					sse.close();
-					sseRef.current = null;
+				// Invalidate the project data when complete
+				if (data.currentStep === DescriptionGenerationStep.COMPLETED) {
+					queryClient.invalidateQueries({ queryKey: ['videoGenState', id] });
 				}
-			};
+			},
+			onError: () => {
+				queryClient.setQueryData(['descriptionGeneration', id], (prev: DescriptionGenerationState) => ({
+					...prev,
+					currentStep: DescriptionGenerationStep.ERROR,
+					error: {
+						step: prev?.currentStep ?? DescriptionGenerationStep.ERROR,
+						message: 'Connection failed',
+					},
+				}));
+			},
+			maxRetries: -1, // Unlimited retries for active states
+		});
 
-			// Add onopen handler
-			sse.onopen = () => {
-				console.log('SSE connection opened');
-			};
-
-			sse.onerror = () => {
-				sse.close();
-				sseRef.current = null;
-
-				// Retry connection after delay if still in active state
-				if (retryTimeoutRef.current) {
-					clearTimeout(retryTimeoutRef.current);
-				}
-				retryTimeoutRef.current = setTimeout(connectSSE, 1000);
-			};
-		};
-
-		connectSSE();
-
-		return () => {
-			if (retryTimeoutRef.current) {
-				clearTimeout(retryTimeoutRef.current);
-			}
-			sseRef.current?.close();
-			sseRef.current = null;
-		};
+		return () => connection.close();
 	}, [id, queryClient, state?.currentStep]);
 
 	// Start generation mutation
@@ -115,14 +70,14 @@ export function useDescriptionGeneration(id: string) {
 			queryClient.setQueryData(['descriptionGeneration', id], {
 				currentStep: DescriptionGenerationStep.PREPARING,
 				completedSteps: [],
-				progress: 0,
+				progress: undefined,
 			});
 		},
 		onError: error => {
 			queryClient.setQueryData(['descriptionGeneration', id], {
 				currentStep: DescriptionGenerationStep.ERROR,
 				completedSteps: [],
-				progress: 0,
+				progress: undefined,
 				error: {
 					step: 'PREPARING',
 					message: error instanceof Error ? error.message : 'Failed to start generation',

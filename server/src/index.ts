@@ -30,4 +30,5 @@ const initServer = async () => {
 
 initServer();
 
+export type AppType = RouterType;
 export default app;

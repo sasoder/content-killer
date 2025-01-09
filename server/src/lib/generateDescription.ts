@@ -5,7 +5,7 @@ import { GoogleAIFileManager, FileState } from '@google/generative-ai/server';
 import { downloadVideo } from './downloadVideo';
 import { projectStorage } from '@/db/storage';
 import { DESCRIPTION_PROMPT } from './prompts';
-import { timestampTextSchema } from './aiSchema';
+import { timestampTextSchema } from './serverSchema';
 
 const fileManager = new GoogleAIFileManager(process.env.GOOGLE_API_KEY!);
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
@@ -16,7 +16,7 @@ export function updateProgress(id: string, update: Partial<DescriptionGeneration
 	const current = progressMap.get(id) || {
 		currentStep: DescriptionGenerationStep.IDLE,
 		completedSteps: [],
-		progress: 0,
+		progress: undefined,
 	};
 
 	const newState = {
@@ -51,7 +51,7 @@ export async function generateDescription(id: string, url: string, options: Desc
 		resetProgress(id);
 		updateProgress(id, {
 			currentStep: DescriptionGenerationStep.PREPARING,
-			progress: 0,
+			progress: undefined,
 		});
 
 		updateProgress(id, {
@@ -65,13 +65,10 @@ export async function generateDescription(id: string, url: string, options: Desc
 
 		console.log('Video downloaded and saved to', videoPath);
 
-		updateProgress(id, {
-			currentStep: DescriptionGenerationStep.UPLOADING,
-			progress: 0,
-		});
 		// Upload to Gemini File API
 		updateProgress(id, {
 			currentStep: DescriptionGenerationStep.UPLOADING,
+			progress: undefined,
 		});
 		const uploadResponse = await fileManager.uploadFile(videoPath, {
 			mimeType: 'video/mp4',
@@ -83,6 +80,7 @@ export async function generateDescription(id: string, url: string, options: Desc
 		// Wait for processing
 		updateProgress(id, {
 			currentStep: DescriptionGenerationStep.PROCESSING,
+			progress: undefined,
 		});
 		let file = await fileManager.getFile(uploadResponse.file.name);
 		while (file.state === FileState.PROCESSING) {
@@ -97,6 +95,7 @@ export async function generateDescription(id: string, url: string, options: Desc
 		// Generate description
 		updateProgress(id, {
 			currentStep: DescriptionGenerationStep.GENERATING,
+			progress: undefined,
 		});
 		const model = genAI.getGenerativeModel({
 			model: 'gemini-1.5-pro',
@@ -112,7 +111,6 @@ export async function generateDescription(id: string, url: string, options: Desc
 			{ text: DESCRIPTION_PROMPT },
 		]);
 
-		console.log('Result', result);
 		const description = JSON.parse(result.response.text());
 
 		// Update project state
@@ -131,7 +129,7 @@ export async function generateDescription(id: string, url: string, options: Desc
 		const errorMsg = error instanceof Error ? error.message : 'Unknown error';
 		updateProgress(id, {
 			currentStep: DescriptionGenerationStep.ERROR,
-			progress: 0,
+			progress: undefined,
 			error: {
 				step: DescriptionGenerationStep.ERROR,
 				message: errorMsg,

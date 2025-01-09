@@ -12,7 +12,7 @@ import { Icons } from '@/components/icons';
 import { DescriptionOptions } from '@shared/types/options';
 import { useDescriptionGeneration } from '@/hooks/useDescriptionGeneration';
 import { DescriptionGenerationStep } from '@shared/types/api/schema';
-import { generateMetadata } from '@/api/apiHelper';
+import { generateMetadata } from '@/api/honoClient';
 
 const GenerateDescription = () => {
 	const { toast } = useToast();
@@ -23,7 +23,7 @@ const GenerateDescription = () => {
 
 	const step = state?.currentStep || DescriptionGenerationStep.IDLE;
 	const completedSteps = state?.completedSteps || [];
-	const progress = state?.progress || 0;
+	const progress = state?.progress;
 	const error = state?.error;
 
 	useEffect(() => {
@@ -99,7 +99,7 @@ const GenerateDescription = () => {
 
 	return (
 		<form onSubmit={handleSubmit} className='flex h-full flex-col'>
-			<div className='flex-grow'>
+			<div className='flex-grow pb-2'>
 				<label htmlFor='url' className='text-muted-foreground block text-sm font-medium'>
 					YouTube URL
 				</label>
@@ -127,7 +127,7 @@ const GenerateDescription = () => {
 
 			<div className='flex justify-center'>
 				<div className='flex flex-grow flex-col gap-4'>
-					<div className='w-full space-y-4'>
+					<div className='flex w-full flex-col gap-2'>
 						{/* Completed steps */}
 						{completedSteps.map((completedStep: DescriptionGenerationStep) => (
 							<div key={completedStep} className='text-muted-foreground flex items-center gap-2 text-sm'>
@@ -143,9 +143,13 @@ const GenerateDescription = () => {
 									{getStepDetails(step).icon}
 									<span className='text-muted-foreground'>{getStepDetails(step).label}</span>
 								</div>
-								{!!progress && <span className='text-muted-foreground'>{Math.round(progress)}%</span>}
+								{step === DescriptionGenerationStep.DOWNLOADING && progress !== undefined && (
+									<span className='text-muted-foreground'>{Math.round(progress)}%</span>
+								)}
 							</div>
-							{!!progress && <Progress value={progress} className='w-full' />}
+							{step === DescriptionGenerationStep.DOWNLOADING && progress !== undefined && (
+								<Progress value={progress} className='w-full' />
+							)}
 						</div>
 
 						{/* Error state */}

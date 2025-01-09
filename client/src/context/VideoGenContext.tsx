@@ -8,7 +8,7 @@ import {
 } from '@shared/types/api/schema';
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/types/options';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchVideoGenState } from '@/api/apiHelper';
+import { fetchVideoGenState } from '@/api/honoClient';
 
 interface VideoGenStateContext {
 	id: string;
@@ -52,8 +52,6 @@ export const VideoGenProvider = ({ children, id }: { children: ReactNode; id: st
 		queryKey: ['videoGenState', id],
 		queryFn: () => fetchVideoGenState(id),
 	});
-
-	console.log(data?.descriptionGenerationState);
 
 	const value: VideoGenStateContext = {
 		id,

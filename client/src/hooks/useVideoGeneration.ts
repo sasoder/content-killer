@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { generateVideo, fetchVideoGenState } from '@/api/apiHelper';
+import { generateVideo, fetchVideoGenState } from '@/api/honoClient';
 import type { VideoOptions } from '@shared/types/options';
 import { VideoGenState, VideoGenerationStep } from '@shared/types/api/schema';
 import type { TimestampText } from '@shared/types/api/schema';
