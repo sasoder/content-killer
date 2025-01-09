@@ -165,15 +165,12 @@ const generateRouter = new Hono()
 			progress: undefined,
 		};
 
-		// For regular state checks or if state is IDLE/ERROR/COMPLETED,
-		// just return current state without streaming
+		// only use SSE for downloading
 		if (
 			!c.req.header('Accept')?.includes('text/event-stream') ||
-			currentState.currentStep === DescriptionGenerationStep.IDLE ||
-			currentState.currentStep === DescriptionGenerationStep.ERROR ||
-			currentState.currentStep === DescriptionGenerationStep.COMPLETED
+			currentState.currentStep !== DescriptionGenerationStep.DOWNLOADING
 		) {
-			return c.json(currentState);
+			return c.json(currentState, 200);
 		}
 
 		return streamSSE(
@@ -193,27 +190,28 @@ const generateRouter = new Hono()
 						continue;
 					}
 
-					// Reset retry count when we get valid state
+					// reset retry count when we get valid state
 					retryCount = 0;
 
-					// Only send if state changed
+					// only send if state changed
 					if (JSON.stringify(state) !== JSON.stringify(lastState)) {
 						console.log('Sending progress for', id, state);
 						await stream.writeSSE({
 							data: JSON.stringify(state),
-							// Remove event type to match client expectation
+							// remove event type to match client expectation
 							id: `${id}-${Date.now()}`,
 						});
 						lastState = { ...state };
 					}
 
-					// Check if we should stop streaming
+					// check if we should stop streaming
 					if (
 						state.currentStep === DescriptionGenerationStep.COMPLETED ||
 						state.currentStep === DescriptionGenerationStep.ERROR ||
-						state.currentStep === DescriptionGenerationStep.IDLE
+						state.currentStep === DescriptionGenerationStep.IDLE ||
+						state.currentStep === DescriptionGenerationStep.UPLOADING
 					) {
-						// Send final state
+						// send final state
 						await stream.writeSSE({
 							data: JSON.stringify(state),
 							id: `${id}-final-${Date.now()}`,
@@ -224,7 +222,7 @@ const generateRouter = new Hono()
 					await stream.sleep(100);
 				}
 
-				// Handle timeout
+				// handle timeout
 				if (retryCount >= MAX_RETRIES) {
 					await stream.writeSSE({
 						data: JSON.stringify({

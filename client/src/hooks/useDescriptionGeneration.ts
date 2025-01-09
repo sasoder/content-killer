@@ -1,5 +1,5 @@
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { startDescriptionGeneration, createSSEConnection, client } from '@/api/honoClient';
+import { useMutation, useQueryClient, useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { startDescriptionGeneration, createSSEConnection, getDescriptionGenerationStatus } from '@/api/honoClient';
 import type { DescriptionOptions } from '@shared/types/options';
 import { DescriptionGenerationState, DescriptionGenerationStep } from '@shared/types/api/schema';
 import { useEffect } from 'react';
@@ -13,19 +13,36 @@ const inactiveStates = [
 export function useDescriptionGeneration(id: string) {
 	const queryClient = useQueryClient();
 
-	// Query for initial state and SSE updates
-	const { data: state } = useQuery({
+	// query for initial state and polling updates
+	const { data: state } = useQuery<DescriptionGenerationState, Error>({
 		queryKey: ['descriptionGeneration', id],
 		queryFn: async () => {
-			const response = await client.generate.description[':id'].status.$get({ param: { id } });
-			return response.json() as Promise<DescriptionGenerationState>;
+			const response = await getDescriptionGenerationStatus(id);
+			return response;
 		},
-		staleTime: 30000,
-	});
+		// poll for all states after downloading until we reach an inactive state
+		refetchInterval: query => {
+			const currentState = query.state.data as DescriptionGenerationState | undefined;
+			if (!currentState || inactiveStates.includes(currentState.currentStep)) return false;
+			if (currentState.currentStep === DescriptionGenerationStep.DOWNLOADING) return false;
 
-	// Connect SSE when state is active
+			return 1000;
+		},
+
+		refetchOnMount: false,
+		refetchOnWindowFocus: false,
+		staleTime: Infinity,
+		select: (data: DescriptionGenerationState) => {
+			if (data.currentStep === DescriptionGenerationStep.COMPLETED) {
+				queryClient.invalidateQueries({ queryKey: ['project', id] });
+			}
+			return data;
+		},
+	} as UseQueryOptions<DescriptionGenerationState, Error>);
+
+	// connect SSE only during downloading
 	useEffect(() => {
-		if (inactiveStates.includes(state?.currentStep ?? DescriptionGenerationStep.IDLE)) {
+		if (state?.currentStep !== DescriptionGenerationStep.DOWNLOADING) {
 			return;
 		}
 
@@ -37,12 +54,21 @@ export function useDescriptionGeneration(id: string) {
 					progress: data.progress > (prev?.progress ?? 0) ? data.progress : (prev?.progress ?? 0),
 				}));
 
-				// Invalidate the project data when complete
-				if (data.currentStep === DescriptionGenerationStep.COMPLETED) {
-					queryClient.invalidateQueries({ queryKey: ['project', id] });
+				// if we get a state that indicates the download is complete, close the connection gracefully
+				if (data.currentStep !== DescriptionGenerationStep.DOWNLOADING) {
+					connection.close();
 				}
 			},
-			onError: () => {
+			onError: error => {
+				// check if this is just a connection close (which is expected when transitioning states)
+				const currentState = queryClient.getQueryData(['descriptionGeneration', id]) as DescriptionGenerationState;
+				if (currentState?.currentStep !== DescriptionGenerationStep.DOWNLOADING) {
+					// this is an expected closure, ignore it
+					return;
+				}
+
+				// this is an unexpected error during downloading
+				console.error('Error in description generation:', error);
 				queryClient.setQueryData(['descriptionGeneration', id], (prev: DescriptionGenerationState) => ({
 					...prev,
 					currentStep: DescriptionGenerationStep.ERROR,
@@ -52,13 +78,13 @@ export function useDescriptionGeneration(id: string) {
 					},
 				}));
 			},
-			maxRetries: -1, // Unlimited retries for active states
+			maxRetries: -1, // unlimited retries for active states
 		});
 
 		return () => connection.close();
 	}, [id, queryClient, state?.currentStep]);
 
-	// Start generation mutation
+	// start generation mutation
 	const mutation = useMutation({
 		mutationFn: async ({ url, options }: { url: string; options: DescriptionOptions }) => {
 			await startDescriptionGeneration(id, url, options);

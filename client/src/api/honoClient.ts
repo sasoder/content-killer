@@ -7,6 +7,7 @@ import type {
 	Metadata,
 	Voice,
 	VideoGenerationState,
+	DescriptionGenerationState,
 } from '@shared/types/api/schema';
 import type { ProjectTemplate } from '@shared/types/options/template';
 import type { CommentaryOptions, DescriptionOptions, VideoOptions } from '@shared/types/options';
@@ -38,6 +39,13 @@ export const getVideoGenerationStatus = async (id: string) => {
 		param: { id },
 	});
 	return handleResponse<VideoGenerationState>(response);
+};
+
+export const getDescriptionGenerationStatus = async (id: string) => {
+	const response = await client.generate.description[':id'].status.$get({
+		param: { id },
+	});
+	return handleResponse<DescriptionGenerationState>(response);
 };
 
 export const fetchProjectTemplates = async (): Promise<ProjectTemplate[]> => {
