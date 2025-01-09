@@ -1,13 +1,17 @@
 {
-	"files": [],
-	"references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
+	"extends": "../tsconfig.json",
 	"compilerOptions": {
-		"strict": true,
+		"composite": true,
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"jsx": "react-jsx",
 		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./src/*"],
 			"@shared/*": ["../shared/*"],
-			"@shared/server/*": ["../server/src/*"]
+			"@server/*": ["../server/src/*"]
 		}
-	}
+	},
+	"include": ["src/**/*"],
+	"references": [{ "path": "../shared" }, { "path": "../server" }]
 }

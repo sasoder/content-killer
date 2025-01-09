@@ -1,11 +1,15 @@
 {
+	"extends": "../tsconfig.json",
 	"compilerOptions": {
-		"strict": true,
-		"baseUrl": "./",
+		"composite": true,
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"baseUrl": ".",
 		"paths": {
-			"@shared/*": ["../shared/*"],
-			"@/*": ["./src/*"]
-		},
-		"esModuleInterop": true
-	}
+			"@/*": ["./src/*"],
+			"@shared/*": ["../shared/*"]
+		}
+	},
+	"include": ["src/**/*"],
+	"references": [{ "path": "../shared" }]
 }
