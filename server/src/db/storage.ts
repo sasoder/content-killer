@@ -11,7 +11,7 @@ import { defaultProjectTemplate } from '@shared/types/options/defaultTemplates';
 import { createDefaultProject } from '@/lib/defaultProject';
 
 const DATA_DIR = './data';
-const FILES_DIR = path.join(DATA_DIR, 'files');
+const PROJECTS_DIR = path.join(DATA_DIR, 'projects');
 const PROJECT_TEMPLATES_DIR = path.join(DATA_DIR, 'project-templates');
 const DB_PATH = path.join(DATA_DIR, 'projects.db');
 const DEFAULT_TEMPLATE_ID = 'default';
@@ -20,8 +20,8 @@ const DEFAULT_TEMPLATE_ID = 'default';
 if (!fs.existsSync(DATA_DIR)) {
 	fs.mkdirSync(DATA_DIR);
 }
-if (!fs.existsSync(FILES_DIR)) {
-	fs.mkdirSync(FILES_DIR);
+if (!fs.existsSync(PROJECTS_DIR)) {
+	fs.mkdirSync(PROJECTS_DIR);
 }
 if (!fs.existsSync(PROJECT_TEMPLATES_DIR)) {
 	fs.mkdirSync(PROJECT_TEMPLATES_DIR);
@@ -37,9 +37,7 @@ sqlite.run('PRAGMA journal_mode = WAL;');
 sqlite.run(`
     CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY NOT NULL,
-        state TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        state TEXT NOT NULL
     )
 `);
 
@@ -58,8 +56,6 @@ sqlite.run(`
 const projects = sqliteTable('projects', {
 	id: text('id').primaryKey(),
 	state: text('state').notNull(),
-	createdAt: text('created_at').notNull(),
-	updatedAt: text('updated_at').notNull(),
 });
 
 const projectTemplates = sqliteTable('project_templates', {
@@ -86,12 +82,13 @@ export class ProjectStorage {
 	async createProject(id: string, projectTemplate?: ProjectTemplate): Promise<Project> {
 		const now = new Date().toISOString();
 		const defaultState = createDefaultProject(id, projectTemplate);
+		if (!fs.existsSync(path.join(this.projectsDir, id))) {
+			fs.mkdirSync(path.join(this.projectsDir, id));
+		}
 
 		await db.insert(projects).values({
 			id,
 			state: JSON.stringify(defaultState),
-			createdAt: now,
-			updatedAt: now,
 		});
 
 		return defaultState;
@@ -109,6 +106,7 @@ export class ProjectStorage {
 
 	async getAllProjects(): Promise<Project[]> {
 		const results = await db.select().from(projects);
+		console.log(results);
 		return results.map(row => JSON.parse(row.state));
 	}
 

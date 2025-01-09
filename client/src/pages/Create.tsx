@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,11 +21,11 @@ const SelectProject = () => {
 		queryFn: fetchProjects,
 	});
 
-	const [selectedId, setSelectedId] = React.useState('new');
-	const [selectedTemplateId, setSelectedTemplateId] = React.useState('');
-	const [isFetching, setIsFetching] = React.useState(false);
+	const [selectedId, setSelectedId] = useState('new');
+	const [selectedTemplateId, setSelectedTemplateId] = useState('');
+	const [isFetching, setIsFetching] = useState(false);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (templates.length > 0) {
 			setSelectedTemplateId(templates[0].id);
 		}

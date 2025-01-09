@@ -9,7 +9,9 @@ const client = new ElevenLabsClient();
 const fetchRouter = new Hono()
 	.get('/projects', async c => {
 		const projects = await projectStorage.getAllProjects();
-		projects.sort((a: Project, b: Project) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+		projects.sort(
+			(a: Project, b: Project) => new Date(b.metadata.createdAt).getTime() - new Date(a.metadata.createdAt).getTime(),
+		);
 		return c.json(projects);
 	})
 	.get('/project/:id', async c => {

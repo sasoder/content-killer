@@ -3,8 +3,6 @@ import { generateDescription, getDescriptionGenerationProgress } from '@/lib/gen
 import { generateMetadata } from '@/lib/generateMetadata';
 import { generateCommentary } from '@/lib/generateCommentary';
 import { generateVideo, getVideoGenerationProgress } from '@/lib/generateVideo';
-import { generateAudio } from '@/lib/generateAudio';
-import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/types/options';
 import {
 	VideoGenerationStep,
 	DescriptionGenerationStep,
@@ -40,8 +38,6 @@ const generateRouter = new Hono()
 
 		// Create project with template first
 		const project = await projectStorage.createProject(id, optionTemplate);
-
-		await projectStorage.updateProjectState(project);
 
 		return c.json(project, 201);
 	})

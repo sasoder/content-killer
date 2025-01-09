@@ -58,7 +58,7 @@ export function useVideoGeneration(id: string) {
 			});
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['videoGenerationStatus', id] });
+			queryClient.invalidateQueries({ queryKey: ['project', id] });
 		},
 	});
 

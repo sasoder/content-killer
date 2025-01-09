@@ -39,7 +39,7 @@ export function useDescriptionGeneration(id: string) {
 
 				// Invalidate the project data when complete
 				if (data.currentStep === DescriptionGenerationStep.COMPLETED) {
-					queryClient.invalidateQueries({ queryKey: ['videoGenState', id] });
+					queryClient.invalidateQueries({ queryKey: ['project', id] });
 				}
 			},
 			onError: () => {
