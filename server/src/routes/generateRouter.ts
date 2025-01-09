@@ -1,19 +1,19 @@
 import { Hono } from 'hono';
-import { generateDescription, getGenerationProgress } from '@/lib/generateDescription';
+import { generateDescription, getDescriptionGenerationProgress } from '@/lib/generateDescription';
 import { generateMetadata } from '@/lib/generateMetadata';
 import { generateCommentary } from '@/lib/generateCommentary';
-import { generateVideo } from '@/lib/generateVideo';
+import { generateVideo, getVideoGenerationProgress } from '@/lib/generateVideo';
 import { generateAudio } from '@/lib/generateAudio';
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/types/options';
 import {
 	VideoGenerationStep,
 	DescriptionGenerationStep,
-	VideoMetadata,
+	Metadata,
 	DescriptionGenerationState,
 } from '@shared/types/api/schema';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { projectStorage, updateVideoGenerationState } from '@/db/storage';
+import { projectStorage } from '@/db/storage';
 import { generateProjectId } from '@/lib/util';
 import { defaultProjectTemplate } from '@shared/types/options/defaultTemplates';
 import { streamSSE } from 'hono/streaming';
@@ -41,15 +41,6 @@ const generateRouter = new Hono()
 		// Create project with template first
 		const project = await projectStorage.createProject(id, optionTemplate);
 
-		// Then initialize the generation states
-		project.descriptionGenerationState = {
-			currentStep: DescriptionGenerationStep.IDLE,
-			completedSteps: [],
-		};
-		project.videoGenerationState = {
-			currentStep: VideoGenerationStep.IDLE,
-			completedSteps: [],
-		};
 		await projectStorage.updateProjectState(project);
 
 		return c.json(project, 201);
@@ -80,7 +71,7 @@ const generateRouter = new Hono()
 		const id = c.req.param('id');
 		const project = await projectStorage.getProject(id);
 		if (project) {
-			const metadata: Partial<VideoMetadata> = await generateMetadata(url);
+			const metadata: Partial<Metadata> = await generateMetadata(url);
 			const fullMetadata = { ...metadata, url };
 			project.metadata = { ...project.metadata, ...fullMetadata };
 			await projectStorage.updateProjectState(project);
@@ -101,39 +92,36 @@ const generateRouter = new Hono()
 		}
 		return c.json(commentary);
 	})
-	.post('/video/:id', zValidator('json', VideoOptionsSchema), async c => {
+	.post('/video/:id/start', zValidator('json', VideoOptionsSchema), async c => {
 		const { commentary, options } = c.req.valid('json');
 		const id = c.req.param('id');
 
 		try {
 			const project = await projectStorage.getProject(id);
-			if (!project?.metadata?.url && !project?.metadata?.url) {
+			if (!project?.metadata?.url) {
 				return c.json({ error: 'No video URL found' }, 400);
 			}
 
-			project.commentary = commentary;
-			project.options.video = options;
-			await updateVideoGenerationState(project, VideoGenerationStep.PREPARING);
-			await updateVideoGenerationState(project, VideoGenerationStep.GENERATING_AUDIO);
-			// remove existing audio files
-			await projectStorage.deleteProjectCommentary(id);
-			await generateAudio(id, commentary, options.audio);
-			await generateVideo(project, options, (step, error) => updateVideoGenerationState(project, step, error));
-			await updateVideoGenerationState(project, VideoGenerationStep.COMPLETED);
+			// Start the process in the background
+			generateVideo(id, commentary, options).catch(error => {
+				console.error('Error in video generation:', error);
+			});
 
-			return c.json({ success: true });
+			return c.json({ message: 'Generation started' });
 		} catch (error) {
-			// Update error state
-			const project = await projectStorage.getProject(id);
-			if (project) {
-				await updateVideoGenerationState(project, VideoGenerationStep.ERROR, {
-					step: VideoGenerationStep.FINALIZING,
-					message: error instanceof Error ? error.message : 'Unknown error',
-				});
-			}
-			console.error('Error generating video:', error);
-			return c.json({ error: 'Failed to generate video' }, 500);
+			console.error('Error starting generation:', error);
+			return c.json({ error: 'Failed to start generation' }, 500);
 		}
+	})
+	.get('/video/:id/status', async c => {
+		const id = c.req.param('id');
+		const progress = getVideoGenerationProgress(id);
+		return c.json(
+			progress || {
+				currentStep: VideoGenerationStep.IDLE,
+				completedSteps: [],
+			},
+		);
 	})
 	.post('/description/:id/start', zValidator('json', DescriptionOptionsSchema), async c => {
 		const { url, options } = c.req.valid('json');
@@ -160,7 +148,7 @@ const generateRouter = new Hono()
 	.get('/description/:id/status', async c => {
 		const id = c.req.param('id');
 
-		const progress = getGenerationProgress(id);
+		const progress = getDescriptionGenerationProgress(id);
 		const currentState = progress || {
 			currentStep: DescriptionGenerationStep.IDLE,
 			completedSteps: [],
@@ -187,7 +175,7 @@ const generateRouter = new Hono()
 
 				while (retryCount < MAX_RETRIES) {
 					console.log('Getting progress for', id);
-					const state = getGenerationProgress(id);
+					const state = getDescriptionGenerationProgress(id);
 
 					if (!state) {
 						await stream.sleep(100);

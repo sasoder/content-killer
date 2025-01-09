@@ -1,8 +1,7 @@
 import youtubedl, { create } from 'youtube-dl-exec';
-import { VideoMetadata } from '@shared/types/api/schema';
+import { Metadata } from '@shared/types/api/schema';
 import dotenv from 'dotenv';
 import path from 'path';
-import { projectStorage } from '@/db/storage';
 import { spawn } from 'child_process';
 
 const DATA_DIR = './data';
@@ -13,7 +12,7 @@ const getYoutubeDl = () => {
 	return process.env.YT_DLP_PATH ? create(process.env.YT_DLP_PATH) : youtubedl;
 };
 
-export const downloadVideoMetadata = async (url: string): Promise<Partial<VideoMetadata>> => {
+export const downloadVideoMetadata = async (url: string): Promise<Partial<Metadata>> => {
 	try {
 		const ytDl = getYoutubeDl();
 		const result = (await ytDl(url, {

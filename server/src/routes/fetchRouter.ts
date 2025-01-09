@@ -1,119 +1,36 @@
 import { Hono } from 'hono';
 import { projectStorage } from '@/db/storage';
-import { ElevenLabsClient } from 'elevenlabs';
-import * as path from 'path';
-import * as fs from 'fs';
-import JSZip from 'jszip';
-
-const client = new ElevenLabsClient();
+import { Project } from '@shared/types/api/schema';
 
 const fetchRouter = new Hono()
-	.get('/videoGenStates', async c => {
-		const videoGenStates = await projectStorage.getAllVideoGenStates();
-		return c.json(
-			videoGenStates.sort(
-				(a, b) => new Date(b.metadata.createdAt).getTime() - new Date(a.metadata.createdAt).getTime(),
-			),
-		);
+	.get('/projects', async c => {
+		const projects = await projectStorage.getAllProjects();
+		projects.sort((a: Project, b: Project) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+		return c.json(projects);
 	})
-	.get('/videoGenState/:id', async c => {
-		const project = await projectStorage.getProject(c.req.param('id'));
-		if (!project) return c.json({ message: 'Project not found' }, 404);
+	.get('/project/:id', async c => {
+		const id = c.req.param('id');
+		const project = await projectStorage.getProject(id);
+		if (!project) {
+			return c.json({ error: 'Project not found' }, 404);
+		}
 		return c.json(project);
 	})
 	.get('/projectTemplates', async c => {
-		try {
-			return c.json(
-				(await projectStorage.getAllProjectTemplates()).sort(
-					(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-				),
-			);
-		} catch (error) {
-			return c.json({ message: 'Failed to fetch project templates' }, 500);
-		}
+		const templates = await projectStorage.getAllProjectTemplates();
+		return c.json(templates);
 	})
 	.get('/projectTemplate/:id', async c => {
-		const template = await projectStorage.getProjectTemplate(c.req.param('id'));
-		if (!template) return c.json({ message: 'Project template not found' }, 404);
+		const id = c.req.param('id');
+		const template = await projectStorage.getProjectTemplate(id);
+		if (!template) {
+			return c.json({ error: 'Template not found' }, 404);
+		}
 		return c.json(template);
 	})
 	.get('/voices', async c => {
-		try {
-			const voices = await client.voices.getAll();
-			return c.json(
-				voices.voices
-					.filter(voice => voice.voice_id && voice.name)
-					.map(voice => ({
-						id: voice.voice_id,
-						name: voice.name || 'Unnamed Voice',
-						previewUrl: voice.preview_url,
-					})),
-			);
-		} catch (error) {
-			return c.json({ error: 'Failed to fetch voices' }, 500);
-		}
-	})
-	.get('/download/:id/:type', async c => {
-		try {
-			const id = c.req.param('id');
-			const type = c.req.param('type');
-
-			if (type !== 'video' && type !== 'audio') {
-				return c.json({ error: 'Invalid type' }, 400);
-			}
-
-			const project = await projectStorage.getProject(id);
-			if (!project) {
-				return c.json({ error: 'Project not found' }, 404);
-			}
-
-			const sanitizedTitle = project.metadata?.title
-				?.replace(/[^a-zA-Z0-9\s-]/g, '')
-				.replace(/\s+/g, '-')
-				.toLowerCase();
-
-			if (type === 'video') {
-				const videoPath = path.join('data', id, 'video', 'output.mp4');
-				if (!fs.existsSync(videoPath)) {
-					return c.json({ error: 'Video file not found' }, 404);
-				}
-
-				const fileBuffer = fs.readFileSync(videoPath);
-				return new Response(fileBuffer, {
-					headers: new Headers({
-						'Content-Type': 'video/mp4',
-						'Content-Disposition': `attachment; filename="${sanitizedTitle}.mp4"`,
-						'Content-Length': fileBuffer.length.toString(),
-					}),
-				});
-			} else {
-				const commentaryDir = path.join('data', id, 'commentary');
-				if (!fs.existsSync(commentaryDir)) {
-					return c.json({ error: 'Audio files not found' }, 404);
-				}
-
-				const files = fs.readdirSync(commentaryDir).filter(file => file.endsWith('.mp3'));
-				if (files.length === 0) {
-					return c.json({ error: 'No audio files found' }, 404);
-				}
-
-				const zip = new JSZip();
-				files.forEach(file => {
-					zip.file(file, fs.readFileSync(path.join(commentaryDir, file)));
-				});
-
-				const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
-				return new Response(zipBuffer, {
-					headers: new Headers({
-						'Content-Type': 'application/zip',
-						'Content-Disposition': `attachment; filename="${sanitizedTitle}-commentary.zip"`,
-						'Content-Length': zipBuffer.length.toString(),
-					}),
-				});
-			}
-		} catch (error) {
-			return c.json({ error: 'Internal server error' }, 500);
-		}
+		const voices = await projectStorage.getVoices();
+		return c.json(voices);
 	});
 
 export { fetchRouter };

@@ -11,7 +11,7 @@ export type TimestampText = {
 	text: string;
 };
 
-export type VideoMetadata = {
+export type Metadata = {
 	url?: string;
 	title?: string;
 	duration?: number;
@@ -61,15 +61,16 @@ export interface DescriptionGenerationState {
 	};
 }
 
-export type VideoGenState = {
+export type Project = {
 	id: string;
-	description: TimestampText[];
-	commentary: TimestampText[];
+	createdAt: string;
+	metadata?: Metadata;
+	description?: TimestampText[];
+	commentary?: TimestampText[];
 	options: {
-		description: DescriptionOptions;
-		commentary: CommentaryOptions;
-		video: VideoOptions;
+		description?: DescriptionOptions;
+		commentary?: CommentaryOptions;
+		video?: VideoOptions;
 	};
-	metadata: VideoMetadata;
 	pauseSoundFilename: string;
 };

@@ -1,13 +1,6 @@
 import { hc } from 'hono/client';
 import type { RouterType } from '@server/routes';
-import type {
-	DescriptionGenerationStep,
-	VideoGenState,
-	TimestampText,
-	VideoMetadata,
-	DescriptionGenerationState,
-	Voice,
-} from '@shared/types/api/schema';
+import type { DescriptionGenerationStep, Project, TimestampText, Metadata, Voice } from '@shared/types/api/schema';
 import type { ProjectTemplate } from '@shared/types/options/template';
 import type { CommentaryOptions, DescriptionOptions, VideoOptions } from '@shared/types/options';
 
@@ -22,15 +15,22 @@ async function handleResponse<T>(response: Response): Promise<T> {
 	return data as T;
 }
 
-export const fetchVideoGenStates = async (): Promise<VideoGenState[]> => {
-	const response = await client.fetch.videoGenStates.$get();
-	return handleResponse<VideoGenState[]>(response);
+export const fetchProjects = async (): Promise<Project[]> => {
+	const response = await client.fetch.projects.$get();
+	return handleResponse<Project[]>(response);
 };
 
-export const fetchVideoGenState = async (id: string): Promise<VideoGenState> => {
-	const response = await client.fetch.videoGenState[':id'].$get({ param: { id } });
-	return handleResponse<VideoGenState>(response);
+export const fetchProject = async (id: string): Promise<Project> => {
+	const response = await client.fetch.project[':id'].$get({ param: { id } });
+	return handleResponse<Project>(response);
 };
+
+export async function getVideoGenerationStatus(id: string) {
+	const response = await client.generate.video[':id'].status.$get({
+		param: { id },
+	});
+	return response.json();
+}
 
 export const fetchProjectTemplates = async (): Promise<ProjectTemplate[]> => {
 	const response = await client.fetch.projectTemplates.$get();
@@ -153,12 +153,12 @@ export function subscribeToDescriptionProgress(
 	return () => connection.close();
 }
 
-export const generateMetadata = async (id: string, url: string): Promise<VideoMetadata> => {
+export const generateMetadata = async (id: string, url: string): Promise<Metadata> => {
 	const response = await client.generate.metadata[':id'].$post({
 		param: { id },
 		json: { url },
 	});
-	return handleResponse<VideoMetadata>(response);
+	return handleResponse<Metadata>(response);
 };
 
 export const generateCommentary = async (
@@ -173,13 +173,13 @@ export const generateCommentary = async (
 	return handleResponse<TimestampText[]>(response);
 };
 
-export const generateVideo = async (id: string, commentary: TimestampText[], options: VideoOptions): Promise<void> => {
-	const response = await client.generate.video[':id'].$post({
+export async function generateVideo(id: string, commentary: TimestampText[], options: VideoOptions) {
+	const response = await client.generate.video[':id'].start.$post({
 		param: { id },
 		json: { commentary, options },
 	});
-	await handleResponse<{ success: true }>(response);
-};
+	return response.json();
+}
 
 export const createProjectTemplate = async (params?: {
 	name?: string;
@@ -217,11 +217,11 @@ export const uploadPauseSound = async (templateId: string, file: File): Promise<
 	return handleResponse<{ filename: string }>(response);
 };
 
-export const createProjectWithTemplate = async (templateId: string): Promise<VideoGenState> => {
+export const createProjectWithTemplate = async (templateId: string): Promise<Project> => {
 	const response = await client.generate.project.$post({
 		json: { templateId },
 	});
-	return handleResponse<VideoGenState>(response);
+	return handleResponse<Project>(response);
 };
 
 export const updateData = async (id: string, data: any): Promise<void> => {
@@ -233,7 +233,7 @@ export const updateData = async (id: string, data: any): Promise<void> => {
 };
 
 export const downloadFile = async (id: string, type: 'video' | 'audio'): Promise<Blob> => {
-	const response = await client.fetch.download[':id'][':type'].$get({
+	const response = await client.fetch.project[':id'].download[':type'].$get({
 		param: { id, type },
 	});
 	return response.blob();

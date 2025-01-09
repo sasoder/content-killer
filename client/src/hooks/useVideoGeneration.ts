@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { generateVideo, fetchVideoGenState } from '@/api/honoClient';
+import { generateVideo, getVideoGenerationStatus } from '@/api/honoClient';
 import type { VideoOptions } from '@shared/types/options';
-import { VideoGenState, VideoGenerationStep } from '@shared/types/api/schema';
+import { VideoGenerationStep, VideoGenerationState } from '@shared/types/api/schema';
 import type { TimestampText } from '@shared/types/api/schema';
 
 const ACTIVE_STEPS = [
@@ -17,10 +17,10 @@ export function useVideoGeneration(id: string) {
 	const queryClient = useQueryClient();
 
 	const genStatus = useQuery({
-		queryKey: ['videoGenState', id],
-		queryFn: () => fetchVideoGenState(id),
+		queryKey: ['videoGenerationStatus', id],
+		queryFn: () => getVideoGenerationStatus(id),
 		refetchInterval: query => {
-			const currentStep = (query.state.data as VideoGenState | undefined)?.videoGenerationState?.currentStep;
+			const currentStep = (query.state.data as VideoGenerationState | undefined)?.currentStep;
 			return currentStep && ACTIVE_STEPS.includes(currentStep) ? 1000 : false;
 		},
 	});
@@ -29,40 +29,37 @@ export function useVideoGeneration(id: string) {
 		mutationFn: ({ commentary, options }: { commentary: TimestampText[]; options: VideoOptions }) =>
 			generateVideo(id, commentary, options),
 		onMutate: async () => {
-			await queryClient.cancelQueries({ queryKey: ['videoGenState', id] });
-			const previousState = queryClient.getQueryData<VideoGenState>(['videoGenState', id]);
+			await queryClient.cancelQueries({ queryKey: ['videoGenerationStatus', id] });
 
-			queryClient.setQueryData<VideoGenState>(['videoGenState', id], old => ({
-				...(old as VideoGenState),
-				videoGenerationState: {
-					currentStep: VideoGenerationStep.PREPARING,
-					completedSteps: [],
-				},
-			}));
-
-			return { previousState };
+			// Optimistic update
+			queryClient.setQueryData(['videoGenerationStatus', id], {
+				currentStep: VideoGenerationStep.PREPARING,
+				completedSteps: [],
+				progress: undefined,
+			});
 		},
-		onError: (err, variables, context) => {
-			if (context?.previousState) {
-				queryClient.setQueryData(['videoGenState', id], context.previousState);
-			}
-			queryClient.invalidateQueries({ queryKey: ['videoGenState', id] });
+		onError: error => {
+			queryClient.setQueryData(['videoGenerationStatus', id], {
+				currentStep: VideoGenerationStep.ERROR,
+				completedSteps: [],
+				progress: undefined,
+				error: {
+					step: VideoGenerationStep.PREPARING,
+					message: error instanceof Error ? error.message : 'Failed to start generation',
+				},
+			});
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['videoGenState', id] });
+			queryClient.invalidateQueries({ queryKey: ['videoGenerationStatus', id] });
 		},
 	});
 
-	const currentStep = genStatus.data?.videoGenerationState?.currentStep ?? VideoGenerationStep.IDLE;
+	const currentStep = genStatus.data?.currentStep ?? VideoGenerationStep.IDLE;
 	const isGenerating = ACTIVE_STEPS.includes(currentStep);
 
 	return {
-		status: currentStep,
-		videoId: genStatus.data?.metadata?.url,
-		audioIds: genStatus.data?.commentary?.map(c => c.timestamp) ?? [],
-		isLoading: genStatus.isLoading || generateMutation.isPending,
-		isGenerating,
-		error: genStatus.error || generateMutation.error,
-		generate: generateMutation.mutate,
+		generate: (commentary: TimestampText[], options: VideoOptions) => generateMutation.mutate({ commentary, options }),
+		isLoading: generateMutation.isPending || isGenerating,
+		state: genStatus.data,
 	} as const;
 }

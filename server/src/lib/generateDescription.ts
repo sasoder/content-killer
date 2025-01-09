@@ -39,7 +39,7 @@ const resetProgress = (id: string) => {
 	progressMap.delete(id);
 };
 
-export function getGenerationProgress(id: string) {
+export function getDescriptionGenerationProgress(id: string) {
 	return progressMap.get(id);
 }
 

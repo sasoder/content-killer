@@ -5,19 +5,23 @@ import { eq } from 'drizzle-orm';
 import { writeFile, readFile, mkdir } from 'fs/promises';
 import * as fs from 'fs';
 import * as path from 'path';
-import { VideoGenerationStep, DescriptionGenerationStep, VideoGenState } from '@shared/types/api/schema';
-import { createDefaultVideoGenState } from '@/lib/defaultVideoGenState';
+import { Project } from '@shared/types/api/schema';
 import { ProjectTemplate } from '@shared/types/options/template';
 import { defaultProjectTemplate } from '@shared/types/options/defaultTemplates';
+import { createDefaultProject } from '@/lib/defaultProject';
 
 const DATA_DIR = './data';
+const FILES_DIR = path.join(DATA_DIR, 'files');
 const PROJECT_TEMPLATES_DIR = path.join(DATA_DIR, 'project-templates');
 const DB_PATH = path.join(DATA_DIR, 'projects.db');
 const DEFAULT_TEMPLATE_ID = 'default';
 
-// Ensure directories exist
+// Ensure directories exist for file storage
 if (!fs.existsSync(DATA_DIR)) {
 	fs.mkdirSync(DATA_DIR);
+}
+if (!fs.existsSync(FILES_DIR)) {
+	fs.mkdirSync(FILES_DIR);
 }
 if (!fs.existsSync(PROJECT_TEMPLATES_DIR)) {
 	fs.mkdirSync(PROJECT_TEMPLATES_DIR);
@@ -25,27 +29,37 @@ if (!fs.existsSync(PROJECT_TEMPLATES_DIR)) {
 
 // Initialize database and tables
 const sqlite = new Database(DB_PATH);
+
+// Enable foreign keys and WAL mode for better performance
+sqlite.run('PRAGMA foreign_keys = ON;');
+sqlite.run('PRAGMA journal_mode = WAL;');
+
 sqlite.run(`
-	CREATE TABLE IF NOT EXISTS projects (
-		id TEXT PRIMARY KEY,
-		state TEXT NOT NULL
-	)
+    CREATE TABLE IF NOT EXISTS projects (
+        id TEXT PRIMARY KEY NOT NULL,
+        state TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )
 `);
+
 sqlite.run(`
-	CREATE TABLE IF NOT EXISTS project_templates (
-		id TEXT PRIMARY KEY,
-		name TEXT NOT NULL,
-		description TEXT NOT NULL,
-		created_at TEXT NOT NULL,
-		options TEXT NOT NULL,
-		pause_sound_filename TEXT NOT NULL
-	)
+    CREATE TABLE IF NOT EXISTS project_templates (
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        options TEXT NOT NULL,
+        pause_sound_filename TEXT NOT NULL
+    )
 `);
 
 // Schema definition for Drizzle
 const projects = sqliteTable('projects', {
 	id: text('id').primaryKey(),
 	state: text('state').notNull(),
+	createdAt: text('created_at').notNull(),
+	updatedAt: text('updated_at').notNull(),
 });
 
 const projectTemplates = sqliteTable('project_templates', {
@@ -61,62 +75,68 @@ const projectTemplates = sqliteTable('project_templates', {
 const db = drizzle(sqlite);
 
 export class ProjectStorage {
-	async createProject(id: string, projectTemplate?: ProjectTemplate): Promise<VideoGenState> {
-		const defaultState = createDefaultVideoGenState(id, projectTemplate);
-		defaultState.metadata.createdAt = new Date().toISOString();
+	private filesDir: string;
+	private templatesDir: string;
+
+	constructor(dataDir: string) {
+		this.filesDir = path.join(dataDir, 'files');
+		this.templatesDir = path.join(dataDir, 'project-templates');
+	}
+
+	async createProject(id: string, projectTemplate?: ProjectTemplate): Promise<Project> {
+		const now = new Date().toISOString();
+		const defaultState = createDefaultProject(id, projectTemplate);
 
 		await db.insert(projects).values({
 			id,
 			state: JSON.stringify(defaultState),
+			createdAt: now,
+			updatedAt: now,
 		});
-
-		await mkdir(path.join(DATA_DIR, id), { recursive: true });
-		await mkdir(path.join(DATA_DIR, id, 'misc'), { recursive: true });
-
-		// If there's a pause sound in the template, copy it to the project
-		if (projectTemplate && projectTemplate.pauseSoundFilename) {
-			const pausePath = path.join(PROJECT_TEMPLATES_DIR, projectTemplate.id, projectTemplate.pauseSoundFilename);
-			if (fs.existsSync(pausePath)) {
-				await fs.promises.copyFile(pausePath, path.join(DATA_DIR, id, 'misc', projectTemplate.pauseSoundFilename));
-			}
-		}
 
 		return defaultState;
 	}
 
-	async getProject(id: string): Promise<VideoGenState | null> {
+	async getProject(id: string): Promise<Project | null> {
 		const result = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
 
-		const project = result[0];
-		return project ? JSON.parse(project.state) : null;
+		if (!result.length) {
+			return null;
+		}
+
+		return JSON.parse(result[0].state);
 	}
 
-	async getAllVideoGenStates(): Promise<VideoGenState[]> {
+	async getAllProjects(): Promise<Project[]> {
 		const results = await db.select().from(projects);
 		return results.map(row => JSON.parse(row.state));
 	}
 
-	async updateProjectState(state: VideoGenState): Promise<void> {
+	async updateProjectState(state: Project): Promise<void> {
+		const now = new Date().toISOString();
+
 		await db
 			.update(projects)
-			.set({ state: JSON.stringify(state) })
+			.set({
+				state: JSON.stringify(state),
+				updatedAt: now,
+			})
 			.where(eq(projects.id, state.id));
 	}
 
 	async saveFile(id: string, fileName: string, content: Buffer): Promise<void> {
-		const filePath = path.join(DATA_DIR, id, fileName);
-		await writeFile(filePath, content);
+		const projectDir = path.join(this.filesDir, id);
+		await mkdir(projectDir, { recursive: true });
+		await writeFile(path.join(projectDir, fileName), content);
 	}
 
 	async getFile(id: string, fileName: string): Promise<Buffer> {
-		const filePath = path.join(DATA_DIR, id, fileName);
-		return readFile(filePath);
+		return readFile(path.join(this.filesDir, id, fileName));
 	}
 
 	async createProjectTemplate(template: ProjectTemplate): Promise<void> {
-		const templateDir = path.join(PROJECT_TEMPLATES_DIR, template.id);
+		const templateDir = path.join(this.templatesDir, template.id);
 		await mkdir(templateDir, { recursive: true });
-
 		await db.insert(projectTemplates).values({
 			id: template.id,
 			name: template.name,
@@ -129,9 +149,12 @@ export class ProjectStorage {
 
 	async getProjectTemplate(id: string): Promise<ProjectTemplate | null> {
 		const result = await db.select().from(projectTemplates).where(eq(projectTemplates.id, id)).limit(1);
-		const template = result[0];
-		if (!template) return null;
 
+		if (!result.length) {
+			return null;
+		}
+
+		const template = result[0];
 		return {
 			id: template.id,
 			name: template.name,
@@ -173,51 +196,45 @@ export class ProjectStorage {
 
 		await db.delete(projectTemplates).where(eq(projectTemplates.id, id));
 
-		// Delete the template directory and all its contents
-		const templateDir = path.join(PROJECT_TEMPLATES_DIR, id);
+		// Delete the template directory and files
+		const templateDir = path.join(this.templatesDir, id);
 		if (fs.existsSync(templateDir)) {
 			await fs.promises.rm(templateDir, { recursive: true, force: true });
 		}
 	}
 
 	async updateTemplatePauseSound(id: string, fileName: string, content: Buffer): Promise<void> {
-		// Get the current template to find the existing pause sound file
 		const template = await this.getProjectTemplate(id);
 		if (!template) {
 			throw new Error('Template not found');
 		}
 
-		const templateDir = path.join(PROJECT_TEMPLATES_DIR, id);
+		const templateDir = path.join(this.templatesDir, id);
 		await mkdir(templateDir, { recursive: true });
 
-		// Remove the existing pause sound file if it exists and is different
+		// Remove old pause sound if it exists and is different
 		if (template.pauseSoundFilename && template.pauseSoundFilename !== fileName) {
-			const existingFilePath = path.join(templateDir, template.pauseSoundFilename);
-			if (fs.existsSync(existingFilePath)) {
-				await fs.promises.unlink(existingFilePath);
+			const oldPath = path.join(templateDir, template.pauseSoundFilename);
+			if (fs.existsSync(oldPath)) {
+				await fs.promises.unlink(oldPath);
 			}
 		}
 
-		// Write the new pause sound file
-		const filePath = path.join(templateDir, fileName);
-		await writeFile(filePath, content);
+		// Save new pause sound
+		await writeFile(path.join(templateDir, fileName), content);
 
-		// Update the template in the database with the new filename
+		// Update template record
 		await db.update(projectTemplates).set({ pauseSoundFilename: fileName }).where(eq(projectTemplates.id, id));
 	}
 
 	async getProjectTemplateFile(templateId: string, fileName: string): Promise<Buffer> {
-		const filePath = path.join(PROJECT_TEMPLATES_DIR, templateId, fileName);
-		return readFile(filePath);
+		return readFile(path.join(this.templatesDir, templateId, fileName));
 	}
 
 	async deleteProjectCommentary(id: string): Promise<void> {
-		const project = await this.getProject(id);
-		if (project) {
-			const audioDir = path.join(DATA_DIR, id, 'commentary');
-			if (fs.existsSync(audioDir)) {
-				await fs.promises.rm(audioDir, { recursive: true, force: true });
-			}
+		const commentaryDir = path.join(this.filesDir, id, 'commentary');
+		if (fs.existsSync(commentaryDir)) {
+			await fs.promises.rm(commentaryDir, { recursive: true, force: true });
 		}
 	}
 
@@ -238,70 +255,4 @@ export class ProjectStorage {
 	}
 }
 
-export const projectStorage = new ProjectStorage();
-
-export const updateVideoGenerationState = async (
-	project: VideoGenState,
-	step: VideoGenerationStep,
-	error?: { step: VideoGenerationStep; message: string },
-) => {
-	if (!project) throw new Error('Project not found');
-
-	if (!project.videoGenerationState.completedSteps) {
-		project.videoGenerationState.completedSteps = [];
-	}
-
-	if (step === VideoGenerationStep.PREPARING) {
-		project.videoGenerationState.completedSteps = [];
-	} else if (
-		!error &&
-		step !== VideoGenerationStep.ERROR &&
-		project.videoGenerationState.currentStep !== VideoGenerationStep.IDLE
-	) {
-		if (!project.videoGenerationState.completedSteps.includes(project.videoGenerationState.currentStep)) {
-			project.videoGenerationState.completedSteps.push(project.videoGenerationState.currentStep);
-		}
-	}
-
-	project.videoGenerationState = {
-		currentStep: step,
-		completedSteps: project.videoGenerationState.completedSteps,
-		...(error && { error }),
-	};
-
-	await projectStorage.updateProjectState(project);
-};
-
-export const updateDescriptionGenerationState = async (
-	project: VideoGenState,
-	step: DescriptionGenerationStep,
-	progress?: number,
-	error?: { step: DescriptionGenerationStep; message: string },
-) => {
-	if (!project) throw new Error('Project not found');
-
-	if (!project.descriptionGenerationState.completedSteps) {
-		project.descriptionGenerationState.completedSteps = [];
-	}
-
-	if (step === DescriptionGenerationStep.PREPARING) {
-		project.descriptionGenerationState.completedSteps = [];
-	} else if (
-		!error &&
-		step !== DescriptionGenerationStep.ERROR &&
-		project.descriptionGenerationState.currentStep !== DescriptionGenerationStep.IDLE
-	) {
-		if (!project.descriptionGenerationState.completedSteps.includes(project.descriptionGenerationState.currentStep)) {
-			project.descriptionGenerationState.completedSteps.push(project.descriptionGenerationState.currentStep);
-		}
-	}
-
-	project.descriptionGenerationState = {
-		currentStep: step,
-		completedSteps: project.descriptionGenerationState.completedSteps,
-		progress,
-		...(error && { error }),
-	};
-
-	await projectStorage.updateProjectState(project);
-};
+export const projectStorage = new ProjectStorage(process.env.DATA_DIR || 'data');

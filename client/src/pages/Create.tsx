@@ -1,154 +1,97 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Link, useNavigate } from 'react-router-dom';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { createProjectWithTemplate, fetchVideoGenStates, fetchProjectTemplates } from '@/api/honoClient';
-import { Header } from '@/components/layout/Header';
-import { formatDate } from '@/lib/utils';
-import { Icons } from '@/components/icons';
+import React, { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { createProjectWithTemplate, fetchProjects, fetchProjectTemplates } from '@/api/honoClient';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
-const SelectProject = () => {
+export default function Create() {
 	const navigate = useNavigate();
-	const { data: videoGenStates, isLoading: isLoadingStates } = useQuery({
-		queryKey: ['videoGenStates'],
-		queryFn: fetchVideoGenStates,
+	const [selectedId, setSelectedId] = useState<string | null>(null);
+
+	const { data: projects, isLoading: isLoadingStates } = useQuery({
+		queryKey: ['projects'],
+		queryFn: fetchProjects,
 	});
 
-	const { data: templates = [], isLoading: isLoadingTemplates } = useQuery({
+	const { data: templates, isLoading: isLoadingTemplates } = useQuery({
 		queryKey: ['projectTemplates'],
 		queryFn: fetchProjectTemplates,
 	});
 
-	const [selectedId, setSelectedId] = React.useState('new');
-	const [selectedTemplateId, setSelectedTemplateId] = React.useState('');
-	const [isFetching, setIsFetching] = React.useState(false);
-
-	React.useEffect(() => {
-		if (templates.length > 0) {
-			setSelectedTemplateId(templates[0].id);
+	useEffect(() => {
+		if (templates?.length === 1) {
+			setSelectedId(templates[0].id);
 		}
 	}, [templates]);
 
-	const handleGenerate = async () => {
-		setIsFetching(true);
+	const handleCreate = async () => {
+		if (!selectedId) return;
+
 		try {
-			if (selectedId === 'new') {
-				const state = await createProjectWithTemplate(selectedTemplateId);
-				navigate(`/generate/${state.id}`);
-			} else {
-				navigate(`/generate/${selectedId}`);
-			}
+			const project = await createProjectWithTemplate(selectedId);
+			navigate(`/project/${project.id}`);
 		} catch (error) {
-			console.error('Error:', error);
-		} finally {
-			setIsFetching(false);
+			console.error('Error creating project:', error);
 		}
 	};
 
-	const selectedTitle = React.useMemo(() => {
-		if (selectedId === 'new') return 'New Project';
-		const selected = videoGenStates?.find(item => item.id === selectedId);
-		return selected?.metadata.title || 'Untitled Project';
-	}, [selectedId, videoGenStates]);
+	const selected = projects?.find(item => item.id === selectedId);
 
-	const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
+	useEffect(() => {
+		console.log('Selected template:', selected);
+	}, [selectedId, projects]);
+
+	if (isLoadingStates || isLoadingTemplates) {
+		return (
+			<div className='container mx-auto p-4'>
+				<h1 className='mb-4 text-2xl font-bold'>Create New Project</h1>
+				<div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+					{[...Array(3)].map((_, i) => (
+						<Card key={i} className='w-full'>
+							<CardHeader>
+								<Skeleton className='h-4 w-[250px]' />
+								<Skeleton className='h-4 w-[200px]' />
+							</CardHeader>
+							<CardContent>
+								<Skeleton className='h-4 w-[300px]' />
+							</CardContent>
+						</Card>
+					))}
+				</div>
+			</div>
+		);
+	}
 
 	return (
-		<>
-			<Header title='Choose Project' showBackButton />
-			<main className='items-top flex h-screen justify-center'>
-				<Card className='h-fit w-full max-w-[400px]'>
-					<CardHeader>
-						<CardTitle>Project Selection</CardTitle>
-						<CardDescription>Choose an existing project or create a new one</CardDescription>
-					</CardHeader>
-					<CardContent className='flex flex-col gap-4'>
-						<div className='flex flex-col gap-2'>
-							<label className='text-sm font-medium'>Project</label>
-							<Select value={selectedId} onValueChange={setSelectedId}>
-								<SelectTrigger className='truncate'>
-									<SelectValue className='truncate'>{selectedTitle}</SelectValue>
-								</SelectTrigger>
-								<SelectContent>
-									<SelectGroup>
-										<SelectItem value='new'>
-											<span className='flex items-center gap-2'>
-												<Icons.plus className='h-4 w-4' />
-												New Project
-											</span>
-										</SelectItem>
-
-										{isLoadingStates ? (
-											<SelectItem value='loading' disabled>
-												<span className='flex items-center gap-2'>
-													<Icons.loader className='h-4 w-4 animate-spin' />
-													Loading projects...
-												</span>
-											</SelectItem>
-										) : (
-											videoGenStates?.map(state => (
-												<SelectItem key={state.id} value={state.id}>
-													<div className='w-full max-w-[300px]'>
-														<div className='truncate font-medium'>{state.metadata.title}</div>
-														<div className='text-muted-foreground truncate text-xs'>
-															Created {formatDate(state.metadata.createdAt)}
-														</div>
-													</div>
-												</SelectItem>
-											))
-										)}
-									</SelectGroup>
-								</SelectContent>
-							</Select>
-						</div>
-
-						{selectedId === 'new' && templates.length > 0 && (
-							<div className='space-y-2'>
-								<label className='text-sm font-medium'>Template</label>
-								<div className='flex gap-2'>
-									<Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-										<SelectTrigger className='truncate'>
-											<SelectValue className='truncate'>{selectedTemplate?.name ?? 'Select Template'}</SelectValue>
-										</SelectTrigger>
-										<SelectContent>
-											<SelectGroup>
-												{templates.map(template => (
-													<SelectItem key={template.id} value={template.id}>
-														<div className='w-full max-w-[300px]'>
-															<div className='truncate font-medium'>{template.name}</div>
-															<div className='text-muted-foreground truncate text-xs'>{template.description}</div>
-														</div>
-													</SelectItem>
-												))}
-											</SelectGroup>
-										</SelectContent>
-									</Select>
-									<Link to='/templates' title='Template Settings'>
-										<Button variant='outline' size='icon'>
-											<Icons.settings className='h-4 w-4' />
-										</Button>
-									</Link>
-								</div>
-							</div>
-						)}
-
-						<Button onClick={handleGenerate} disabled={isFetching || isLoadingStates} className='w-fit self-center'>
-							{isFetching ? (
-								<>
-									<Icons.loader className='mr-2 h-4 w-4 animate-spin' />
-									Creating Project...
-								</>
-							) : (
-								'Continue'
-							)}
-						</Button>
-					</CardContent>
-				</Card>
-			</main>
-		</>
+		<div className='container mx-auto p-4'>
+			<h1 className='mb-4 text-2xl font-bold'>Create New Project</h1>
+			<div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+				{projects?.map(project => (
+					<Card
+						key={project.id}
+						className={cn('hover:bg-accent w-full cursor-pointer', {
+							'border-primary': selectedId === project.id,
+						})}
+						onClick={() => setSelectedId(project.id)}
+					>
+						<CardHeader>
+							<CardTitle>Template {project.id}</CardTitle>
+							<CardDescription>Description of template {project.id}</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<p className='text-sm'>Additional details about template {project.id}</p>
+						</CardContent>
+					</Card>
+				))}
+			</div>
+			<div className='mt-4'>
+				<Button onClick={handleCreate} disabled={!selectedId}>
+					Create Project
+				</Button>
+			</div>
+		</div>
 	);
-};
-
-export default SelectProject;
+}
