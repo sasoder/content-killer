@@ -22,7 +22,6 @@ async function handleResponse<T>(response: Response): Promise<T> {
 	return data as T;
 }
 
-// Export type-safe client functions that handle response.json() internally
 export const fetchVideoGenStates = async (): Promise<VideoGenState[]> => {
 	const response = await client.fetch.videoGenStates.$get();
 	return handleResponse<VideoGenState[]>(response);

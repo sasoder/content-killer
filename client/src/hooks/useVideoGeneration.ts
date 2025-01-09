@@ -7,7 +7,6 @@ import type { TimestampText } from '@shared/types/api/schema';
 const ACTIVE_STEPS = [
 	VideoGenerationStep.PREPARING,
 	VideoGenerationStep.GENERATING_AUDIO,
-	VideoGenerationStep.DOWNLOADING_VIDEO,
 	VideoGenerationStep.SCALING_VIDEO,
 	VideoGenerationStep.PROCESSING_VIDEO,
 	VideoGenerationStep.TRANSCRIBING,

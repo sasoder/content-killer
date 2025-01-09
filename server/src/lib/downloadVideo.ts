@@ -45,7 +45,7 @@ export const downloadVideo = async (
 ): Promise<string> => {
 	try {
 		const ytDl = getYoutubeDl();
-		const outputPath = path.join(DATA_DIR, projectId, 'source.mp4');
+		const outputPath = path.join(DATA_DIR, projectId, 'video', 'source.mp4');
 		const ytDlPath = process.env.YT_DLP_PATH || 'yt-dlp';
 
 		let isDownloadingAudio = false;

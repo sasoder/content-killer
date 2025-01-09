@@ -251,19 +251,6 @@ export async function generateVideo(
 		const pauseAudioPath = path.join(miscDir, project.pauseSoundFilename);
 		const outputPath = path.join(videoDir, 'output.mp4');
 
-		try {
-			console.log('Downloading video...');
-			await updateState(VideoGenerationStep.DOWNLOADING_VIDEO);
-			await downloadVideo(project.metadata.url ?? '', sourceVideoPath);
-			console.log('Downloaded video');
-		} catch (error) {
-			await updateState(VideoGenerationStep.ERROR, {
-				step: VideoGenerationStep.DOWNLOADING_VIDEO,
-				message: error instanceof Error ? error.message : 'Unknown error',
-			});
-			throw error;
-		}
-
 		const needsScaling = options.video.size !== 'source';
 		try {
 			await updateState(VideoGenerationStep.SCALING_VIDEO);

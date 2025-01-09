@@ -40,13 +40,11 @@ const resetProgress = (id: string) => {
 };
 
 export function getGenerationProgress(id: string) {
-	console.log('Getting progress for', id, progressMap.get(id));
 	return progressMap.get(id);
 }
 
 export async function generateDescription(id: string, url: string, options: DescriptionOptions) {
 	try {
-		console.log('Generating description for', id);
 		// Download video
 		resetProgress(id);
 		updateProgress(id, {
@@ -62,8 +60,6 @@ export async function generateDescription(id: string, url: string, options: Desc
 		const videoPath = await downloadVideo(url, id, (progress: number) => {
 			updateProgress(id, { progress });
 		});
-
-		console.log('Video downloaded and saved to', videoPath);
 
 		// Upload to Gemini File API
 		updateProgress(id, {

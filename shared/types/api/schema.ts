@@ -22,7 +22,6 @@ export enum VideoGenerationStep {
 	IDLE = 'IDLE',
 	PREPARING = 'PREPARING',
 	GENERATING_AUDIO = 'GENERATING_AUDIO',
-	DOWNLOADING_VIDEO = 'DOWNLOADING_VIDEO',
 	SCALING_VIDEO = 'SCALING_VIDEO',
 	TRANSCRIBING = 'TRANSCRIBING',
 	PROCESSING_VIDEO = 'PROCESSING_VIDEO',
@@ -66,8 +65,6 @@ export type VideoGenState = {
 	id: string;
 	description: TimestampText[];
 	commentary: TimestampText[];
-	videoGenerationState: VideoGenerationState;
-	descriptionGenerationState: DescriptionGenerationState;
 	options: {
 		description: DescriptionOptions;
 		commentary: CommentaryOptions;
