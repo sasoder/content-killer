@@ -1,5 +1,5 @@
 import { DescriptionOptions } from '@shared/types/options';
-import { TimestampText, DescriptionGenerationStep, DescriptionGenerationState } from '@shared/types/api/schema';
+import { DescriptionGenerationStep, DescriptionGenerationState } from '@shared/types/api/schema';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GoogleAIFileManager, FileState } from '@google/generative-ai/server';
 import { downloadVideo } from './downloadVideo';
@@ -43,7 +43,7 @@ export function getDescriptionGenerationProgress(id: string) {
 	return progressMap.get(id);
 }
 
-export async function generateDescription(id: string, url: string, options: DescriptionOptions) {
+export const generateDescription = async (id: string, url: string, options: DescriptionOptions) => {
 	try {
 		// Download video
 		resetProgress(id);
@@ -133,4 +133,4 @@ export async function generateDescription(id: string, url: string, options: Desc
 		});
 		throw error;
 	}
-}
+};

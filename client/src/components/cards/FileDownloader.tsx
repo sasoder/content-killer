@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useVideoGen, useVideoGenerationProgress } from '@/context/VideoGenContext';
+import { useProject } from '@/context/ProjectContext';
 import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { VideoGenerationStep } from '@shared/types/api/schema';
 import { Separator } from '@/components/ui/separator';
 import { downloadFile } from '@/api/honoClient';
 import { toast } from '@/hooks/use-toast';
+import { useVideoGeneration } from '@/hooks/useVideoGeneration';
 
 const GENERATION_STEPS = [
 	{ step: VideoGenerationStep.PREPARING, label: 'Preparing generation' },
@@ -34,14 +35,17 @@ const StepIndicator = ({
 };
 
 const FileDownloader = () => {
-	const { id, options } = useVideoGen();
-	const { step: currentStep, completedSteps = [], error, isComplete } = useVideoGenerationProgress();
+	const { id, options } = useProject();
+	const { state } = useVideoGeneration(id);
 	const [isDownloadingAudio, setIsDownloadingAudio] = useState(false);
 	const [isDownloadingVideo, setIsDownloadingVideo] = useState(false);
 
-	if (currentStep === VideoGenerationStep.IDLE) {
+	if (!state || state.currentStep === VideoGenerationStep.IDLE) {
 		return null;
 	}
+
+	const { currentStep, completedSteps = [], error } = state;
+	const isComplete = currentStep === VideoGenerationStep.COMPLETED;
 
 	const handleDownloadAudio = async () => {
 		try {
@@ -75,7 +79,7 @@ const FileDownloader = () => {
 
 	// Filter steps based on options
 	const activeSteps = GENERATION_STEPS.filter(
-		step => step.step !== VideoGenerationStep.TRANSCRIBING || options?.video.video.subtitlesEnabled,
+		step => step.step !== VideoGenerationStep.TRANSCRIBING || options?.video?.video.subtitlesEnabled,
 	);
 
 	return (
@@ -87,7 +91,7 @@ const FileDownloader = () => {
 					<div className='flex flex-col gap-2'>
 						{activeSteps.map(({ step, label }) => {
 							const isCompleted =
-								completedSteps?.includes(step) || (step === VideoGenerationStep.COMPLETED && isComplete);
+								completedSteps.includes(step) || (step === VideoGenerationStep.COMPLETED && isComplete);
 							const isErrorStep = error?.step === step;
 							const isActiveStep = step === currentStep && !isCompleted;
 							const isPending = !isCompleted && !isActiveStep;
@@ -107,7 +111,7 @@ const FileDownloader = () => {
 										)}
 									>
 										{label}
-										{isErrorStep && ` (${error.message})`}
+										{isErrorStep && error && ` (${error.message})`}
 									</span>
 								</div>
 							);

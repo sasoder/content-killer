@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useVideoGen } from '@/context/VideoGenContext';
+import { useProject } from '@/context/ProjectContext';
 import { Button } from '@/components/ui/button';
 import { CommentaryOptions } from '@shared/types/options';
 import StepOptions from '@/components/cards/StepOptions';
@@ -10,8 +10,8 @@ import QuickInfo from '@/components/QuickInfo';
 import { useCommentaryGeneration } from '@/hooks/useCommentaryGeneration';
 
 const GenerateCommentary = () => {
-	const { description, id, options } = useVideoGen();
-	const [commentaryOptions, setCommentaryOptions] = useState<CommentaryOptions>(options.commentary);
+	const { description, id, options } = useProject();
+	const [commentaryOptions, setCommentaryOptions] = useState(options?.commentary);
 	const { generate, isLoading, error } = useCommentaryGeneration(id);
 
 	const handleGenerate = async () => {

@@ -1,5 +1,4 @@
 import { SchemaType } from '@google/generative-ai';
-import { TimestampText } from '@shared/types/api/schema';
 import { CommentaryOptions, DescriptionOptions, VideoOptions } from '@shared/types/options';
 import { z } from 'zod';
 
@@ -29,12 +28,10 @@ export const DescriptionOptionsSchema = z.object({
 });
 
 export const CommentaryOptionsSchema = z.object({
-	description: TimestampTextSchema,
 	options: z.custom<CommentaryOptions>(),
 });
 
 export const VideoOptionsSchema = z.object({
-	commentary: TimestampTextSchema,
 	options: z.custom<VideoOptions>(),
 });
 

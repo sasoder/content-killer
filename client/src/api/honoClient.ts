@@ -1,6 +1,13 @@
 import { hc } from 'hono/client';
 import type { RouterType } from '@server/routes';
-import type { DescriptionGenerationStep, Project, TimestampText, Metadata, Voice } from '@shared/types/api/schema';
+import type {
+	DescriptionGenerationStep,
+	Project,
+	TimestampText,
+	Metadata,
+	Voice,
+	VideoGenerationState,
+} from '@shared/types/api/schema';
 import type { ProjectTemplate } from '@shared/types/options/template';
 import type { CommentaryOptions, DescriptionOptions, VideoOptions } from '@shared/types/options';
 
@@ -25,12 +32,13 @@ export const fetchProject = async (id: string): Promise<Project> => {
 	return handleResponse<Project>(response);
 };
 
-export async function getVideoGenerationStatus(id: string) {
+export const getVideoGenerationStatus = async (id: string) => {
+	console.log(id);
 	const response = await client.generate.video[':id'].status.$get({
 		param: { id },
 	});
-	return response.json();
-}
+	return handleResponse<VideoGenerationState>(response);
+};
 
 export const fetchProjectTemplates = async (): Promise<ProjectTemplate[]> => {
 	const response = await client.fetch.projectTemplates.$get();
@@ -161,22 +169,18 @@ export const generateMetadata = async (id: string, url: string): Promise<Metadat
 	return handleResponse<Metadata>(response);
 };
 
-export const generateCommentary = async (
-	id: string,
-	description: TimestampText[],
-	options: CommentaryOptions,
-): Promise<TimestampText[]> => {
+export const generateCommentary = async (id: string, options: CommentaryOptions): Promise<TimestampText[]> => {
 	const response = await client.generate.commentary[':id'].$post({
 		param: { id },
-		json: { description, options },
+		json: { options },
 	});
 	return handleResponse<TimestampText[]>(response);
 };
 
-export async function generateVideo(id: string, commentary: TimestampText[], options: VideoOptions) {
+export async function generateVideo(id: string, options: VideoOptions) {
 	const response = await client.generate.video[':id'].start.$post({
 		param: { id },
-		json: { commentary, options },
+		json: { options },
 	});
 	return response.json();
 }

@@ -3,17 +3,14 @@ import { TimestampText } from '@shared/types/api/schema';
 import OpenAI from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
+import { projectStorage } from '@/db/storage';
+import { TimestampTextSchema } from '@/lib/serverSchema';
 const openai = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
 });
 
 const CommentarySchema = z.object({
-	data: z.array(
-		z.object({
-			timestamp: z.string(),
-			text: z.string(),
-		}),
-	),
+	data: TimestampTextSchema,
 });
 
 const baseSystemPrompt = `Generate concise, sharp, and psychologically insightful commentary for a police bodycam video in the style of JCS Criminal Psychology. Each commentary point must:
@@ -46,10 +43,7 @@ Structure the commentary to:
 const introPrompt = `Also generate an introduction to the commentary that sets the tone for the rest of the video at 00:00. It should be 1-2 sentences but include setting the scene for the video, the key players, and the key events that will be analyzed in the commentary. It should be concise and to the point.`;
 const outroPrompt = `Also generate an outro to the commentary that wraps up the video at the end. It should be 1-2 sentences but include a summary of the video, the key players, and the key events that will be analyzed in the commentary. It should be concise and to the point.`;
 
-export const generateCommentary = async (
-	description: TimestampText[],
-	options: CommentaryOptions,
-): Promise<TimestampText[]> => {
+export const generateCommentary = async (id: string, description: TimestampText[], options: CommentaryOptions) => {
 	const prompt = `Based on the following information from a police bodycam video, generate concise, insightful commentary that creates an engaging narrative structure:
 
   ${JSON.stringify(description)}
@@ -75,5 +69,11 @@ export const generateCommentary = async (
 		response_format: zodResponseFormat(CommentarySchema, 'commentary'),
 	});
 
-	return completion.choices[0].message.parsed?.data ?? [];
+	// Update project state
+	const project = await projectStorage.getProject(id);
+	if (project) {
+		project.commentary = completion.choices[0].message.parsed?.data ?? [];
+		project.options.commentary = options;
+		await projectStorage.updateProjectState(project);
+	}
 };

@@ -238,7 +238,6 @@ export function updateVideoProgress(id: string, update: Partial<VideoGenerationS
 	const current = progressMap.get(id) || {
 		currentStep: VideoGenerationStep.IDLE,
 		completedSteps: [],
-		progress: undefined,
 	};
 
 	const newState = {

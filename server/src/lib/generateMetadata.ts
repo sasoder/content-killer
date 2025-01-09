@@ -1,6 +1,17 @@
-import { Metadata } from '@shared/types/api/schema';
 import { downloadVideoMetadata } from './downloadVideo';
+import { projectStorage } from '@/db/storage';
 
-export const generateMetadata = async (url: string): Promise<Partial<Metadata>> => {
-	return downloadVideoMetadata(url);
+export const generateMetadata = async (id: string, url: string) => {
+	const metadata = await downloadVideoMetadata(url);
+
+	const project = await projectStorage.getProject(id);
+	if (project) {
+		const fullMetadata = {
+			...project.metadata,
+			...metadata,
+			url,
+		};
+		project.metadata = fullMetadata;
+		await projectStorage.updateProjectState(project);
+	}
 };

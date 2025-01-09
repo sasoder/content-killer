@@ -1,26 +1,21 @@
 import { createContext, useContext } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type {
-	TimestampText,
-	Metadata,
-	Project,
-	DescriptionGenerationStep,
-	VideoGenerationStep,
-} from '@shared/types/api/schema';
+import type { TimestampText, Metadata, Project } from '@shared/types/api/schema';
 import type { CommentaryOptions, DescriptionOptions, VideoOptions } from '@shared/types/options';
 import { fetchProject } from '@/api/honoClient';
 
 interface ProjectContext {
 	id: string;
-	description?: TimestampText[];
-	commentary?: TimestampText[];
+	description: TimestampText[];
+	commentary: TimestampText[];
 	metadata?: Metadata;
 	options: {
-		description?: DescriptionOptions;
-		commentary?: CommentaryOptions;
-		video?: VideoOptions;
+		description: DescriptionOptions;
+		commentary: CommentaryOptions;
+		video: VideoOptions;
 	};
 	isLoading: boolean;
+	error: Error | null;
 	updateDescription: (description: TimestampText[]) => void;
 	updateCommentary: (commentary: TimestampText[]) => void;
 	updateMetadata: (metadata: Metadata) => void;
@@ -32,18 +27,27 @@ interface ProjectContext {
 export function ProjectProvider({ id, children }: { id: string; children: React.ReactNode }) {
 	const queryClient = useQueryClient();
 
-	const { data: project, isLoading } = useQuery({
+	const {
+		data: project,
+		isLoading,
+		error,
+	} = useQuery({
 		queryKey: ['project', id],
 		queryFn: () => fetchProject(id),
 	});
 
 	const value: ProjectContext = {
 		id,
-		description: project?.description,
-		commentary: project?.commentary,
+		description: project?.description ?? [],
+		commentary: project?.commentary ?? [],
 		metadata: project?.metadata,
-		options: project?.options ?? {},
+		options: project?.options as {
+			description: DescriptionOptions;
+			commentary: CommentaryOptions;
+			video: VideoOptions;
+		},
 		isLoading,
+		error,
 		updateDescription: (description: TimestampText[]) => {
 			queryClient.setQueryData(['project', id], (old: any) => ({
 				...old,

@@ -1,7 +1,5 @@
 import { z } from 'zod';
-import { TimestampTextSchema } from './serverSchema';
 import type { ProjectTemplate } from '@shared/types/options/template';
-import type { DescriptionOptions, CommentaryOptions, VideoOptions } from '@shared/types/options';
 
 // Request schemas
 export const UpdateProjectTemplateSchema = z.custom<ProjectTemplate>();

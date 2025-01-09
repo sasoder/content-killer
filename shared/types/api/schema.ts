@@ -44,7 +44,6 @@ export enum DescriptionGenerationStep {
 export interface VideoGenerationState {
 	currentStep: VideoGenerationStep;
 	completedSteps: VideoGenerationStep[];
-	progress?: number;
 	error?: {
 		step: VideoGenerationStep;
 		message: string;
@@ -63,8 +62,7 @@ export interface DescriptionGenerationState {
 
 export type Project = {
 	id: string;
-	createdAt: string;
-	metadata?: Metadata;
+	metadata: Metadata;
 	description?: TimestampText[];
 	commentary?: TimestampText[];
 	options: {

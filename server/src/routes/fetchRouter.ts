@@ -1,6 +1,10 @@
 import { Hono } from 'hono';
 import { projectStorage } from '@/db/storage';
 import { Project } from '@shared/types/api/schema';
+import { Voice } from '@shared/types/options';
+import { ElevenLabsClient } from 'elevenlabs';
+
+const client = new ElevenLabsClient();
 
 const fetchRouter = new Hono()
 	.get('/projects', async c => {
@@ -29,8 +33,20 @@ const fetchRouter = new Hono()
 		return c.json(template);
 	})
 	.get('/voices', async c => {
-		const voices = await projectStorage.getVoices();
-		return c.json(voices);
+		try {
+			const voices = await client.voices.getAll();
+			return c.json(
+				voices.voices
+					.filter(voice => voice.voice_id && voice.name)
+					.map(voice => ({
+						id: voice.voice_id,
+						name: voice.name || 'Unnamed Voice',
+						previewUrl: voice.preview_url,
+					})),
+			);
+		} catch (error) {
+			return c.json({ error: 'Failed to fetch voices' }, 500);
+		}
 	});
 
 export { fetchRouter };

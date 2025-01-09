@@ -4,8 +4,9 @@ import { ProjectTemplate } from '@shared/types/options/template';
 export const createDefaultProject = (id: string, projectTemplate?: ProjectTemplate): Project => {
 	return {
 		id,
-		createdAt: new Date().toISOString(),
-		metadata: undefined,
+		metadata: {
+			createdAt: new Date().toISOString(),
+		},
 		description: undefined,
 		commentary: undefined,
 		options: {

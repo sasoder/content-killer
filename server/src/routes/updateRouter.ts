@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
 import { projectStorage } from '@/db/storage';
-import { ProjectTemplate } from '@shared/types/options/template';
 import { zValidator } from '@hono/zod-validator';
 import { TimestampTextSchema } from '@/lib/serverSchema';
 import { UpdateProjectTemplateSchema, UpdateProjectDataSchema, UploadPauseSoundSchema } from '@/lib/apiSchema';

@@ -87,7 +87,8 @@ export function useDescriptionGeneration(id: string) {
 	});
 
 	return {
-		generate: (url: string, options: DescriptionOptions) => mutation.mutate({ url, options }),
+		generate: (url: string, options: DescriptionOptions, mutationOptions?: Parameters<typeof mutation.mutate>[1]) =>
+			mutation.mutate({ url, options }, mutationOptions),
 		isLoading: mutation.isPending || !inactiveStates.includes(state?.currentStep ?? DescriptionGenerationStep.IDLE),
 		state,
 	};

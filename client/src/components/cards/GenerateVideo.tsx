@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useVideoGen } from '@/context/VideoGenContext';
+import { useProject } from '@/context/ProjectContext';
 import { VideoOptions } from '@shared/types/options';
 import { Icons } from '@/components/icons';
 import { toast } from '@/hooks/use-toast';
@@ -11,10 +11,9 @@ import QuickInfo from '@/components/QuickInfo';
 import VoiceSelector from '@/components/VoiceSelector';
 
 const GenerateVideo = () => {
-	const { commentary, id, options } = useVideoGen();
+	const { commentary, id, options } = useProject();
 	const [videoOptions, setVideoOptions] = useState<VideoOptions>(options.video);
-	const { generate, isLoading, isGenerating, error } = useVideoGeneration(id);
-
+	const { generate, isLoading, state } = useVideoGeneration(id);
 	const handleGenerate = () => {
 		if (!commentary || commentary.length === 0) {
 			toast({
@@ -25,28 +24,25 @@ const GenerateVideo = () => {
 			return;
 		}
 
-		generate(
-			{ commentary, options: videoOptions },
-			{
-				onSuccess: () => {
-					toast({
-						title: 'Success',
-						description: 'Video generation started successfully.',
-					});
-				},
-				onError: error => {
-					console.error('Error generating content:', error);
-					const errorMessage =
-						error instanceof Error ? error.message : 'Failed to start video generation. Please try again.';
-
-					toast({
-						title: 'Error',
-						description: errorMessage,
-						variant: 'destructive',
-					});
-				},
+		generate(videoOptions, {
+			onSuccess: () => {
+				toast({
+					title: 'Success',
+					description: 'Video generation started successfully.',
+				});
 			},
-		);
+			onError: error => {
+				console.error('Error generating content:', error);
+				const errorMessage =
+					error instanceof Error ? error.message : 'Failed to start video generation. Please try again.';
+
+				toast({
+					title: 'Error',
+					description: errorMessage,
+					variant: 'destructive',
+				});
+			},
+		});
 	};
 
 	return (
@@ -96,11 +92,8 @@ const GenerateVideo = () => {
 						type='video'
 					/>
 					<div className='flex justify-center pt-2'>
-						<Button
-							onClick={handleGenerate}
-							disabled={!commentary || commentary.length === 0 || isLoading || isGenerating}
-						>
-							{isLoading || isGenerating ? (
+						<Button onClick={handleGenerate} disabled={!commentary || commentary.length === 0 || isLoading}>
+							{isLoading ? (
 								<>
 									<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />
 									Generating...

@@ -75,11 +75,11 @@ const projectTemplates = sqliteTable('project_templates', {
 const db = drizzle(sqlite);
 
 export class ProjectStorage {
-	private filesDir: string;
+	private projectsDir: string;
 	private templatesDir: string;
 
 	constructor(dataDir: string) {
-		this.filesDir = path.join(dataDir, 'files');
+		this.projectsDir = path.join(dataDir, 'projects');
 		this.templatesDir = path.join(dataDir, 'project-templates');
 	}
 
@@ -125,13 +125,13 @@ export class ProjectStorage {
 	}
 
 	async saveFile(id: string, fileName: string, content: Buffer): Promise<void> {
-		const projectDir = path.join(this.filesDir, id);
+		const projectDir = path.join(this.projectsDir, id);
 		await mkdir(projectDir, { recursive: true });
 		await writeFile(path.join(projectDir, fileName), content);
 	}
 
 	async getFile(id: string, fileName: string): Promise<Buffer> {
-		return readFile(path.join(this.filesDir, id, fileName));
+		return readFile(path.join(this.projectsDir, id, fileName));
 	}
 
 	async createProjectTemplate(template: ProjectTemplate): Promise<void> {
@@ -167,14 +167,16 @@ export class ProjectStorage {
 
 	async getAllProjectTemplates(): Promise<ProjectTemplate[]> {
 		const results = await db.select().from(projectTemplates);
-		return results.map(template => ({
-			id: template.id,
-			name: template.name,
-			description: template.description,
-			createdAt: template.createdAt,
-			options: JSON.parse(template.options),
-			pauseSoundFilename: template.pauseSoundFilename,
-		}));
+		return results
+			.map(template => ({
+				id: template.id,
+				name: template.name,
+				description: template.description,
+				createdAt: template.createdAt,
+				options: JSON.parse(template.options),
+				pauseSoundFilename: template.pauseSoundFilename,
+			}))
+			.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 	}
 
 	async updateProjectTemplate(template: ProjectTemplate): Promise<void> {
@@ -232,7 +234,7 @@ export class ProjectStorage {
 	}
 
 	async deleteProjectCommentary(id: string): Promise<void> {
-		const commentaryDir = path.join(this.filesDir, id, 'commentary');
+		const commentaryDir = path.join(this.projectsDir, id, 'commentary');
 		if (fs.existsSync(commentaryDir)) {
 			await fs.promises.rm(commentaryDir, { recursive: true, force: true });
 		}

@@ -48,7 +48,7 @@ export default function TemplatesPage() {
 	const handleCreateNew = async () => {
 		try {
 			const newTemplate = await createProjectTemplate();
-			setTemplates(prev => [...prev, newTemplate]);
+			setTemplates(prev => [newTemplate, ...prev]);
 			setSelectedTemplate(newTemplate);
 		} catch (error) {
 			console.error('Failed to create template:', error);

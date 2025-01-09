@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useVideoGen } from '@/context/VideoGenContext';
+import { useProject } from '@/context/ProjectContext';
 import { validateUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,9 +16,9 @@ import { generateMetadata } from '@/api/honoClient';
 
 const GenerateDescription = () => {
 	const { toast } = useToast();
-	const { metadata, id, options, updateMetadata } = useVideoGen();
-	const [url, setUrl] = useState<string>(metadata?.url ?? '');
-	const [descriptionOptions, setDescriptionOptions] = useState<DescriptionOptions>(options.description);
+	const { metadata, id, options, updateMetadata } = useProject();
+	const [url, setUrl] = useState(metadata?.url ?? '');
+	const [descriptionOptions, setDescriptionOptions] = useState(options?.description ?? {});
 	const { generate, isLoading, state } = useDescriptionGeneration(id);
 
 	const step = state?.currentStep || DescriptionGenerationStep.IDLE;
@@ -77,21 +77,35 @@ const GenerateDescription = () => {
 		}
 
 		try {
-			// Then start the description generation
-			generate(url, descriptionOptions);
 			// First update metadata so we have the video info
 			const metadata = await generateMetadata(id, url);
 			updateMetadata(metadata);
 
-			toast({
-				title: 'Success',
-				description: 'Description generation started.',
+			// Then start the description generation
+			generate(url, descriptionOptions, {
+				onSuccess: () => {
+					toast({
+						title: 'Success',
+						description: 'Description generation started.',
+					});
+				},
+				onError: error => {
+					console.error('Error generating content:', error);
+					const errorMessage =
+						error instanceof Error ? error.message : 'Failed to generate description. Please try again.';
+
+					toast({
+						title: 'Error',
+						description: errorMessage,
+						variant: 'destructive',
+					});
+				},
 			});
 		} catch (error) {
-			console.error('Error generating content:', error);
+			console.error('Error updating metadata:', error);
 			toast({
 				title: 'Error',
-				description: 'Failed to generate description. Please try again.',
+				description: 'Failed to update video metadata. Please try again.',
 				variant: 'destructive',
 			});
 		}

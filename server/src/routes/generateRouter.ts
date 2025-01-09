@@ -69,31 +69,42 @@ const generateRouter = new Hono()
 	.post('/metadata/:id', zValidator('json', z.object({ url: z.string() })), async c => {
 		const { url } = c.req.valid('json');
 		const id = c.req.param('id');
-		const project = await projectStorage.getProject(id);
-		if (project) {
-			const metadata: Partial<Metadata> = await generateMetadata(url);
-			const fullMetadata = { ...metadata, url };
-			project.metadata = { ...project.metadata, ...fullMetadata };
-			await projectStorage.updateProjectState(project);
-			return c.json(fullMetadata);
+
+		try {
+			const project = await projectStorage.getProject(id);
+			if (!project) {
+				return c.json({ error: 'Project not found' }, 404);
+			}
+			generateMetadata(id, url);
+			return c.json({ message: 'Generation started' });
+		} catch (error) {
+			console.error('Error starting generation:', error);
+			return c.json({ error: 'Failed to start generation' }, 500);
 		}
-		return c.json({ error: 'Project not found' }, 404);
 	})
-	.post('/commentary/:id', zValidator('json', CommentaryOptionsSchema), async c => {
-		const { description, options } = c.req.valid('json');
+	.post('/commentary/:id/start', zValidator('json', CommentaryOptionsSchema), async c => {
+		const { options } = c.req.valid('json');
 		const id = c.req.param('id');
-		const project = await projectStorage.getProject(id);
-		const commentary = await generateCommentary(description, options);
-		if (project) {
-			project.commentary = commentary;
-			project.description = description;
-			project.options.commentary = options;
-			await projectStorage.updateProjectState(project);
+
+		try {
+			const project = await projectStorage.getProject(id);
+			if (!project) {
+				return c.json({ error: 'Project not found' }, 404);
+			}
+			const description = project?.description;
+			if (!description) {
+				return c.json({ error: 'No description found' }, 400);
+			}
+			generateCommentary(id, description, options);
+
+			return c.json({ message: 'Generation started' });
+		} catch (error) {
+			console.error('Error starting generation:', error);
+			return c.json({ error: 'Failed to start generation' }, 500);
 		}
-		return c.json(commentary);
 	})
 	.post('/video/:id/start', zValidator('json', VideoOptionsSchema), async c => {
-		const { commentary, options } = c.req.valid('json');
+		const { options } = c.req.valid('json');
 		const id = c.req.param('id');
 
 		try {
@@ -102,8 +113,12 @@ const generateRouter = new Hono()
 				return c.json({ error: 'No video URL found' }, 400);
 			}
 
+			if (!project || !project.commentary) {
+				return c.json({ error: 'Project not found' }, 404);
+			}
+
 			// Start the process in the background
-			generateVideo(id, commentary, options).catch(error => {
+			generateVideo(id, project.commentary, options).catch(error => {
 				console.error('Error in video generation:', error);
 			});
 
@@ -134,7 +149,6 @@ const generateRouter = new Hono()
 				return c.json({ error: 'Project not found' }, 404);
 			}
 
-			// Start the process in the background
 			generateDescription(id, url, options).catch(error => {
 				console.error('Error in description generation:', error);
 			});
@@ -152,7 +166,7 @@ const generateRouter = new Hono()
 		const currentState = progress || {
 			currentStep: DescriptionGenerationStep.IDLE,
 			completedSteps: [],
-			progress: 0,
+			progress: undefined,
 		};
 
 		// For regular state checks or if state is IDLE/ERROR/COMPLETED,

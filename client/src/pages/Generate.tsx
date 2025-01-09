@@ -1,4 +1,4 @@
-import { VideoGenProvider, useVideoGen } from '@/context/VideoGenContext';
+import { ProjectProvider, useProject } from '@/context/ProjectContext';
 import FileDownloader from '@/components/cards/FileDownloader';
 import GenerateDescription from '@/components/cards/GenerateDescription';
 import GenerateCommentary from '@/components/cards/GenerateCommentary';
@@ -9,19 +9,12 @@ import { Icons } from '@/components/icons';
 import { useParams } from 'react-router-dom';
 import { HTTPError } from '@/components/HTTPError';
 import { Header } from '@/components/layout/Header';
+import { useVideoGeneration } from '@/hooks/useVideoGeneration';
 import { VideoGenerationStep } from '@shared/types/api/schema';
 
 const GeneratePageContent = () => {
-	const {
-		description,
-		commentary,
-		videoGenerationState,
-		updateDescription,
-		updateCommentary,
-		metadata,
-		isLoading,
-		error,
-	} = useVideoGen();
+	const { description, commentary, updateDescription, updateCommentary, metadata, isLoading, error, id } = useProject();
+	const { state } = useVideoGeneration(id);
 
 	if (isLoading) {
 		return (
@@ -32,7 +25,7 @@ const GeneratePageContent = () => {
 	}
 
 	if (error) {
-		return <HTTPError error={error} />;
+		return <HTTPError error={error.message} />;
 	}
 
 	return (
@@ -46,7 +39,7 @@ const GeneratePageContent = () => {
 						info='This step generates a comprehensive description of the video, with timestamps for all the pivotal moments in the video.'
 					/>
 
-					{description.length > 0 && (
+					{description && description.length > 0 && (
 						<>
 							<StepTransition data={description} jsonEditorTitle='Edit Description Data' onUpdate={updateDescription} />
 
@@ -58,7 +51,7 @@ const GeneratePageContent = () => {
 						</>
 					)}
 
-					{commentary.length > 0 && (
+					{commentary && commentary.length > 0 && (
 						<>
 							<StepTransition data={commentary} jsonEditorTitle='Edit Commentary Data' onUpdate={updateCommentary} />
 
@@ -70,7 +63,7 @@ const GeneratePageContent = () => {
 						</>
 					)}
 
-					{videoGenerationState.currentStep !== VideoGenerationStep.IDLE && (
+					{state?.currentStep !== VideoGenerationStep.IDLE && (
 						<>
 							<StepTransition data={[]} jsonEditorTitle='' onUpdate={() => {}} />
 
@@ -99,8 +92,8 @@ export default function GeneratePage() {
 	const { id } = useParams();
 
 	return (
-		<VideoGenProvider id={id as string}>
+		<ProjectProvider id={id as string}>
 			<GeneratePageContent />
-		</VideoGenProvider>
+		</ProjectProvider>
 	);
 }
