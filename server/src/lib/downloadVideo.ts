@@ -3,8 +3,7 @@ import { Metadata } from '@shared/types/api/schema';
 import dotenv from 'dotenv';
 import path from 'path';
 import { spawn } from 'child_process';
-
-const DATA_DIR = './data';
+import { PROJECTS_DIR } from '@/db/storage';
 
 dotenv.config();
 
@@ -44,7 +43,7 @@ export const downloadVideo = async (
 ): Promise<string> => {
 	try {
 		const ytDl = getYoutubeDl();
-		const outputPath = path.join(DATA_DIR, projectId, 'video', 'source.mp4');
+		const outputPath = path.join(PROJECTS_DIR, projectId, 'video', 'source.mp4');
 		const ytDlPath = process.env.YT_DLP_PATH || 'yt-dlp';
 
 		let isDownloadingAudio = false;

@@ -34,26 +34,39 @@ export function ProjectProvider({ id, children }: { id: string; children: React.
 	} = useQuery({
 		queryKey: ['project', id],
 		queryFn: () => fetchProject(id),
+		staleTime: Infinity,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+		refetchOnReconnect: false,
 	});
 
 	const descriptionMutation = useMutation({
 		mutationFn: (description: TimestampText[]) => updateProjectDescription(id, description),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['project', id] });
+		onSuccess: data => {
+			queryClient.setQueryData(['project', id], (old: any) => ({
+				...old,
+				description: data,
+			}));
 		},
 	});
 
 	const commentaryMutation = useMutation({
 		mutationFn: (commentary: TimestampText[]) => updateProjectCommentary(id, commentary),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['project', id] });
+		onSuccess: data => {
+			queryClient.setQueryData(['project', id], (old: any) => ({
+				...old,
+				commentary: data,
+			}));
 		},
 	});
 
 	const metadataMutation = useMutation({
 		mutationFn: (url: string) => generateMetadata(id, url),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['project', id] });
+		onSuccess: data => {
+			queryClient.setQueryData(['project', id], (old: any) => ({
+				...old,
+				metadata: data,
+			}));
 		},
 	});
 

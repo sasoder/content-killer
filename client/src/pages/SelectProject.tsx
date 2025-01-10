@@ -93,7 +93,7 @@ const SelectProject = () => {
 													<div className='w-full max-w-[300px]'>
 														<div className='truncate font-medium'>{project.metadata?.title}</div>
 														<div className='text-muted-foreground truncate text-xs'>
-															Created {formatDate(project.createdAt)}
+															Created {formatDate(project.metadata.createdAt)}
 														</div>
 													</div>
 												</SelectItem>

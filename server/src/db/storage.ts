@@ -10,11 +10,11 @@ import { ProjectTemplate } from '@shared/types/options/template';
 import { defaultProjectTemplate } from '@shared/types/options/defaultTemplates';
 import { createDefaultProject } from '@/lib/defaultProject';
 
-const DATA_DIR = './data';
-const PROJECTS_DIR = path.join(DATA_DIR, 'projects');
-const PROJECT_TEMPLATES_DIR = path.join(DATA_DIR, 'project-templates');
-const DB_PATH = path.join(DATA_DIR, 'projects.db');
-const DEFAULT_TEMPLATE_ID = 'default';
+export const DATA_DIR = './data';
+export const PROJECTS_DIR = path.join(DATA_DIR, 'projects');
+export const PROJECT_TEMPLATES_DIR = path.join(DATA_DIR, 'project-templates');
+export const DB_PATH = path.join(DATA_DIR, 'projects.db');
+export const DEFAULT_TEMPLATE_ID = 'default';
 
 // Ensure directories exist for file storage
 if (!fs.existsSync(DATA_DIR)) {
