@@ -19,6 +19,7 @@ export type VideoOptions = {
 	audio: {
 		stability: number;
 		voiceId: string;
+		speedMultiplier: number;
 	};
 	video: {
 		bw: boolean;

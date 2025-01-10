@@ -77,7 +77,7 @@ Focus on capturing both immediate actions and deeper psychological/strategic ele
 
 export const COMMENTARY_POLICE_PROMPT = `Generate concise, sharp, and psychologically insightful commentary for a police bodycam video in the style of JCS Criminal Psychology. Each commentary point must:
 - Be **authoritative** and **confident**—avoid speculative language like "could signify" or "possibly."
-- Use **clear and simple language, at most an 8th grade level**—avoid complex or formal phrasing like "forthcoming" or "infused with an odd joviality" or "invites scrutiny" or "stark" or "signifies a blatant defiance" or "jovial act"
+- Use **clear and simple language, at most an 8th grade level**—avoid complex or formal phrasing!!!
 - Focus on the **suspect's and officer's behavior, intentions, and psychology** (1-2 sentences per moment).
 - Avoid unnecessary descriptions of the scene unless they reveal important behavior or psychology.
 - Highlight manipulative tactics, inconsistencies, or psychological patterns with **confidence**.

@@ -16,6 +16,7 @@ export const defaultVideoOptions: VideoOptions = {
 	audio: {
 		stability: 0.7,
 		voiceId: 'nPczCjzI2devNBz1zQrb',
+		speedMultiplier: 1,
 	},
 	video: {
 		bw: true,

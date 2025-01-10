@@ -1,7 +1,11 @@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { descriptionOptionDefinitions, videoOptionDefinitions } from '@/lib/options/optionDefinitions';
+import {
+	commentaryOptionDefinitions,
+	descriptionOptionDefinitions,
+	videoOptionDefinitions,
+} from '@/lib/options/optionDefinitions';
 import { ProjectTemplate } from '@shared/types/options/template';
 import StepOptions from '@/components/cards/StepOptions';
 import VoiceSelector from '@/components/VoiceSelector';
@@ -47,7 +51,7 @@ export function TemplateCard({ template, onChange, onPauseSoundSelect }: Templat
 			</div>
 
 			{/* Options Section */}
-			<div className='grid grid-cols-3 gap-6'>
+			<div className='grid grid-cols-4 gap-6'>
 				{/* Video Options */}
 				<div>
 					<StepOptions
@@ -66,6 +70,18 @@ export function TemplateCard({ template, onChange, onPauseSoundSelect }: Templat
 						}
 						optionDefinitions={videoOptionDefinitions.video}
 						type='video'
+					/>
+				</div>
+
+				{/* Commentary Options */}
+				<div>
+					<StepOptions
+						options={template.options.commentary}
+						onOptionChange={newOptions =>
+							onChange({ ...template, options: { ...template.options, commentary: newOptions } })
+						}
+						optionDefinitions={commentaryOptionDefinitions}
+						type='commentary'
 					/>
 				</div>
 

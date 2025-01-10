@@ -162,7 +162,7 @@ async function processVideoWithOverlays(
 		throw new Error('Unsupported pause audio format');
 	}
 
-	return new Promise<string>((resolve, reject) => {
+	return new Promise<string>(async (resolve, reject) => {
 		const command = ffmpeg(sourceVideo);
 
 		overlays.forEach(o => command.input(o.filepath));
@@ -170,6 +170,10 @@ async function processVideoWithOverlays(
 		if (options.playSound) {
 			command.input(pauseAudio);
 		}
+
+		// Get pause audio duration early
+		const pauseDuration = await getMediaDuration(pauseAudio);
+		const delayMs = Math.max(0, (pauseDuration - 0.2) * 1000); // 200ms before end
 
 		const filterComplex: string[] = [];
 		const streams: string[] = [];
@@ -192,7 +196,7 @@ async function processVideoWithOverlays(
 
 			if (options.playSound) {
 				filterComplex.push(`[${pauseInputIndex}:a]asetpts=PTS-STARTPTS[pause${i}]`);
-				filterComplex.push(`[${i + 1}:a]asetpts=PTS-STARTPTS,adelay=500|500[delay${i}]`);
+				filterComplex.push(`[${i + 1}:a]asetpts=PTS-STARTPTS,adelay=${delayMs}|${delayMs}[delay${i}]`);
 				filterComplex.push(`[pause${i}][delay${i}]amix=inputs=2:duration=longest[af${i}]`);
 			} else {
 				filterComplex.push(`[${i + 1}:a]asetpts=PTS-STARTPTS[af${i}]`);

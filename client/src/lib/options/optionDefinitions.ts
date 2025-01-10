@@ -66,12 +66,20 @@ export const videoOptionDefinitions: VideoOptionDefinitions = {
 			type: 'number',
 			min: 0,
 			max: 1,
-			step: 0.1,
+			step: 0.5,
 		},
 		voiceId: {
 			label: 'Voice',
 			description: 'The voice to use for the audio narration.',
 			type: 'string',
+		},
+		speedMultiplier: {
+			label: 'Speed Multiplier',
+			description: 'The speed multiplier for the audio narration.',
+			type: 'number',
+			min: 0.75,
+			max: 1.75,
+			step: 0.05,
 		},
 	},
 	video: {
@@ -96,7 +104,7 @@ export const videoOptionDefinitions: VideoOptionDefinitions = {
 			type: 'number',
 			min: 8,
 			max: 32,
-			step: 2,
+			step: 1,
 		},
 		size: {
 			label: 'Video Size',

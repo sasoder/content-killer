@@ -53,10 +53,10 @@ const GenerateDescription = () => {
 		}
 
 		try {
-			// First update metadata so we have the video info
+			// first update metadata so we have the video info
 			updateMetadata(url);
 
-			// Then start the description generation
+			// then start the description generation
 			generate(url, descriptionOptions, {
 				onSuccess: () => {
 					toast({
