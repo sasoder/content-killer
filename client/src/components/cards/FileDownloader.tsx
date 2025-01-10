@@ -7,9 +7,9 @@ import { downloadFile } from '@/api/honoClient';
 import { toast } from '@/hooks/use-toast';
 import { useVideoGeneration } from '@/hooks/useVideoGeneration';
 import StepProgress from '@/components/cards/StepProgress';
-
+import { cn } from '@/lib/utils';
 const FileDownloader = () => {
-	const { id, options } = useProject();
+	const { id, options, audio, video } = useProject();
 	const { state } = useVideoGeneration(id);
 	const [isDownloadingAudio, setIsDownloadingAudio] = useState(false);
 	const [isDownloadingVideo, setIsDownloadingVideo] = useState(false);
@@ -68,14 +68,19 @@ const FileDownloader = () => {
 
 	return (
 		<div className='flex h-full flex-col gap-4'>
-			<div className='flex flex-grow flex-col justify-end'>
+			<div className='flex flex-grow flex-col justify-between'>
+				<Icons.download
+					className={cn('text-muted-foreground mx-auto h-32 w-32 pt-4', !isComplete && 'animate-pulse')}
+				/>
 				<StepProgress steps={steps} state={state} />
 			</div>
 			<div className='flex flex-col items-center gap-4'>
 				<Button
 					onClick={handleDownloadAudio}
 					className='w-fit'
-					disabled={!completedSteps.includes(VideoGenerationStep.GENERATING_AUDIO) || isDownloadingAudio}
+					disabled={
+						audio ? false : !completedSteps.includes(VideoGenerationStep.GENERATING_AUDIO) || isDownloadingAudio
+					}
 				>
 					{isDownloadingAudio ? (
 						<>
@@ -86,7 +91,11 @@ const FileDownloader = () => {
 						'Download Audio'
 					)}
 				</Button>
-				<Button onClick={handleDownloadVideo} className='w-fit' disabled={!isComplete || isDownloadingVideo}>
+				<Button
+					onClick={handleDownloadVideo}
+					className='w-fit'
+					disabled={video ? false : !isComplete || isDownloadingVideo || !video}
+				>
 					{isDownloadingVideo ? (
 						<>
 							<Icons.loader className='mr-2 h-[1.2rem] w-[1.2rem] animate-spin' />

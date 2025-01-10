@@ -78,9 +78,9 @@ const ProjectPageContent = () => {
 
 				<div>
 					<p className='text-muted-foreground text-sm'>
-						This app uses Gemini 1.5 Pro to generate a description of the provided video. The description is then used
-						to create a commentary at all pivotal moments in the video with GPT 4o mini. This commentary is sent to
-						Elevenlabs and made into audio files.
+						This app uses Gemini to generate a description of the provided video. The description is then used to create
+						a commentary at all pivotal moments in the video with GPT 4o mini. This commentary is sent to ElevenLabs and
+						made into audio files and finally stitched into a video.
 					</p>
 				</div>
 			</main>

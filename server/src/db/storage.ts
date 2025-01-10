@@ -9,6 +9,8 @@ import { Project } from '@shared/types/api/schema';
 import { ProjectTemplate } from '@shared/types/options/template';
 import { defaultProjectTemplate } from '@shared/types/options/defaultTemplates';
 import { createDefaultProject } from '@/lib/defaultProject';
+import { createWriteStream } from 'fs';
+import archiver from 'archiver';
 
 export const DATA_DIR = './data';
 export const PROJECTS_DIR = path.join(DATA_DIR, 'projects');
@@ -80,7 +82,7 @@ export class ProjectStorage {
 		if (!fs.existsSync(path.join(this.projectsDir, id))) {
 			fs.mkdirSync(path.join(this.projectsDir, id));
 			fs.mkdirSync(path.join(this.projectsDir, id, 'video'));
-			fs.mkdirSync(path.join(this.projectsDir, id, 'commentary'));
+			fs.mkdirSync(path.join(this.projectsDir, id, 'audio'));
 			fs.mkdirSync(path.join(this.projectsDir, id, 'misc'));
 			// copy template pause sound to project
 			const templateDir = path.join(this.templatesDir, projectTemplate.id);
@@ -127,8 +129,49 @@ export class ProjectStorage {
 		await writeFile(path.join(projectDir, fileName), content);
 	}
 
-	async getFile(id: string, fileName: string): Promise<Buffer> {
-		return readFile(path.join(this.projectsDir, id, fileName));
+	async getVideo(id: string): Promise<Buffer> {
+		const projectDir = path.join(this.projectsDir, id);
+		const videoDir = path.join(projectDir, 'video');
+		const videoFiles = fs.readdirSync(videoDir);
+		const videoFile = videoFiles[0];
+		return readFile(path.join(videoDir, videoFile));
+	}
+
+	async getAudio(id: string): Promise<Buffer> {
+		const projectDir = path.join(this.projectsDir, id);
+		const audioDir = path.join(projectDir, 'audio');
+		const tempZipPath = path.join(projectDir, 'temp-audio.zip');
+
+		const output = createWriteStream(tempZipPath);
+		const archive = archiver('zip', {
+			zlib: { level: 9 },
+			store: false,
+		});
+
+		archive.pipe(output);
+
+		const audioFiles = fs.readdirSync(audioDir);
+		for (const audioFile of audioFiles) {
+			const filePath = path.join(audioDir, audioFile);
+			archive.file(filePath, { name: audioFile });
+		}
+
+		await archive.finalize();
+
+		await new Promise((resolve, reject) => {
+			output.on('close', resolve);
+			output.on('error', reject);
+			archive.on('error', reject);
+		});
+
+		const zipBuffer = await readFile(tempZipPath);
+		try {
+			await fs.promises.unlink(tempZipPath);
+		} catch (error) {
+			console.error('Failed to clean up temporary zip file:', error);
+		}
+
+		return zipBuffer;
 	}
 
 	async createProjectTemplate(template: ProjectTemplate): Promise<void> {
@@ -230,10 +273,10 @@ export class ProjectStorage {
 		return readFile(path.join(this.templatesDir, templateId, fileName));
 	}
 
-	async deleteProjectCommentary(id: string): Promise<void> {
-		const commentaryDir = path.join(this.projectsDir, id, 'commentary');
-		if (fs.existsSync(commentaryDir)) {
-			await fs.promises.rm(commentaryDir, { recursive: true, force: true });
+	async deleteProjectAudio(id: string): Promise<void> {
+		const audioDir = path.join(this.projectsDir, id, 'audio');
+		if (fs.existsSync(audioDir)) {
+			await fs.promises.rm(audioDir, { recursive: true, force: true });
 		}
 	}
 

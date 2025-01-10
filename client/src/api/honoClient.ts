@@ -252,9 +252,22 @@ export const updateProjectCommentary = async (id: string, commentary: TimestampT
 	return handleResponse<void>(response);
 };
 
-export const downloadFile = async (id: string, type: 'video' | 'audio'): Promise<Blob> => {
-	const response = await client.fetch.project[':id'].download[':type'].$get({
-		param: { id, type },
-	});
-	return response.blob();
+export const downloadFile = async (id: string, type: 'video' | 'audio'): Promise<void> => {
+	const response = await (type === 'video'
+		? client.fetch.project[':id'].download.video.$get({ param: { id } })
+		: client.fetch.project[':id'].download.audio.$get({ param: { id } }));
+
+	if (!response.ok) {
+		throw new Error(`Failed to download ${type} file`);
+	}
+
+	const blob = await response.blob();
+	const url = window.URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = `${type}-${id}.${type === 'video' ? 'mp4' : 'zip'}`;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	window.URL.revokeObjectURL(url);
 };

@@ -49,6 +49,36 @@ const fetchRouter = new Hono()
 		} catch (error) {
 			return c.json({ error: 'Failed to fetch voices' }, 500);
 		}
+	})
+	.get('/project/:id/download/audio', async c => {
+		const id = c.req.param('id');
+		const project = await projectStorage.getProject(id);
+		if (!project) {
+			return c.json({ error: 'Project not found' }, 404);
+		}
+		const zippedFiles = await projectStorage.getAudio(id);
+		return new Response(zippedFiles, {
+			headers: {
+				'Content-Type': 'application/zip',
+				'Content-Disposition': `attachment; filename="audio-${id}.zip"`,
+				'Content-Length': zippedFiles.length.toString(),
+				'Cache-Control': 'no-cache',
+			},
+		});
+	})
+	.get('/project/:id/download/video', async c => {
+		const id = c.req.param('id');
+		const project = await projectStorage.getProject(id);
+		if (!project) {
+			return c.json({ error: 'Project not found' }, 404);
+		}
+		const video = await projectStorage.getVideo(id);
+		return new Response(video, {
+			headers: {
+				'Content-Type': 'video/mp4',
+				'Content-Disposition': `attachment; filename="video-${id}.mp4"`,
+			},
+		});
 	});
 
 export { fetchRouter };

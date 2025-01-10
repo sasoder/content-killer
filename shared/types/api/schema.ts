@@ -65,6 +65,8 @@ export type Project = {
 	metadata: Metadata;
 	description?: TimestampText[];
 	commentary?: TimestampText[];
+	audio: boolean;
+	video: boolean;
 	options: {
 		description?: DescriptionOptions;
 		commentary?: CommentaryOptions;

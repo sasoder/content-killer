@@ -20,6 +20,7 @@ import {
 	Upload,
 	Music,
 	Dot,
+	Download,
 } from 'lucide-react';
 
 export type IconKeys = keyof typeof icons;
@@ -50,6 +51,7 @@ const icons = {
 	upload: Upload,
 	music: Music,
 	dot: Dot,
+	download: Download,
 };
 
 export const Icons: IconsType = icons;

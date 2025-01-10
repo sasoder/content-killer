@@ -8,6 +8,8 @@ interface ProjectContext {
 	id: string;
 	description: TimestampText[];
 	commentary: TimestampText[];
+	audio: boolean;
+	video: boolean;
 	metadata?: Metadata;
 	options: {
 		description: DescriptionOptions;
@@ -18,6 +20,8 @@ interface ProjectContext {
 	error: Error | null;
 	updateDescription: (description: TimestampText[]) => void;
 	updateCommentary: (commentary: TimestampText[]) => void;
+	updateAudio: (audio: boolean) => void;
+	updateVideo: (video: boolean) => void;
 	updateMetadata: (url: string) => void;
 	updateDescriptionOptions: (options: DescriptionOptions) => void;
 	updateCommentaryOptions: (options: CommentaryOptions) => void;
@@ -74,6 +78,8 @@ export function ProjectProvider({ id, children }: { id: string; children: React.
 		id,
 		description: project?.description ?? [],
 		commentary: project?.commentary ?? [],
+		audio: project?.audio ?? false,
+		video: project?.video ?? false,
 		metadata: project?.metadata,
 		options: project?.options as {
 			description: DescriptionOptions;
@@ -87,6 +93,18 @@ export function ProjectProvider({ id, children }: { id: string; children: React.
 		},
 		updateCommentary: (commentary: TimestampText[]) => {
 			commentaryMutation.mutate(commentary);
+		},
+		updateAudio: (audio: boolean) => {
+			queryClient.setQueryData(['project', id], (old: any) => ({
+				...old,
+				audio,
+			}));
+		},
+		updateVideo: (video: boolean) => {
+			queryClient.setQueryData(['project', id], (old: any) => ({
+				...old,
+				video,
+			}));
 		},
 		updateMetadata: (url: string) => {
 			metadataMutation.mutate(url);

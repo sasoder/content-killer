@@ -41,13 +41,13 @@ export const generateAudio = async (
 ): Promise<void> => {
 	try {
 		const projectDir = path.join(PROJECTS_DIR, id);
-		const commentaryDir = path.join(projectDir, 'commentary');
-		await fs.mkdir(commentaryDir, { recursive: true });
+		const audioDir = path.join(projectDir, 'audio');
+		await fs.mkdir(audioDir, { recursive: true });
 
 		const audioPromises = commentary.map(async entry => {
 			const timestamp = entry.timestamp.replace(':', '');
 			const filename = `${timestamp}.mp3`;
-			const filePath = path.join(commentaryDir, filename);
+			const filePath = path.join(audioDir, filename);
 
 			const buffer = await generateSingleAudio(entry.text, options);
 			await fs.writeFile(filePath, buffer);

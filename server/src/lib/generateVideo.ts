@@ -122,7 +122,6 @@ async function generateSubtitles(videoPath: string, srtPath: string): Promise<st
 	});
 
 	await fs.writeFile(srtPath, transcript);
-	await fs.unlink(audioPath);
 
 	return srtPath;
 }
@@ -276,6 +275,8 @@ export async function generateVideo(id: string, commentary: TimestampText[], opt
 		// Update project state
 		project.commentary = commentary;
 		project.options.video = options;
+		project.video = false;
+		project.audio = false;
 		await projectStorage.updateProjectState(project);
 
 		updateVideoProgress(id, {
@@ -286,15 +287,15 @@ export async function generateVideo(id: string, commentary: TimestampText[], opt
 		const projectDir = path.join(PROJECTS_DIR, id);
 		const videoDir = path.join(projectDir, 'video');
 		const miscDir = path.join(projectDir, 'misc');
-		const commentaryDir = path.join(projectDir, 'commentary');
+		const audioDir = path.join(projectDir, 'audio');
 		console.log('projectDir', projectDir);
 		console.log('videoDir', videoDir);
 		console.log('miscDir', miscDir);
-		console.log('commentaryDir', commentaryDir);
+		console.log('audioDir', audioDir);
 
 		await fs.mkdir(videoDir, { recursive: true });
 		await fs.mkdir(miscDir, { recursive: true });
-		await fs.mkdir(commentaryDir, { recursive: true });
+		await fs.mkdir(audioDir, { recursive: true });
 
 		const sourceVideoPath = path.join(videoDir, 'source.mkv');
 		const scaledVideoPath = path.join(videoDir, 'scaled.mkv');
@@ -302,7 +303,7 @@ export async function generateVideo(id: string, commentary: TimestampText[], opt
 		const pauseAudioPath = path.join(miscDir, project.pauseSoundFilename);
 		const outputPath = path.join(videoDir, 'output.mp4');
 
-		await downloadVideo(project.metadata.url ?? '', sourceVideoPath);
+		await downloadVideo(project.metadata.url ?? '', id);
 
 		// Scale video if needed
 		let videoToProcess = sourceVideoPath;
@@ -332,7 +333,7 @@ export async function generateVideo(id: string, commentary: TimestampText[], opt
 		});
 
 		// Remove existing audio files
-		await projectStorage.deleteProjectCommentary(id);
+		await projectStorage.deleteProjectAudio(id);
 		await generateAudio(id, commentary, options.audio);
 
 		// Process video with overlays
@@ -340,7 +341,7 @@ export async function generateVideo(id: string, commentary: TimestampText[], opt
 			currentStep: VideoGenerationStep.PROCESSING_VIDEO,
 		});
 
-		await processVideoWithOverlays(videoToProcess, outputPath, commentaryDir, pauseAudioPath, {
+		await processVideoWithOverlays(videoToProcess, outputPath, audioDir, pauseAudioPath, {
 			bw: options.video.bw,
 			playSound: options.video.playSound,
 			size: options.video.size,
@@ -367,6 +368,10 @@ export async function generateVideo(id: string, commentary: TimestampText[], opt
 		updateVideoProgress(id, {
 			currentStep: VideoGenerationStep.COMPLETED,
 		});
+
+		project.video = true;
+		project.audio = true;
+		await projectStorage.updateProjectState(project);
 	} catch (error) {
 		console.error('Error in video generation:', error);
 		const errorMsg = error instanceof Error ? error.message : 'Unknown error';

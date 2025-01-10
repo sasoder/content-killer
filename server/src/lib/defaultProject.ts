@@ -9,6 +9,8 @@ export const createDefaultProject = (id: string, projectTemplate: ProjectTemplat
 		},
 		description: undefined,
 		commentary: undefined,
+		audio: false,
+		video: false,
 		options: {
 			description: projectTemplate?.options.description,
 			commentary: projectTemplate?.options.commentary,
