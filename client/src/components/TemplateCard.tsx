@@ -52,24 +52,15 @@ export function TemplateCard({ template, onChange, onPauseSoundSelect }: Templat
 
 			{/* Options Section */}
 			<div className='grid grid-cols-4 gap-6'>
-				{/* Video Options */}
+				{/* Description Options */}
 				<div>
 					<StepOptions
-						options={template.options.video.video}
+						options={template.options.description}
 						onOptionChange={newOptions =>
-							onChange({
-								...template,
-								options: {
-									...template.options,
-									video: {
-										...template.options.video,
-										video: newOptions,
-									},
-								},
-							})
+							onChange({ ...template, options: { ...template.options, description: newOptions } })
 						}
-						optionDefinitions={videoOptionDefinitions.video}
-						type='video'
+						optionDefinitions={descriptionOptionDefinitions}
+						type='description'
 					/>
 				</div>
 
@@ -84,7 +75,6 @@ export function TemplateCard({ template, onChange, onPauseSoundSelect }: Templat
 						type='commentary'
 					/>
 				</div>
-
 				{/* Audio Options */}
 				<div className='flex flex-col gap-4'>
 					<StepOptions
@@ -130,15 +120,24 @@ export function TemplateCard({ template, onChange, onPauseSoundSelect }: Templat
 					</div>
 				</div>
 
-				{/* Description Options */}
+				{/* Video Options */}
 				<div>
 					<StepOptions
-						options={template.options.description}
+						options={template.options.video.video}
 						onOptionChange={newOptions =>
-							onChange({ ...template, options: { ...template.options, description: newOptions } })
+							onChange({
+								...template,
+								options: {
+									...template.options,
+									video: {
+										...template.options.video,
+										video: newOptions,
+									},
+								},
+							})
 						}
-						optionDefinitions={descriptionOptionDefinitions}
-						type='description'
+						optionDefinitions={videoOptionDefinitions.video}
+						type='video'
 					/>
 				</div>
 			</div>

@@ -13,7 +13,8 @@ import { useVideoGeneration } from '@/hooks/useVideoGeneration';
 import { VideoGenerationStep } from '@shared/types/api/schema';
 
 const ProjectPageContent = () => {
-	const { description, commentary, updateDescription, updateCommentary, metadata, isLoading, error, id } = useProject();
+	const { description, commentary, updateDescription, updateCommentary, metadata, isLoading, error, id, audio, video } =
+		useProject();
 	const { state } = useVideoGeneration(id);
 
 	if (isLoading) {
@@ -63,7 +64,7 @@ const ProjectPageContent = () => {
 						</>
 					)}
 
-					{state?.currentStep !== VideoGenerationStep.IDLE && (
+					{(state?.currentStep !== VideoGenerationStep.IDLE || audio || video) && (
 						<>
 							<StepTransition data={[]} jsonEditorTitle='' onUpdate={() => {}} />
 

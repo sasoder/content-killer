@@ -73,6 +73,14 @@ export const DESCRIPTION_PROMPT = `Provide a detailed behavioral analysis descri
     text: "Description of the event, including exact communication (verbal/non-verbal) and behavioral context and actor identification"
 }
 
+For extended dialogue or complex interactions, indicate completion time using [completes at MM:SS] at the end of the relevant description.
+
+Example:
+{
+    timestamp: "00:30",
+    text: "Subject A begins lengthy monologue about project challenges, voice showing increasing frustration as they detail multiple setbacks. Body language becomes more tense, with frequent hand gestures and pacing. [completes at 01:45]"
+}
+
 Focus on capturing both immediate actions and deeper psychological/strategic elements that reveal character, motivation, and decision-making processes.`;
 
 export const COMMENTARY_POLICE_PROMPT = `Generate concise, sharp, and psychologically insightful commentary for a police bodycam video in the style of JCS Criminal Psychology. Each commentary point must:

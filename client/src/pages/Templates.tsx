@@ -181,7 +181,7 @@ export default function TemplatesPage() {
 									<CardDescription>Customize settings for this template</CardDescription>
 								</CardHeader>
 								<CardContent>
-									<div className='space-y-6'>
+									<div className='flex flex-col'>
 										<TemplateCard
 											template={selectedTemplate}
 											onChange={setSelectedTemplate}
@@ -196,7 +196,7 @@ export default function TemplatesPage() {
 										/>
 
 										{/* Save Button */}
-										<div className='flex justify-end pt-4'>
+										<div className='flex justify-end'>
 											<Button onClick={handleSave} disabled={loading || !hasChanges()} className='shadow-sm'>
 												{loading ? (
 													<>

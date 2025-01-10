@@ -27,12 +27,8 @@ const FileDownloader = () => {
 		[options?.video?.video.subtitlesEnabled],
 	);
 
-	if (!state || state.currentStep === VideoGenerationStep.IDLE) {
-		return null;
-	}
-
 	const { currentStep, completedSteps = [], error } = state;
-	const isComplete = currentStep === VideoGenerationStep.COMPLETED;
+	const isComplete = currentStep === VideoGenerationStep.COMPLETED || video;
 
 	const handleDownloadAudio = async () => {
 		try {
@@ -67,9 +63,10 @@ const FileDownloader = () => {
 	return (
 		<div className='flex h-full flex-col gap-4'>
 			<div className='flex flex-grow flex-col justify-between'>
-				<Icons.download
-					className={cn('text-muted-foreground mx-auto h-32 w-32 pt-4', !isComplete && 'animate-pulse')}
-				/>
+				<div className='mt-2 flex flex-col items-center gap-4'>
+					<p className='text-sm text-gray-500'>Download the generated video and audio files.</p>
+					<Icons.download className={cn('text-muted-foreground mx-auto h-32 w-32', !isComplete && 'animate-pulse')} />
+				</div>
 				<StepProgress steps={steps} state={state} />
 			</div>
 			<div className='flex flex-col items-center gap-4'>
