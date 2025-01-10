@@ -24,7 +24,7 @@ const GenerateDescription = () => {
 			{ id: DescriptionGenerationStep.PREPARING, label: 'Sending generation request' },
 			{
 				id: DescriptionGenerationStep.DOWNLOADING,
-				label: 'Downloading video',
+				label: 'Downloading video with yt-dlp',
 				showProgress: true,
 			},
 			{ id: DescriptionGenerationStep.UPLOADING, label: 'Uploading video to Gemini' },
