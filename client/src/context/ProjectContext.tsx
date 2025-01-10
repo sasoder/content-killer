@@ -62,10 +62,10 @@ export function ProjectProvider({ id, children }: { id: string; children: React.
 
 	const metadataMutation = useMutation({
 		mutationFn: (url: string) => generateMetadata(id, url),
-		onSuccess: data => {
-			queryClient.setQueryData(['project', id], (old: any) => ({
+		onSuccess: metadata => {
+			queryClient.setQueryData(['project', id], (old: Project) => ({
 				...old,
-				metadata: data,
+				metadata,
 			}));
 		},
 	});

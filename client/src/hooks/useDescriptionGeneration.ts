@@ -116,6 +116,6 @@ export function useDescriptionGeneration(id: string) {
 		generate: (url: string, options: DescriptionOptions, mutationOptions?: Parameters<typeof mutation.mutate>[1]) =>
 			mutation.mutate({ url, options }, mutationOptions),
 		isLoading: mutation.isPending || !inactiveStates.includes(state?.currentStep ?? DescriptionGenerationStep.IDLE),
-		state,
+		state: state ?? { currentStep: DescriptionGenerationStep.IDLE, completedSteps: [] },
 	};
 }

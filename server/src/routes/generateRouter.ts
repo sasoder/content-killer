@@ -3,12 +3,7 @@ import { generateDescription, getDescriptionGenerationProgress } from '@/lib/gen
 import { generateMetadata } from '@/lib/generateMetadata';
 import { generateCommentary } from '@/lib/generateCommentary';
 import { generateVideo, getVideoGenerationProgress } from '@/lib/generateVideo';
-import {
-	VideoGenerationStep,
-	DescriptionGenerationStep,
-	Metadata,
-	DescriptionGenerationState,
-} from '@shared/types/api/schema';
+import { VideoGenerationStep, DescriptionGenerationStep, DescriptionGenerationState } from '@shared/types/api/schema';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { projectStorage } from '@/db/storage';
@@ -18,7 +13,6 @@ import { streamSSE } from 'hono/streaming';
 import type { SSEStreamingApi } from 'hono/streaming';
 import {
 	ProjectOptionsSchema,
-	TimestampTextSchema,
 	DescriptionOptionsSchema,
 	CommentaryOptionsSchema,
 	VideoOptionsSchema,
@@ -28,7 +22,7 @@ const generateRouter = new Hono()
 	.post('/project', zValidator('json', ProjectOptionsSchema), async c => {
 		const { templateId } = c.req.valid('json');
 		const id = generateProjectId();
-		let projectTemplate = undefined;
+		let projectTemplate = defaultProjectTemplate;
 		if (templateId) {
 			const template = await projectStorage.getProjectTemplate(templateId);
 			if (template) {
@@ -71,8 +65,8 @@ const generateRouter = new Hono()
 			if (!project) {
 				return c.json({ error: 'Project not found' }, 404);
 			}
-			generateMetadata(id, url);
-			return c.json({ message: 'Generation started' });
+			const metadata = await generateMetadata(id, url);
+			return c.json(metadata, 200);
 		} catch (error) {
 			console.error('Error starting generation:', error);
 			return c.json({ error: 'Failed to start generation' }, 500);

@@ -1,16 +1,16 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useProject } from '@/context/ProjectContext';
 import { validateUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
 import StepOptions from '@/components/cards/StepOptions';
 import { descriptionOptionDefinitions } from '@/lib/options/optionDefinitions';
 import { Icons } from '@/components/icons';
 import { useDescriptionGeneration } from '@/hooks/useDescriptionGeneration';
 import { DescriptionGenerationStep } from '@shared/types/api/schema';
+import StepProgress from '@/components/cards/StepProgress';
 
 const GenerateDescription = () => {
 	const { toast } = useToast();
@@ -19,48 +19,27 @@ const GenerateDescription = () => {
 	const [descriptionOptions, setDescriptionOptions] = useState(options?.description ?? {});
 	const { generate, isLoading, state } = useDescriptionGeneration(id);
 
-	const step = state?.currentStep || DescriptionGenerationStep.IDLE;
-	const completedSteps = state?.completedSteps || [];
-	const progress = state?.progress;
-	const error = state?.error;
+	const steps = useMemo(
+		() => [
+			{ id: DescriptionGenerationStep.PREPARING, label: 'Sending generation request' },
+			{
+				id: DescriptionGenerationStep.DOWNLOADING,
+				label: 'Downloading video',
+				showProgress: true,
+			},
+			{ id: DescriptionGenerationStep.UPLOADING, label: 'Uploading video to Gemini' },
+			{ id: DescriptionGenerationStep.PROCESSING, label: 'File API processing video' },
+			{ id: DescriptionGenerationStep.GENERATING, label: 'Generating description' },
+		],
+		[],
+	);
 
+	console.log(state);
 	useEffect(() => {
 		if (metadata?.url) {
 			setUrl(metadata.url);
 		}
 	}, [metadata]);
-
-	const getStepDetails = (step: DescriptionGenerationStep) => {
-		switch (step) {
-			case DescriptionGenerationStep.PREPARING:
-				return {
-					label: 'Sending generation request',
-					icon: <Icons.loader className='h-4 w-4 animate-spin' />,
-				};
-			case DescriptionGenerationStep.DOWNLOADING:
-				return {
-					label: 'Downloading video',
-					icon: <Icons.upload className='h-4 w-4 animate-pulse' />,
-				};
-			case DescriptionGenerationStep.UPLOADING:
-				return {
-					label: 'Uploading video to Gemini',
-					icon: <Icons.upload className='h-4 w-4 animate-pulse' />,
-				};
-			case DescriptionGenerationStep.PROCESSING:
-				return {
-					label: 'File API processing video',
-					icon: <Icons.bot className='h-4 w-4 animate-pulse' />,
-				};
-			case DescriptionGenerationStep.GENERATING:
-				return {
-					label: 'Generating description',
-					icon: <Icons.pencil className='h-4 w-4 animate-pulse' />,
-				};
-			default:
-				return { label: '', icon: null };
-		}
-	};
 
 	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -138,39 +117,7 @@ const GenerateDescription = () => {
 
 			<div className='flex justify-center'>
 				<div className='flex flex-grow flex-col gap-4'>
-					<div className='flex w-full flex-col gap-2'>
-						{/* Completed steps */}
-						{completedSteps.map((completedStep: DescriptionGenerationStep) => (
-							<div key={completedStep} className='text-muted-foreground flex items-center gap-2 text-sm'>
-								<Icons.checkbox className='h-4 w-4 text-green-500' />
-								<span>{getStepDetails(completedStep).label}</span>
-							</div>
-						))}
-
-						{/* Current step */}
-						<div className='space-y-2'>
-							<div className='flex items-center justify-between text-sm'>
-								<div className='flex items-center gap-2'>
-									{getStepDetails(step).icon}
-									<span className='text-muted-foreground'>{getStepDetails(step).label}</span>
-								</div>
-								{step === DescriptionGenerationStep.DOWNLOADING && progress !== undefined && (
-									<span className='text-muted-foreground'>{Math.round(progress)}%</span>
-								)}
-							</div>
-							{step === DescriptionGenerationStep.DOWNLOADING && progress !== undefined && (
-								<Progress value={progress} className='w-full' />
-							)}
-						</div>
-
-						{/* Error state */}
-						{error && (
-							<div className='text-destructive flex items-center gap-2 text-sm'>
-								<Icons.alertTriangle className='h-4 w-4' />
-								<span>{error.message}</span>
-							</div>
-						)}
-					</div>
+					<StepProgress steps={steps} state={state} />
 
 					<StepOptions
 						options={descriptionOptions}

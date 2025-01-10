@@ -13,5 +13,7 @@ export const generateMetadata = async (id: string, url: string) => {
 		};
 		project.metadata = fullMetadata;
 		await projectStorage.updateProjectState(project);
+		return fullMetadata;
 	}
+	return metadata;
 };
