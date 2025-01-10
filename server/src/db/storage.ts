@@ -35,6 +35,7 @@ const sqlite = new Database(DB_PATH);
 sqlite.run(`
     CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY NOT NULL,
+		template_id TEXT NOT NULL,
         state TEXT NOT NULL
     )
 `);
@@ -53,6 +54,7 @@ sqlite.run(`
 // Schema definition for Drizzle
 const projects = sqliteTable('projects', {
 	id: text('id').primaryKey(),
+	template_id: text('template_id').notNull(),
 	state: text('state').notNull(),
 });
 
@@ -93,6 +95,7 @@ export class ProjectStorage {
 
 		await db.insert(projects).values({
 			id,
+			template_id: projectTemplate.id,
 			state: JSON.stringify(defaultState),
 		});
 
@@ -262,11 +265,52 @@ export class ProjectStorage {
 			}
 		}
 
-		// Save new pause sound
-		await writeFile(path.join(templateDir, fileName), content);
+		// Save new pause sound to template directory
+		const templatePauseSoundPath = path.join(templateDir, fileName);
+		await writeFile(templatePauseSoundPath, content);
 
 		// Update template record
 		await db.update(projectTemplates).set({ pauseSoundFilename: fileName }).where(eq(projectTemplates.id, id));
+
+		// Update all projects using this template
+		await this.updateProjectPauseSound(id, fileName);
+	}
+
+	async updateProjectPauseSound(templateId: string, fileName: string): Promise<void> {
+		// Get the template and its pause sound file
+		const templatePauseSoundPath = path.join(this.templatesDir, templateId, fileName);
+		if (!fs.existsSync(templatePauseSoundPath)) {
+			throw new Error('Template pause sound file not found');
+		}
+
+		// Find all projects using this template
+		const projectsWithTemplate = await db.select().from(projects).where(eq(projects.template_id, templateId));
+
+		// Update each project's pause sound
+		for (const projectRow of projectsWithTemplate) {
+			const project = JSON.parse(projectRow.state) as Project;
+			const projectDir = path.join(this.projectsDir, project.id);
+			const projectMiscDir = path.join(projectDir, 'misc');
+
+			// Ensure misc directory exists
+			await mkdir(projectMiscDir, { recursive: true });
+
+			// Copy new pause sound to project
+			const projectPauseSoundPath = path.join(projectMiscDir, fileName);
+			await fs.promises.copyFile(templatePauseSoundPath, projectPauseSoundPath);
+
+			// Remove old pause sound if it exists and is different
+			if (project.pauseSoundFilename && project.pauseSoundFilename !== fileName) {
+				const oldPauseSoundPath = path.join(projectMiscDir, project.pauseSoundFilename);
+				if (fs.existsSync(oldPauseSoundPath)) {
+					await fs.promises.unlink(oldPauseSoundPath);
+				}
+			}
+
+			// Update project state with new filename
+			project.pauseSoundFilename = fileName;
+			await this.updateProjectState(project);
+		}
 	}
 
 	async getProjectTemplateFile(templateId: string, fileName: string): Promise<Buffer> {
