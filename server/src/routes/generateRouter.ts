@@ -28,16 +28,16 @@ const generateRouter = new Hono()
 	.post('/project', zValidator('json', ProjectOptionsSchema), async c => {
 		const { templateId } = c.req.valid('json');
 		const id = generateProjectId();
-		let optionTemplate = undefined;
+		let projectTemplate = undefined;
 		if (templateId) {
 			const template = await projectStorage.getProjectTemplate(templateId);
 			if (template) {
-				optionTemplate = template;
+				projectTemplate = template;
 			}
 		}
 
 		// Create project with template first
-		const project = await projectStorage.createProject(id, optionTemplate);
+		const project = await projectStorage.createProject(id, projectTemplate);
 
 		return c.json(project, 201);
 	})
@@ -78,7 +78,7 @@ const generateRouter = new Hono()
 			return c.json({ error: 'Failed to start generation' }, 500);
 		}
 	})
-	.post('/commentary/:id/start', zValidator('json', CommentaryOptionsSchema), async c => {
+	.post('/commentary/:id', zValidator('json', CommentaryOptionsSchema), async c => {
 		const { options } = c.req.valid('json');
 		const id = c.req.param('id');
 
@@ -91,12 +91,13 @@ const generateRouter = new Hono()
 			if (!description) {
 				return c.json({ error: 'No description found' }, 400);
 			}
-			generateCommentary(id, description, options);
 
-			return c.json({ message: 'Generation started' });
+			// Wait for the commentary to be generated
+			const commentary = await generateCommentary(id, description, options);
+			return c.json({ commentary });
 		} catch (error) {
-			console.error('Error starting generation:', error);
-			return c.json({ error: 'Failed to start generation' }, 500);
+			console.error('Error generating commentary:', error);
+			return c.json({ error: 'Failed to generate commentary' }, 500);
 		}
 	})
 	.post('/video/:id/start', zValidator('json', VideoOptionsSchema), async c => {
@@ -136,7 +137,6 @@ const generateRouter = new Hono()
 	})
 	.post('/description/:id/start', zValidator('json', DescriptionOptionsSchema), async c => {
 		const { url, options } = c.req.valid('json');
-		console.log('url', url);
 		const id = c.req.param('id');
 
 		try {
@@ -181,7 +181,6 @@ const generateRouter = new Hono()
 				const MAX_RETRIES = 100; // 10 seconds with 100ms sleep
 
 				while (retryCount < MAX_RETRIES) {
-					console.log('Getting progress for', id);
 					const state = getDescriptionGenerationProgress(id);
 
 					if (!state) {
@@ -195,7 +194,6 @@ const generateRouter = new Hono()
 
 					// only send if state changed
 					if (JSON.stringify(state) !== JSON.stringify(lastState)) {
-						console.log('Sending progress for', id, state);
 						await stream.writeSSE({
 							data: JSON.stringify(state),
 							// remove event type to match client expectation

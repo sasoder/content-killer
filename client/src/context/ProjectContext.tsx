@@ -42,20 +42,20 @@ export function ProjectProvider({ id, children }: { id: string; children: React.
 
 	const descriptionMutation = useMutation({
 		mutationFn: (description: TimestampText[]) => updateProjectDescription(id, description),
-		onSuccess: data => {
+		onSuccess: (_, description) => {
 			queryClient.setQueryData(['project', id], (old: any) => ({
 				...old,
-				description: data,
+				description,
 			}));
 		},
 	});
 
 	const commentaryMutation = useMutation({
 		mutationFn: (commentary: TimestampText[]) => updateProjectCommentary(id, commentary),
-		onSuccess: data => {
+		onSuccess: (_, commentary) => {
 			queryClient.setQueryData(['project', id], (old: any) => ({
 				...old,
-				commentary: data,
+				commentary,
 			}));
 		},
 	});

@@ -1,7 +1,7 @@
 import { Project } from '@shared/types/api/schema';
 import { ProjectTemplate } from '@shared/types/options/template';
 
-export const createDefaultProject = (id: string, projectTemplate?: ProjectTemplate): Project => {
+export const createDefaultProject = (id: string, projectTemplate: ProjectTemplate): Project => {
 	return {
 		id,
 		metadata: {

@@ -30,10 +30,6 @@ if (!fs.existsSync(PROJECT_TEMPLATES_DIR)) {
 // Initialize database and tables
 const sqlite = new Database(DB_PATH);
 
-// Enable foreign keys and WAL mode for better performance
-sqlite.run('PRAGMA foreign_keys = ON;');
-sqlite.run('PRAGMA journal_mode = WAL;');
-
 sqlite.run(`
     CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY NOT NULL,
@@ -74,16 +70,23 @@ export class ProjectStorage {
 	private projectsDir: string;
 	private templatesDir: string;
 
-	constructor(dataDir: string) {
-		this.projectsDir = path.join(dataDir, 'projects');
-		this.templatesDir = path.join(dataDir, 'project-templates');
+	constructor() {
+		this.projectsDir = PROJECTS_DIR;
+		this.templatesDir = PROJECT_TEMPLATES_DIR;
 	}
 
-	async createProject(id: string, projectTemplate?: ProjectTemplate): Promise<Project> {
-		const now = new Date().toISOString();
+	async createProject(id: string, projectTemplate: ProjectTemplate): Promise<Project> {
 		const defaultState = createDefaultProject(id, projectTemplate);
 		if (!fs.existsSync(path.join(this.projectsDir, id))) {
 			fs.mkdirSync(path.join(this.projectsDir, id));
+			fs.mkdirSync(path.join(this.projectsDir, id, 'video'));
+			fs.mkdirSync(path.join(this.projectsDir, id, 'commentary'));
+			fs.mkdirSync(path.join(this.projectsDir, id, 'misc'));
+			// copy template pause sound to project
+			const templateDir = path.join(this.templatesDir, projectTemplate.id);
+			const pauseSoundPath = path.join(templateDir, projectTemplate.pauseSoundFilename);
+			const projectPauseSoundPath = path.join(this.projectsDir, id, 'misc', projectTemplate.pauseSoundFilename);
+			await fs.promises.copyFile(pauseSoundPath, projectPauseSoundPath);
 		}
 
 		await db.insert(projects).values({
@@ -106,18 +109,14 @@ export class ProjectStorage {
 
 	async getAllProjects(): Promise<Project[]> {
 		const results = await db.select().from(projects);
-		console.log(results);
 		return results.map(row => JSON.parse(row.state));
 	}
 
 	async updateProjectState(state: Project): Promise<void> {
-		const now = new Date().toISOString();
-
 		await db
 			.update(projects)
 			.set({
 				state: JSON.stringify(state),
-				updatedAt: now,
 			})
 			.where(eq(projects.id, state.id));
 	}
@@ -255,4 +254,4 @@ export class ProjectStorage {
 	}
 }
 
-export const projectStorage = new ProjectStorage(process.env.DATA_DIR || 'data');
+export const projectStorage = new ProjectStorage();

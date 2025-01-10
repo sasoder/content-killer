@@ -9,6 +9,7 @@ import { downloadVideo } from './downloadVideo';
 import dotenv from 'dotenv';
 import { projectStorage } from '@/db/storage';
 import { generateAudio } from './generateAudio';
+import { PROJECTS_DIR } from '@/db/storage';
 
 dotenv.config();
 
@@ -281,6 +282,51 @@ export async function generateVideo(id: string, commentary: TimestampText[], opt
 			currentStep: VideoGenerationStep.PREPARING,
 		});
 
+		// Create necessary directories
+		const projectDir = path.join(PROJECTS_DIR, id);
+		const videoDir = path.join(projectDir, 'video');
+		const miscDir = path.join(projectDir, 'misc');
+		const commentaryDir = path.join(projectDir, 'commentary');
+		console.log('projectDir', projectDir);
+		console.log('videoDir', videoDir);
+		console.log('miscDir', miscDir);
+		console.log('commentaryDir', commentaryDir);
+
+		await fs.mkdir(videoDir, { recursive: true });
+		await fs.mkdir(miscDir, { recursive: true });
+		await fs.mkdir(commentaryDir, { recursive: true });
+
+		const sourceVideoPath = path.join(videoDir, 'source.mkv');
+		const scaledVideoPath = path.join(videoDir, 'scaled.mkv');
+		const subtitledVideoPath = path.join(videoDir, 'subtitled.mkv');
+		const pauseAudioPath = path.join(miscDir, project.pauseSoundFilename);
+		const outputPath = path.join(videoDir, 'output.mp4');
+
+		await downloadVideo(project.metadata.url ?? '', sourceVideoPath);
+
+		// Scale video if needed
+		let videoToProcess = sourceVideoPath;
+		const needsScaling = options.video.size !== 'source';
+
+		if (needsScaling) {
+			updateVideoProgress(id, {
+				currentStep: VideoGenerationStep.SCALING_VIDEO,
+			});
+			await scaleVideo(sourceVideoPath, scaledVideoPath, options.video.size);
+			videoToProcess = scaledVideoPath;
+		}
+
+		// Generate subtitles if enabled
+		if (options.video.subtitlesEnabled) {
+			updateVideoProgress(id, {
+				currentStep: VideoGenerationStep.TRANSCRIBING,
+			});
+			const srtPath = path.join(miscDir, 'subtitles.srt');
+			await generateSubtitles(videoToProcess, srtPath);
+			await addSubtitles(videoToProcess, srtPath, subtitledVideoPath, options.video.subtitlesSize);
+			videoToProcess = subtitledVideoPath;
+		}
+
 		updateVideoProgress(id, {
 			currentStep: VideoGenerationStep.GENERATING_AUDIO,
 		});
@@ -289,13 +335,34 @@ export async function generateVideo(id: string, commentary: TimestampText[], opt
 		await projectStorage.deleteProjectCommentary(id);
 		await generateAudio(id, commentary, options.audio);
 
-		// Generate video
+		// Process video with overlays
 		updateVideoProgress(id, {
 			currentStep: VideoGenerationStep.PROCESSING_VIDEO,
 		});
 
-		// Your existing video processing logic here
-		// Update progress as needed during processing
+		await processVideoWithOverlays(videoToProcess, outputPath, commentaryDir, pauseAudioPath, {
+			bw: options.video.bw,
+			playSound: options.video.playSound,
+			size: options.video.size,
+			subtitlesEnabled: options.video.subtitlesEnabled,
+		});
+
+		updateVideoProgress(id, {
+			currentStep: VideoGenerationStep.FINALIZING,
+		});
+
+		// Cleanup temporary files
+		try {
+			await fs.unlink(sourceVideoPath);
+			if (needsScaling) {
+				await fs.unlink(scaledVideoPath);
+			}
+			if (options.video.subtitlesEnabled) {
+				await fs.unlink(subtitledVideoPath);
+			}
+		} catch (error) {
+			console.error('Error cleaning up files:', error);
+		}
 
 		updateVideoProgress(id, {
 			currentStep: VideoGenerationStep.COMPLETED,

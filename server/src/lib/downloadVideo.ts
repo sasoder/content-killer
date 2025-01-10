@@ -43,7 +43,7 @@ export const downloadVideo = async (
 ): Promise<string> => {
 	try {
 		const ytDl = getYoutubeDl();
-		const outputPath = path.join(PROJECTS_DIR, projectId, 'video', 'source.mp4');
+		const outputPath = path.join(PROJECTS_DIR, projectId, 'video', 'source.mkv');
 		const ytDlPath = process.env.YT_DLP_PATH || 'yt-dlp';
 
 		let isDownloadingAudio = false;
@@ -53,18 +53,18 @@ export const downloadVideo = async (
 		const subprocess = spawn(ytDlPath, [
 			url,
 			'--format',
-			'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+			'bv*+ba/b',
 			'--output',
 			outputPath,
 			'--merge-output-format',
-			'mp4',
-			'--newline', // Force progress on new lines
+			'mkv',
+			'--newline',
 		]);
 
 		let buffer = '';
 		const processLine = (line: string) => {
 			// Check for audio download start
-			if (line.includes('.m4a')) {
+			if (line.includes('[download]') && line.includes('audio')) {
 				isDownloadingAudio = true;
 				lastReportedProgress = 90;
 				if (onProgress) onProgress(90);

@@ -16,6 +16,11 @@ const CommentarySchema = z.object({
 });
 
 export const generateCommentary = async (id: string, description: TimestampText[], options: CommentaryOptions) => {
+	const project = await projectStorage.getProject(id);
+	if (!project) {
+		throw new Error('Project not found');
+	}
+
 	const prompt = generateCommentaryPrompt(JSON.stringify(description), options.intro, options.outro);
 
 	const completion = await openai.beta.chat.completions.parse({
@@ -28,10 +33,9 @@ export const generateCommentary = async (id: string, description: TimestampText[
 	});
 
 	// Update project state
-	const project = await projectStorage.getProject(id);
-	if (project) {
-		project.commentary = completion.choices[0].message.parsed?.data ?? [];
-		project.options.commentary = options;
-		await projectStorage.updateProjectState(project);
-	}
+	project.commentary = completion.choices[0].message.parsed?.data ?? [];
+	project.options.commentary = options;
+	await projectStorage.updateProjectState(project);
+
+	return project.commentary;
 };

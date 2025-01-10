@@ -8,7 +8,7 @@ export function useCommentaryGeneration(id: string) {
 	const commentaryMutation = useMutation({
 		mutationFn: async ({ options }: { options: CommentaryOptions }) => generateCommentary(id, options),
 		onSuccess: data => {
-			// Update the project query data
+			// Update the project query data with the new commentary
 			queryClient.setQueryData(['project', id], (old: any) => ({
 				...old,
 				commentary: data,

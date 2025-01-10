@@ -3,6 +3,7 @@ import { TimestampText } from '@shared/types/api/schema';
 import { ElevenLabsClient } from 'elevenlabs';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { PROJECTS_DIR } from '@/db/storage';
 
 const client = new ElevenLabsClient({
 	apiKey: process.env.ELEVENLABS_API_KEY,
@@ -39,7 +40,7 @@ export const generateAudio = async (
 	options: VideoOptions['audio'],
 ): Promise<void> => {
 	try {
-		const projectDir = path.join('data', id);
+		const projectDir = path.join(PROJECTS_DIR, id);
 		const commentaryDir = path.join(projectDir, 'commentary');
 		await fs.mkdir(commentaryDir, { recursive: true });
 

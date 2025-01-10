@@ -11,9 +11,9 @@ import { useVideoGeneration } from '@/hooks/useVideoGeneration';
 
 const GENERATION_STEPS = [
 	{ step: VideoGenerationStep.PREPARING, label: 'Preparing generation' },
-	{ step: VideoGenerationStep.GENERATING_AUDIO, label: 'Generating audio with ElevenLabs' },
 	{ step: VideoGenerationStep.SCALING_VIDEO, label: 'Scaling video' },
 	{ step: VideoGenerationStep.TRANSCRIBING, label: 'Transcribing with Whisper' },
+	{ step: VideoGenerationStep.GENERATING_AUDIO, label: 'Generating audio with ElevenLabs' },
 	{ step: VideoGenerationStep.PROCESSING_VIDEO, label: 'Processing with ffmpeg' },
 	{ step: VideoGenerationStep.FINALIZING, label: 'Finalizing output' },
 	{ step: VideoGenerationStep.COMPLETED, label: 'Generation complete' },
