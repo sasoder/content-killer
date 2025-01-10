@@ -6,9 +6,12 @@ import { downloadVideo } from './downloadVideo';
 import { projectStorage } from '@/db/storage';
 import { DESCRIPTION_PROMPT } from './prompts';
 import { timestampTextSchema } from './serverSchema';
+import dotenv from 'dotenv';
 
-const fileManager = new GoogleAIFileManager(process.env.GOOGLE_API_KEY!);
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
+dotenv.config();
+
+const fileManager = new GoogleAIFileManager(process.env.GOOGLE_API_KEY || '');
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
 const progressMap = new Map<string, DescriptionGenerationState>();
 
@@ -90,7 +93,7 @@ export const generateDescription = async (id: string, url: string, options: Desc
 			progress: undefined,
 		});
 		const model = genAI.getGenerativeModel({
-			model: 'gemini-2.0-flash-exp',
+			model: process.env.GEMINI_DESCRIPTION_MODEL || 'gemini-2.0-flash-exp',
 			generationConfig: { responseMimeType: 'application/json', responseSchema: timestampTextSchema },
 		});
 		const result = await model.generateContent([

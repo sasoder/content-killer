@@ -116,7 +116,7 @@ async function generateSubtitles(videoPath: string, srtPath: string): Promise<st
 
 	const transcript = await openai.audio.transcriptions.create({
 		file: file,
-		model: 'whisper-1',
+		model: process.env.OPENAI_TRANSCRIBE_MODEL || 'whisper-1',
 		language: 'en',
 		response_format: 'srt',
 	});
@@ -142,12 +142,7 @@ async function processVideoWithOverlays(
 	outputPath: string,
 	commentaryDir: string,
 	pauseAudio: string,
-	options: {
-		bw: boolean;
-		playSound: boolean;
-		size: string;
-		subtitlesEnabled: boolean;
-	},
+	options: VideoOptions['video'],
 ): Promise<string> {
 	console.log('Processing video with overlays...');
 	const overlays = await findOverlayAudios(commentaryDir);

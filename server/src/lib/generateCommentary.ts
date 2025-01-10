@@ -47,7 +47,7 @@ export const generateCommentary = async (id: string, description: TimestampText[
 	}
 
 	const completion = await openai.beta.chat.completions.parse({
-		model: 'gpt-4o-mini',
+		model: process.env.OPENAI_COMMENTARY_MODEL || 'gpt-4o-mini',
 		messages: [
 			{ role: 'system', content: commentaryPrompt },
 			{ role: 'user', content: prompt },
