@@ -71,9 +71,6 @@ export const generateDescription = async (id: string, url: string, options: Desc
 			displayName: `video-${id}`,
 		});
 
-		// console.log('Video uploaded to Gemini File API', uploadResponse);
-
-		// Wait for processing
 		updateProgress(id, {
 			currentStep: DescriptionGenerationStep.PROCESSING,
 			progress: undefined,
@@ -88,13 +85,12 @@ export const generateDescription = async (id: string, url: string, options: Desc
 			throw new Error('Video processing failed');
 		}
 
-		// Generate description
 		updateProgress(id, {
 			currentStep: DescriptionGenerationStep.GENERATING,
 			progress: undefined,
 		});
 		const model = genAI.getGenerativeModel({
-			model: 'gemini-1.5-pro',
+			model: 'gemini-2.0-flash-exp',
 			generationConfig: { responseMimeType: 'application/json', responseSchema: timestampTextSchema },
 		});
 		const result = await model.generateContent([

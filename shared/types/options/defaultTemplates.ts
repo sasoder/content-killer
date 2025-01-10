@@ -9,6 +9,7 @@ export const defaultCommentaryOptions: CommentaryOptions = {
 	intro: true,
 	outro: true,
 	temperature: 0.7,
+	videoType: 'police',
 };
 
 export const defaultVideoOptions: VideoOptions = {

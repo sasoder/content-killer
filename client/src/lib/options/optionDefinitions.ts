@@ -50,6 +50,12 @@ export const commentaryOptionDefinitions: OptionsDefinitionMap<CommentaryOptions
 		max: 2,
 		step: 0.01,
 	},
+	videoType: {
+		label: 'Video Type',
+		description: 'The type of video to generate',
+		type: 'string',
+		options: ['police', 'sports', 'interrogation', 'poker'],
+	},
 };
 
 export const videoOptionDefinitions: VideoOptionDefinitions = {

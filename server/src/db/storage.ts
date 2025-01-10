@@ -187,11 +187,11 @@ export class ProjectStorage {
 		});
 	}
 
-	async getProjectTemplate(id: string): Promise<ProjectTemplate> {
+	async getProjectTemplate(id: string): Promise<ProjectTemplate | null> {
 		const result = await db.select().from(projectTemplates).where(eq(projectTemplates.id, id)).limit(1);
 
 		if (!result.length) {
-			return defaultProjectTemplate;
+			return null;
 		}
 
 		const template = result[0];

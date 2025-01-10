@@ -6,6 +6,7 @@ export type CommentaryOptions = {
 	intro: boolean;
 	outro: boolean;
 	temperature: number;
+	videoType: 'police' | 'sports' | 'interrogation' | 'poker';
 };
 
 export type Voice = {

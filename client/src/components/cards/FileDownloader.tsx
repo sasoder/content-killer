@@ -34,8 +34,6 @@ const FileDownloader = () => {
 	const { currentStep, completedSteps = [], error } = state;
 	const isComplete = currentStep === VideoGenerationStep.COMPLETED;
 
-	console.log(state);
-
 	const handleDownloadAudio = async () => {
 		try {
 			setIsDownloadingAudio(true);

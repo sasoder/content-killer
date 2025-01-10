@@ -34,7 +34,6 @@ export const fetchProject = async (id: string): Promise<Project> => {
 };
 
 export const getVideoGenerationStatus = async (id: string) => {
-	console.log(id);
 	const response = await client.generate.video[':id'].status.$get({
 		param: { id },
 	});

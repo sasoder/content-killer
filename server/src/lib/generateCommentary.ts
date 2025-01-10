@@ -5,7 +5,13 @@ import { zodResponseFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
 import { projectStorage } from '@/db/storage';
 import { TimestampTextSchema } from '@/lib/serverSchema';
-import { COMMENTARY_BASE_PROMPT, generateCommentaryPrompt } from '@/lib/prompts';
+import {
+	COMMENTARY_INTERROGATION_PROMPT,
+	COMMENTARY_POKER_PROMPT,
+	COMMENTARY_POLICE_PROMPT,
+	COMMENTARY_SPORTS_PROMPT,
+	generateCommentaryPrompt,
+} from '@/lib/prompts';
 
 const openai = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
@@ -21,12 +27,29 @@ export const generateCommentary = async (id: string, description: TimestampText[
 		throw new Error('Project not found');
 	}
 
-	const prompt = generateCommentaryPrompt(JSON.stringify(description), options.intro, options.outro);
+	const prompt = generateCommentaryPrompt(JSON.stringify(description), options.intro, options.outro, options.videoType);
+	let commentaryPrompt = '';
+	switch (options.videoType) {
+		case 'police':
+			commentaryPrompt = COMMENTARY_POLICE_PROMPT;
+			break;
+		case 'sports':
+			commentaryPrompt = COMMENTARY_SPORTS_PROMPT;
+			break;
+		case 'poker':
+			commentaryPrompt = COMMENTARY_POKER_PROMPT;
+			break;
+		case 'interrogation':
+			commentaryPrompt = COMMENTARY_INTERROGATION_PROMPT;
+			break;
+		default:
+			throw new Error(`Unsupported video type: ${options.videoType}`);
+	}
 
 	const completion = await openai.beta.chat.completions.parse({
 		model: 'gpt-4o-mini',
 		messages: [
-			{ role: 'system', content: COMMENTARY_BASE_PROMPT },
+			{ role: 'system', content: commentaryPrompt },
 			{ role: 'user', content: prompt },
 		],
 		response_format: zodResponseFormat(CommentarySchema, 'commentary'),

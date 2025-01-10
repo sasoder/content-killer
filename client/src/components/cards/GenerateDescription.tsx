@@ -34,7 +34,6 @@ const GenerateDescription = () => {
 		[],
 	);
 
-	console.log(state);
 	useEffect(() => {
 		if (metadata?.url) {
 			setUrl(metadata.url);
