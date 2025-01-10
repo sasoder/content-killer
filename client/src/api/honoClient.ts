@@ -9,7 +9,7 @@ import type {
 	VideoGenerationState,
 	DescriptionGenerationState,
 } from '@shared/types/api/schema';
-import type { ProjectTemplate } from '@shared/types/options/template';
+import type { Template } from '@shared/types/options/template';
 import type { CommentaryOptions, DescriptionOptions, VideoOptions } from '@shared/types/options';
 
 const API_BASE = import.meta.env.VITE_APP_API_BASE;
@@ -47,14 +47,14 @@ export const getDescriptionGenerationStatus = async (id: string) => {
 	return handleResponse<DescriptionGenerationState>(response);
 };
 
-export const fetchProjectTemplates = async (): Promise<ProjectTemplate[]> => {
-	const response = await client.fetch.projectTemplates.$get();
-	return handleResponse<ProjectTemplate[]>(response);
+export const fetchTemplates = async (): Promise<Template[]> => {
+	const response = await client.fetch.templates.$get();
+	return handleResponse<Template[]>(response);
 };
 
-export const fetchProjectTemplate = async (id: string): Promise<ProjectTemplate> => {
-	const response = await client.fetch.projectTemplate[':id'].$get({ param: { id } });
-	return handleResponse<ProjectTemplate>(response);
+export const fetchTemplate = async (id: string): Promise<Template> => {
+	const response = await client.fetch.template[':id'].$get({ param: { id } });
+	return handleResponse<Template>(response);
 };
 
 export const fetchVoices = async (): Promise<Voice[]> => {
@@ -192,26 +192,23 @@ export async function generateVideo(id: string, options: VideoOptions) {
 	return response.json();
 }
 
-export const createProjectTemplate = async (params?: {
-	name?: string;
-	description?: string;
-}): Promise<ProjectTemplate> => {
-	const response = await client.generate.projectTemplate.$post({
+export const createTemplate = async (params?: { name?: string; description?: string }): Promise<Template> => {
+	const response = await client.generate.template.$post({
 		json: params,
 	});
-	return handleResponse<ProjectTemplate>(response);
+	return handleResponse<Template>(response);
 };
 
-export const updateProjectTemplate = async (template: ProjectTemplate): Promise<ProjectTemplate> => {
-	const response = await client.update.projectTemplate[':id'].$put({
+export const updateTemplate = async (template: Template): Promise<Template> => {
+	const response = await client.update.template[':id'].$put({
 		param: { id: template.id },
 		json: template,
 	});
-	return handleResponse<ProjectTemplate>(response);
+	return handleResponse<Template>(response);
 };
 
-export const deleteProjectTemplate = async (id: string): Promise<void> => {
-	const response = await client.update.projectTemplate[':id'].$delete({
+export const deleteTemplate = async (id: string): Promise<void> => {
+	const response = await client.update.template[':id'].$delete({
 		param: { id },
 	});
 	await handleResponse<{ success: true }>(response);
@@ -221,7 +218,7 @@ export const uploadPauseSound = async (templateId: string, file: File): Promise<
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const response = await client.update.projectTemplate[':id'].pauseSound.$post({
+	const response = await client.update.template[':id'].pauseSound.$post({
 		param: { id: templateId },
 		form: { file },
 	});

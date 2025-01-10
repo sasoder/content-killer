@@ -1,7 +1,7 @@
 import { Project } from '@shared/types/api/schema';
-import { ProjectTemplate } from '@shared/types/options/template';
+import { Template } from '@shared/types/options/template';
 
-export const createDefaultProject = (id: string, projectTemplate: ProjectTemplate): Project => {
+export const createDefaultProject = (id: string, template: Template): Project => {
 	return {
 		id,
 		metadata: {
@@ -12,10 +12,10 @@ export const createDefaultProject = (id: string, projectTemplate: ProjectTemplat
 		audio: false,
 		video: false,
 		options: {
-			description: projectTemplate?.options.description,
-			commentary: projectTemplate?.options.commentary,
-			video: projectTemplate?.options.video,
+			description: template?.options.description,
+			commentary: template?.options.commentary,
+			video: template?.options.video,
 		},
-		pauseSoundFilename: projectTemplate?.pauseSoundFilename || 'pause_default.wav',
+		pauseSoundFilename: template?.pauseSoundFilename || 'pause_default.wav',
 	};
 };

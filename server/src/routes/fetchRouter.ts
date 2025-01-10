@@ -22,13 +22,13 @@ const fetchRouter = new Hono()
 		}
 		return c.json(project);
 	})
-	.get('/projectTemplates', async c => {
-		const templates = await projectStorage.getAllProjectTemplates();
+	.get('/templates', async c => {
+		const templates = await projectStorage.getAllTemplates();
 		return c.json(templates);
 	})
-	.get('/projectTemplate/:id', async c => {
+	.get('/template/:id', async c => {
 		const id = c.req.param('id');
-		const template = await projectStorage.getProjectTemplate(id);
+		const template = await projectStorage.getTemplate(id);
 		if (!template) {
 			return c.json({ error: 'Template not found' }, 404);
 		}

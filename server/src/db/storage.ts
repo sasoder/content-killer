@@ -6,30 +6,28 @@ import { writeFile, readFile, mkdir } from 'fs/promises';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Project } from '@shared/types/api/schema';
-import { ProjectTemplate } from '@shared/types/options/template';
-import { defaultProjectTemplate } from '@shared/types/options/defaultTemplates';
+import { Template } from '@shared/types/options/template';
+import { defaultTemplate } from '@shared/types/options/defaultTemplates';
 import { createDefaultProject } from '@/lib/defaultProject';
 import { createWriteStream } from 'fs';
 import archiver from 'archiver';
 
 export const DATA_DIR = './data';
 export const PROJECTS_DIR = path.join(DATA_DIR, 'projects');
-export const PROJECT_TEMPLATES_DIR = path.join(DATA_DIR, 'project-templates');
+export const TEMPLATES_DIR = path.join(DATA_DIR, 'templates');
 export const DB_PATH = path.join(DATA_DIR, 'projects.db');
 export const DEFAULT_TEMPLATE_ID = 'default';
 
-// Ensure directories exist for file storage
 if (!fs.existsSync(DATA_DIR)) {
 	fs.mkdirSync(DATA_DIR);
 }
 if (!fs.existsSync(PROJECTS_DIR)) {
 	fs.mkdirSync(PROJECTS_DIR);
 }
-if (!fs.existsSync(PROJECT_TEMPLATES_DIR)) {
-	fs.mkdirSync(PROJECT_TEMPLATES_DIR);
+if (!fs.existsSync(TEMPLATES_DIR)) {
+	fs.mkdirSync(TEMPLATES_DIR);
 }
 
-// Initialize database and tables
 const sqlite = new Database(DB_PATH);
 
 sqlite.run(`
@@ -41,7 +39,7 @@ sqlite.run(`
 `);
 
 sqlite.run(`
-    CREATE TABLE IF NOT EXISTS project_templates (
+    CREATE TABLE IF NOT EXISTS templates (
         id TEXT PRIMARY KEY NOT NULL,
         name TEXT NOT NULL,
         description TEXT NOT NULL,
@@ -51,14 +49,13 @@ sqlite.run(`
     )
 `);
 
-// Schema definition for Drizzle
 const projects = sqliteTable('projects', {
 	id: text('id').primaryKey(),
 	template_id: text('template_id').notNull(),
 	state: text('state').notNull(),
 });
 
-const projectTemplates = sqliteTable('project_templates', {
+const templates = sqliteTable('templates', {
 	id: text('id').primaryKey(),
 	name: text('name').notNull(),
 	description: text('description').notNull(),
@@ -67,7 +64,6 @@ const projectTemplates = sqliteTable('project_templates', {
 	pauseSoundFilename: text('pause_sound_filename').notNull(),
 });
 
-// Initialize Drizzle
 const db = drizzle(sqlite);
 
 export class ProjectStorage {
@@ -76,26 +72,26 @@ export class ProjectStorage {
 
 	constructor() {
 		this.projectsDir = PROJECTS_DIR;
-		this.templatesDir = PROJECT_TEMPLATES_DIR;
+		this.templatesDir = TEMPLATES_DIR;
 	}
 
-	async createProject(id: string, projectTemplate: ProjectTemplate): Promise<Project> {
-		const defaultState = createDefaultProject(id, projectTemplate);
+	async createProject(id: string, template: Template): Promise<Project> {
+		const defaultState = createDefaultProject(id, template);
 		if (!fs.existsSync(path.join(this.projectsDir, id))) {
 			fs.mkdirSync(path.join(this.projectsDir, id));
 			fs.mkdirSync(path.join(this.projectsDir, id, 'video'));
 			fs.mkdirSync(path.join(this.projectsDir, id, 'audio'));
 			fs.mkdirSync(path.join(this.projectsDir, id, 'misc'));
 			// copy template pause sound to project
-			const templateDir = path.join(this.templatesDir, projectTemplate.id);
-			const pauseSoundPath = path.join(templateDir, projectTemplate.pauseSoundFilename);
-			const projectPauseSoundPath = path.join(this.projectsDir, id, 'misc', projectTemplate.pauseSoundFilename);
+			const templateDir = path.join(this.templatesDir, template.id);
+			const pauseSoundPath = path.join(templateDir, template.pauseSoundFilename);
+			const projectPauseSoundPath = path.join(this.projectsDir, id, 'misc', template.pauseSoundFilename);
 			await fs.promises.copyFile(pauseSoundPath, projectPauseSoundPath);
 		}
 
 		await db.insert(projects).values({
 			id,
-			template_id: projectTemplate.id,
+			template_id: template.id,
 			state: JSON.stringify(defaultState),
 		});
 
@@ -177,10 +173,10 @@ export class ProjectStorage {
 		return zipBuffer;
 	}
 
-	async createProjectTemplate(template: ProjectTemplate): Promise<void> {
+	async createTemplate(template: Template): Promise<void> {
 		const templateDir = path.join(this.templatesDir, template.id);
 		await mkdir(templateDir, { recursive: true });
-		await db.insert(projectTemplates).values({
+		await db.insert(templates).values({
 			id: template.id,
 			name: template.name,
 			description: template.description,
@@ -190,8 +186,8 @@ export class ProjectStorage {
 		});
 	}
 
-	async getProjectTemplate(id: string): Promise<ProjectTemplate | null> {
-		const result = await db.select().from(projectTemplates).where(eq(projectTemplates.id, id)).limit(1);
+	async getTemplate(id: string): Promise<Template | null> {
+		const result = await db.select().from(templates).where(eq(templates.id, id)).limit(1);
 
 		if (!result.length) {
 			return null;
@@ -208,8 +204,8 @@ export class ProjectStorage {
 		};
 	}
 
-	async getAllProjectTemplates(): Promise<ProjectTemplate[]> {
-		const results = await db.select().from(projectTemplates);
+	async getAllTemplates(): Promise<Template[]> {
+		const results = await db.select().from(templates);
 		return results
 			.map(template => ({
 				id: template.id,
@@ -222,24 +218,24 @@ export class ProjectStorage {
 			.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 	}
 
-	async updateProjectTemplate(template: ProjectTemplate): Promise<void> {
+	async updateTemplate(template: Template): Promise<void> {
 		await db
-			.update(projectTemplates)
+			.update(templates)
 			.set({
 				name: template.name,
 				description: template.description,
 				options: JSON.stringify(template.options),
 				pauseSoundFilename: template.pauseSoundFilename,
 			})
-			.where(eq(projectTemplates.id, template.id));
+			.where(eq(templates.id, template.id));
 	}
 
-	async deleteProjectTemplate(id: string): Promise<void> {
+	async deleteTemplate(id: string): Promise<void> {
 		if (id === DEFAULT_TEMPLATE_ID) {
 			throw new Error('Cannot delete the default template');
 		}
 
-		await db.delete(projectTemplates).where(eq(projectTemplates.id, id));
+		await db.delete(templates).where(eq(templates.id, id));
 
 		// Delete the template directory and files
 		const templateDir = path.join(this.templatesDir, id);
@@ -249,7 +245,7 @@ export class ProjectStorage {
 	}
 
 	async updateTemplatePauseSound(id: string, fileName: string, content: Buffer): Promise<void> {
-		const template = await this.getProjectTemplate(id);
+		const template = await this.getTemplate(id);
 		if (!template) {
 			throw new Error('Template not found');
 		}
@@ -270,7 +266,7 @@ export class ProjectStorage {
 		await writeFile(templatePauseSoundPath, content);
 
 		// Update template record
-		await db.update(projectTemplates).set({ pauseSoundFilename: fileName }).where(eq(projectTemplates.id, id));
+		await db.update(templates).set({ pauseSoundFilename: fileName }).where(eq(templates.id, id));
 
 		// Update all projects using this template
 		await this.updateProjectPauseSound(id, fileName);
@@ -313,7 +309,7 @@ export class ProjectStorage {
 		}
 	}
 
-	async getProjectTemplateFile(templateId: string, fileName: string): Promise<Buffer> {
+	async getTemplateFile(templateId: string, fileName: string): Promise<Buffer> {
 		return readFile(path.join(this.templatesDir, templateId, fileName));
 	}
 
@@ -325,10 +321,10 @@ export class ProjectStorage {
 	}
 
 	async ensureDefaultTemplateExists(): Promise<void> {
-		const defaultTemplate = await this.getProjectTemplate(DEFAULT_TEMPLATE_ID);
-		if (!defaultTemplate) {
-			const template = {
-				...defaultProjectTemplate,
+		const template = await this.getTemplate(DEFAULT_TEMPLATE_ID);
+		if (!template) {
+			const newTemplate = {
+				...defaultTemplate,
 				id: DEFAULT_TEMPLATE_ID,
 				name: 'Default Template',
 				description: 'A project template with sensible defaults',
@@ -336,7 +332,7 @@ export class ProjectStorage {
 				pauseSoundFilename: 'pause_default.wav',
 			};
 
-			await this.createProjectTemplate(template);
+			await this.createTemplate(newTemplate);
 		}
 	}
 }

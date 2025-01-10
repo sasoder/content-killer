@@ -8,7 +8,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { projectStorage } from '@/db/storage';
 import { generateProjectId } from '@/lib/util';
-import { defaultProjectTemplate } from '@shared/types/options/defaultTemplates';
+import { defaultTemplate } from '@shared/types/options/defaultTemplates';
 import { streamSSE } from 'hono/streaming';
 import type { SSEStreamingApi } from 'hono/streaming';
 import {
@@ -22,32 +22,32 @@ const generateRouter = new Hono()
 	.post('/project', zValidator('json', ProjectOptionsSchema), async c => {
 		const { templateId } = c.req.valid('json');
 		const id = generateProjectId();
-		let projectTemplate = defaultProjectTemplate;
+		let template = defaultTemplate;
 		if (templateId) {
-			const template = await projectStorage.getProjectTemplate(templateId);
-			if (template) {
-				projectTemplate = template;
+			const fetchedTemplate = await projectStorage.getTemplate(templateId);
+			if (fetchedTemplate) {
+				template = fetchedTemplate;
 			}
 		}
 
 		// Create project with template first
-		const project = await projectStorage.createProject(id, projectTemplate);
+		const project = await projectStorage.createProject(id, template);
 
 		return c.json(project, 201);
 	})
-	.post('/projectTemplate', async c => {
+	.post('/template', async c => {
 		try {
 			const template = {
-				...defaultProjectTemplate,
+				...defaultTemplate,
 				id: crypto.randomUUID(),
 				createdAt: new Date().toISOString(),
 				pauseSoundFilename: 'pause_default.wav',
 			};
 
-			await projectStorage.createProjectTemplate(template);
+			await projectStorage.createTemplate(template);
 
 			// Copy the default pause sound to the new template
-			const defaultPauseSound = await projectStorage.getProjectTemplateFile('default', 'pause_default.wav');
+			const defaultPauseSound = await projectStorage.getTemplateFile('default', 'pause_default.wav');
 			await projectStorage.updateTemplatePauseSound(template.id, template.pauseSoundFilename, defaultPauseSound);
 
 			return c.json(template, 201);

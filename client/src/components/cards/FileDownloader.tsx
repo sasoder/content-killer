@@ -18,9 +18,9 @@ const FileDownloader = () => {
 		() =>
 			[
 				{ id: VideoGenerationStep.PREPARING, label: 'Preparing generation' },
+				{ id: VideoGenerationStep.GENERATING_AUDIO, label: 'Generating audio with ElevenLabs' },
 				{ id: VideoGenerationStep.SCALING_VIDEO, label: 'Scaling video' },
 				{ id: VideoGenerationStep.TRANSCRIBING, label: 'Transcribing with Whisper' },
-				{ id: VideoGenerationStep.GENERATING_AUDIO, label: 'Generating audio with ElevenLabs' },
 				{ id: VideoGenerationStep.PROCESSING_VIDEO, label: 'Processing with ffmpeg' },
 				{ id: VideoGenerationStep.FINALIZING, label: 'Finalizing output' },
 			].filter(step => step.id !== VideoGenerationStep.TRANSCRIBING || options?.video?.video.subtitlesEnabled),

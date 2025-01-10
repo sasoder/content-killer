@@ -309,6 +309,14 @@ export async function generateVideo(id: string, commentary: TimestampText[], opt
 
 		await downloadVideo(project.metadata.url ?? '', id);
 
+		updateVideoProgress(id, {
+			currentStep: VideoGenerationStep.GENERATING_AUDIO,
+		});
+
+		// Remove existing audio files
+		await projectStorage.deleteProjectAudio(id);
+		await generateAudio(id, commentary, options.audio);
+
 		// Scale video if needed
 		let videoToProcess = sourceVideoPath;
 		const needsScaling = options.video.size !== 'source';
@@ -332,14 +340,6 @@ export async function generateVideo(id: string, commentary: TimestampText[], opt
 			videoToProcess = subtitledVideoPath;
 		}
 
-		updateVideoProgress(id, {
-			currentStep: VideoGenerationStep.GENERATING_AUDIO,
-		});
-
-		// Remove existing audio files
-		await projectStorage.deleteProjectAudio(id);
-		await generateAudio(id, commentary, options.audio);
-
 		// Process video with overlays
 		updateVideoProgress(id, {
 			currentStep: VideoGenerationStep.PROCESSING_VIDEO,
@@ -356,7 +356,7 @@ export async function generateVideo(id: string, commentary: TimestampText[], opt
 			currentStep: VideoGenerationStep.FINALIZING,
 		});
 
-		// Cleanup temporary files
+		// cleanup temporary files
 		try {
 			await fs.unlink(sourceVideoPath);
 			if (needsScaling) {

@@ -91,7 +91,7 @@ const GenerateVideo = () => {
 						optionDefinitions={videoOptionDefinitions.video}
 						type='video'
 					/>
-					<div className='flex justify-center pt-2'>
+					<div className='flex justify-center'>
 						<Button onClick={handleGenerate} disabled={!commentary || commentary.length === 0 || isLoading}>
 							{isLoading ? (
 								<>

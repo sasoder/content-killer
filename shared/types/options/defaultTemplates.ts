@@ -1,5 +1,5 @@
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from '.';
-import { ProjectTemplate } from './template';
+import { Template } from './template';
 
 export const defaultDescriptionOptions: DescriptionOptions = {
 	temperature: 1,
@@ -27,7 +27,7 @@ export const defaultVideoOptions: VideoOptions = {
 	},
 };
 
-export const defaultProjectTemplate: ProjectTemplate = {
+export const defaultTemplate: Template = {
 	id: crypto.randomUUID(),
 	name: 'New Template',
 	description: 'A thought-provoking project template',

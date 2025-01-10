@@ -2,33 +2,33 @@ import { Hono } from 'hono';
 import { projectStorage } from '@/db/storage';
 import { zValidator } from '@hono/zod-validator';
 import { TimestampTextSchema } from '@/lib/serverSchema';
-import { UpdateProjectTemplateSchema, UpdateProjectDataSchema, UploadPauseSoundSchema } from '@/lib/apiSchema';
+import { UpdateTemplateSchema, UpdateProjectDataSchema, UploadPauseSoundSchema } from '@/lib/apiSchema';
 
 const ALLOWED_AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'aac'];
 
 const updateRouter = new Hono()
-	.put('/projectTemplate/:id', zValidator('json', UpdateProjectTemplateSchema), async c => {
+	.put('/template/:id', zValidator('json', UpdateTemplateSchema), async c => {
 		try {
 			const id = c.req.param('id');
 			const template = c.req.valid('json');
 			if (id !== template.id) {
 				return c.json({ error: 'ID mismatch' }, 400);
 			}
-			await projectStorage.updateProjectTemplate(template);
+			await projectStorage.updateTemplate(template);
 			return c.json(template);
 		} catch (error) {
 			console.error('Error updating project template:', error);
 			return c.json({ error: 'Failed to update project template' }, 500);
 		}
 	})
-	.delete('/projectTemplate/:id', async c => {
+	.delete('/template/:id', async c => {
 		try {
 			const id = c.req.param('id');
-			await projectStorage.deleteProjectTemplate(id);
-			return c.json({ message: 'Project template deleted successfully' });
+			await projectStorage.deleteTemplate(id);
+			return c.json({ message: 'Template deleted successfully' });
 		} catch (error) {
-			console.error('Error deleting project template:', error);
-			return c.json({ error: 'Failed to delete project template' }, 500);
+			console.error('Error deleting template:', error);
+			return c.json({ error: 'Failed to delete template' }, 500);
 		}
 	})
 	.put('/project/:id/description', zValidator('json', TimestampTextSchema), async c => {
@@ -69,7 +69,7 @@ const updateRouter = new Hono()
 		await projectStorage.updateProjectState({ ...project, ...data });
 		return c.json({ message: 'Project updated' }, 200);
 	})
-	.post('/projectTemplate/:id/pauseSound', zValidator('form', UploadPauseSoundSchema), async c => {
+	.post('/template/:id/pauseSound', zValidator('form', UploadPauseSoundSchema), async c => {
 		try {
 			const id = c.req.param('id');
 

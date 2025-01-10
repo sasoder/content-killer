@@ -2,25 +2,19 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
-import {
-	fetchProjectTemplates,
-	createProjectTemplate,
-	updateProjectTemplate,
-	deleteProjectTemplate,
-	uploadPauseSound,
-} from '@/api/honoClient';
-import { ProjectTemplate } from '@shared/types/options/template';
+import { fetchTemplates, createTemplate, updateTemplate, deleteTemplate, uploadPauseSound } from '@/api/honoClient';
+import { Template } from '@shared/types/options/template';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/layout/Header';
 import { TemplateCard } from '@/components/TemplateCard';
 
 export default function TemplatesPage() {
 	const { toast } = useToast();
-	const [templates, setTemplates] = useState<ProjectTemplate[]>([]);
-	const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate | null>(null);
+	const [templates, setTemplates] = useState<Template[]>([]);
+	const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
 	const [loading, setLoading] = useState(false);
 
-	const handleTemplateSelect = (template: ProjectTemplate) => {
+	const handleTemplateSelect = (template: Template) => {
 		setSelectedTemplate(template);
 	};
 
@@ -33,7 +27,7 @@ export default function TemplatesPage() {
 
 	const loadTemplates = async () => {
 		try {
-			const data = await fetchProjectTemplates();
+			const data = await fetchTemplates();
 			setTemplates(data);
 		} catch (error) {
 			console.error('Failed to load templates:', error);
@@ -47,7 +41,7 @@ export default function TemplatesPage() {
 
 	const handleCreateNew = async () => {
 		try {
-			const newTemplate = await createProjectTemplate();
+			const newTemplate = await createTemplate();
 			setTemplates(prev => [newTemplate, ...prev]);
 			setSelectedTemplate(newTemplate);
 		} catch (error) {
@@ -65,7 +59,7 @@ export default function TemplatesPage() {
 
 		try {
 			setLoading(true);
-			let updatedTemplate = await updateProjectTemplate(selectedTemplate);
+			let updatedTemplate = await updateTemplate(selectedTemplate);
 
 			const pauseSound = (selectedTemplate as any).pauseSound;
 			if (pauseSound instanceof File) {
@@ -97,7 +91,7 @@ export default function TemplatesPage() {
 
 	const handleDelete = async (id: string) => {
 		try {
-			await deleteProjectTemplate(id);
+			await deleteTemplate(id);
 			setTemplates(prev => prev.filter(t => t.id !== id));
 			if (selectedTemplate?.id === id) {
 				setSelectedTemplate(null);
@@ -190,7 +184,7 @@ export default function TemplatesPage() {
 													setSelectedTemplate({
 														...selectedTemplate,
 														pauseSound: file,
-													} as ProjectTemplate);
+													} as Template);
 												}
 											}}
 										/>

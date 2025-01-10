@@ -6,14 +6,14 @@ import {
 	descriptionOptionDefinitions,
 	videoOptionDefinitions,
 } from '@/lib/options/optionDefinitions';
-import { ProjectTemplate } from '@shared/types/options/template';
+import { Template } from '@shared/types/options/template';
 import StepOptions from '@/components/cards/StepOptions';
 import VoiceSelector from '@/components/VoiceSelector';
 import SoundUpload from '@/components/ui/SoundUpload';
 
 interface TemplateCardProps {
-	template: ProjectTemplate;
-	onChange: (template: ProjectTemplate) => void;
+	template: Template;
+	onChange: (template: Template) => void;
 	onPauseSoundSelect: (file: File) => void;
 }
 

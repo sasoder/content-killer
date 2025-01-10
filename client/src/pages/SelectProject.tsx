@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { createProjectWithTemplate, fetchProjects, fetchProjectTemplates } from '@/api/honoClient';
+import { createProjectWithTemplate, fetchProjects, fetchTemplates } from '@/api/honoClient';
 import { Header } from '@/components/layout/Header';
 import { formatDate } from '@/lib/utils';
 import { Icons } from '@/components/icons';
@@ -12,8 +12,8 @@ import { useQuery } from '@tanstack/react-query';
 const SelectProject = () => {
 	const navigate = useNavigate();
 	const { data: templates = [], isLoading: isLoadingTemplates } = useQuery({
-		queryKey: ['projectTemplates'],
-		queryFn: fetchProjectTemplates,
+		queryKey: ['templates'],
+		queryFn: fetchTemplates,
 	});
 
 	const { data: projects = [], isLoading: isLoadingProjects } = useQuery({

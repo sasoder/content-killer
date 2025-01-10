@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import type { ProjectTemplate } from '@shared/types/options/template';
+import type { Template } from '@shared/types/options/template';
 
 // Request schemas
-export const UpdateProjectTemplateSchema = z.custom<ProjectTemplate>();
+export const UpdateTemplateSchema = z.custom<Template>();
 
 export const UpdateProjectDataSchema = z.object({
 	data: z.any(),
@@ -26,9 +26,9 @@ export const FileUploadResponseSchema = z.object({
 });
 
 // Combined schemas for routes
-export const UpdateProjectTemplateRoute = {
-	request: UpdateProjectTemplateSchema,
-	response: z.union([UpdateProjectTemplateSchema, ErrorResponseSchema]),
+export const UpdateTemplateRoute = {
+	request: UpdateTemplateSchema,
+	response: z.union([UpdateTemplateSchema, ErrorResponseSchema]),
 };
 
 export const UpdateProjectDataRoute = {

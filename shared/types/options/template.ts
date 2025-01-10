@@ -1,6 +1,6 @@
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from '.';
 
-export interface ProjectTemplate {
+export interface Template {
 	id: string;
 	name: string;
 	description: string;
