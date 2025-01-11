@@ -118,8 +118,11 @@ async function generateSubtitles(videoPath: string, srtPath: string): Promise<st
 		file: file,
 		model: process.env.OPENAI_TRANSCRIBE_MODEL || 'whisper-1',
 		language: 'en',
-		response_format: 'srt',
+		timestamp_granularities: ['segment', 'word'],
+		response_format: 'verbose_json',
 	});
+
+	// todo: convert to srt
 
 	await fs.writeFile(srtPath, transcript);
 
