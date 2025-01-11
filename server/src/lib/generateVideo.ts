@@ -343,12 +343,7 @@ export async function generateVideo(id: string, commentary: TimestampText[], opt
 			currentStep: VideoGenerationStep.PROCESSING_VIDEO,
 		});
 
-		await processVideoWithOverlays(videoToProcess, outputPath, audioDir, pauseAudioPath, {
-			bw: options.video.bw,
-			playSound: options.video.playSound,
-			size: options.video.size,
-			subtitlesEnabled: options.video.subtitlesEnabled,
-		});
+		await processVideoWithOverlays(videoToProcess, outputPath, audioDir, pauseAudioPath, options.video);
 
 		updateVideoProgress(id, {
 			currentStep: VideoGenerationStep.FINALIZING,

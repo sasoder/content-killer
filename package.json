@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "use-why-rerender": "^0.0.2"
-  },
-  "devDependencies": {
-    "@hono/client": "^0.0.3"
-  }
-}
