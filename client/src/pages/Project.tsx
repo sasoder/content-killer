@@ -79,8 +79,8 @@ const ProjectPageContent = () => {
 
 				<div>
 					<p className='text-muted-foreground text-sm'>
-						This app uses the Gemini API to generate a description of the provided YouTube video. The description is
-						used to create a commentary at all pivotal moments in the video with the OpenAI API. This commentary is
+						Content Killer uses the Gemini API to generate a description of the provided YouTube video. The description
+						is used to create commentary at all pivotal moments in the video with the OpenAI API. This commentary is
 						turned into audio files with ElevenLabs and finally stitched into a video using ffmpeg.
 					</p>
 				</div>
