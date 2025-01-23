@@ -10,24 +10,24 @@
 	},
 	"dependencies": {
 		"@content-killer/shared": "workspace:*",
-		"@google-cloud/vertexai": "^1.9.0",
+		"@google-cloud/vertexai": "^1.9.2",
 		"@google/generative-ai": "^0.21.0",
-		"@hono/zod-validator": "^0.4.1",
+		"@hono/zod-validator": "^0.4.2",
 		"archiver": "^7.0.1",
-		"dotenv": "^16.4.5",
-		"drizzle-orm": "^0.36.0",
-		"elevenlabs": "^0.18.0",
+		"dotenv": "^16.4.7",
+		"drizzle-orm": "^0.38.4",
+		"elevenlabs": "^1.50.4",
 		"fluent-ffmpeg": "^2.1.3",
-		"hono": "^4.6.5",
-		"openai": "^4.68.4",
-		"youtube-dl-exec": "^3.0.10",
-		"zod": "^3.23.8"
+		"hono": "^4.6.18",
+		"openai": "^4.80.0",
+		"youtube-dl-exec": "^3.0.13",
+		"zod": "^3.24.1"
 	},
 	"devDependencies": {
 		"@types/archiver": "^6.0.3",
-		"@types/bun": "latest",
+		"@types/bun": "^1.2.0",
 		"@types/fluent-ffmpeg": "^2.1.27",
-		"@types/node": "^22.7.6",
-		"drizzle-kit": "^0.27.1"
+		"@types/node": "^22.10.10",
+		"drizzle-kit": "^0.30.2"
 	}
 }
