@@ -1,4 +1,4 @@
-import { VideoOptions, DescriptionOptions, CommentaryOptions } from '@shared/types/options';
+import { VideoOptions, DescriptionOptions, CommentaryOptions } from '@content-killer/shared';
 
 export type OptionDefinition = {
 	label: string;
@@ -15,9 +15,8 @@ type OptionsDefinitionMap<T> = {
 };
 
 export type VideoOptionDefinitions = {
-	[K in keyof VideoOptions]: {
-		[P in keyof VideoOptions[K]]: OptionDefinition;
-	};
+	audio: OptionsDefinitionMap<VideoOptions['audio']>;
+	video: OptionsDefinitionMap<VideoOptions['video']>;
 };
 
 export const descriptionOptionDefinitions: OptionsDefinitionMap<DescriptionOptions> = {

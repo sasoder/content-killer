@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient, useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { startDescriptionGeneration, createSSEConnection, getDescriptionGenerationStatus } from '@/api/honoClient';
-import type { DescriptionOptions } from '@shared/types/options';
-import { DescriptionGenerationState, DescriptionGenerationStep } from '@shared/types/api/schema';
+import type { DescriptionOptions } from '@content-killer/shared';
+import { DescriptionGenerationState, DescriptionGenerationStep } from '@content-killer/shared';
 import { useEffect } from 'react';
 
 const inactiveStates = [

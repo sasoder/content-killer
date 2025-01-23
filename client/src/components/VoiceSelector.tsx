@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Icons } from '@/components/icons';
 import { fetchVoices } from '@/api/honoClient';
-import { Voice } from '@shared/types/options';
+import { Voice } from '@content-killer/shared/options';
 
 interface VoiceSelectorProps {
 	value: string;

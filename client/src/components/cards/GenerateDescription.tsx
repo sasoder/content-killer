@@ -9,7 +9,7 @@ import StepOptions from '@/components/cards/StepOptions';
 import { descriptionOptionDefinitions } from '@/lib/options/optionDefinitions';
 import { Icons } from '@/components/icons';
 import { useDescriptionGeneration } from '@/hooks/useDescriptionGeneration';
-import { DescriptionGenerationStep } from '@shared/types/api/schema';
+import { DescriptionGenerationStep } from '@content-killer/shared';
 import StepProgress from '@/components/cards/StepProgress';
 
 const GenerateDescription = () => {

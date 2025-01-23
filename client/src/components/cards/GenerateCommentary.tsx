@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useProject } from '@/context/ProjectContext';
 import { Button } from '@/components/ui/button';
-import { CommentaryOptions } from '@shared/types/options';
 import StepOptions from '@/components/cards/StepOptions';
 import { commentaryOptionDefinitions } from '@/lib/options/optionDefinitions';
 import { Icons } from '@/components/icons';

@@ -1,0 +1,29 @@
+{
+	"name": "content-killer",
+	"private": true,
+	"version": "1.0.0",
+	"workspaces": [
+		"client",
+		"server",
+		"shared"
+	],
+	"scripts": {
+		"dev": "concurrently \"npm:dev:*\"",
+		"dev:client": "cd client && bun run dev",
+		"dev:server": "cd server && bun run dev",
+		"build": "npm run build:shared && npm run build:client && npm run build:server",
+		"build:client": "cd client && bun run build",
+		"build:server": "cd server && bun run build",
+		"build:shared": "cd shared && bun run build",
+		"lint": "eslint .",
+		"format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+	},
+	"devDependencies": {
+		"@typescript-eslint/eslint-plugin": "^6.21.0",
+		"@typescript-eslint/parser": "^6.21.0",
+		"concurrently": "^8.2.2",
+		"eslint": "^8.56.0",
+		"prettier": "^3.2.5",
+		"typescript": "^5.3.3"
+	}
+}

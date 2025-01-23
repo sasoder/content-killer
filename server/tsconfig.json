@@ -4,12 +4,14 @@
 		"composite": true,
 		"outDir": "./dist",
 		"rootDir": "./src",
-		"baseUrl": ".",
+		"baseUrl": "./src",
 		"paths": {
-			"@/*": ["./src/*"],
-			"@shared/*": ["../shared/*"]
+			"@/*": ["./*"],
+			"@content-killer/shared/*": ["../../shared/src/*"],
+			"@content-killer/shared": ["../../shared/src"]
 		}
 	},
 	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist"],
 	"references": [{ "path": "../shared" }]
 }

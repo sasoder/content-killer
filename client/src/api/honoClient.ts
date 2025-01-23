@@ -1,5 +1,5 @@
 import { hc } from 'hono/client';
-import type { RouterType } from '@server/routes';
+import type { RouterType } from '@content-killer/server';
 import type {
 	DescriptionGenerationStep,
 	Project,
@@ -8,9 +8,9 @@ import type {
 	Voice,
 	VideoGenerationState,
 	DescriptionGenerationState,
-} from '@shared/types/api/schema';
-import type { Template } from '@shared/types/options/template';
-import type { CommentaryOptions, DescriptionOptions, VideoOptions } from '@shared/types/options';
+} from '@content-killer/shared';
+import type { Template } from '@content-killer/shared';
+import type { CommentaryOptions, DescriptionOptions, VideoOptions } from '@content-killer/shared';
 
 const API_BASE = import.meta.env.VITE_APP_API_BASE;
 export const client = hc<RouterType>(API_BASE);

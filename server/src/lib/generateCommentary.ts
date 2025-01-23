@@ -1,5 +1,5 @@
-import { CommentaryOptions } from '@shared/types/options';
-import { TimestampText } from '@shared/types/api/schema';
+import { CommentaryOptions } from '@content-killer/shared';
+import { TimestampText } from '@content-killer/shared';
 import OpenAI from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { z } from 'zod';

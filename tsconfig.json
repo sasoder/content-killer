@@ -5,18 +5,22 @@
 		"moduleResolution": "bundler",
 		"strict": true,
 		"skipLibCheck": true,
-		"baseUrl": ".",
-		"paths": {
-			"@/*": ["./server/src/*"],
-			"@shared/*": ["./shared/*"],
-			"@server/*": ["./server/src/*"],
-			"@client/*": ["./client/src/*"]
-		},
 		"esModuleInterop": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,
-		"composite": true
+		"composite": true,
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["./src/*"],
+			"@content-killer/shared/*": ["./shared/src/*"],
+			"@content-killer/shared": ["./shared/src"],
+			"@content-killer/server": ["./server/src"]
+		}
 	},
-	"references": [{ "path": "./client" }, { "path": "./server" }, { "path": "./shared" }],
-	"files": []
+	"references": [{ "path": "./shared" }, { "path": "./client" }, { "path": "./server" }],
+	"files": [],
+	"exclude": ["**/node_modules", "**/dist"]
 }

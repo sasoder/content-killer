@@ -1,5 +1,5 @@
-import { VideoOptions } from '@shared/types/options';
-import { TimestampText } from '@shared/types/api/schema';
+import { VideoOptions } from '@content-killer/shared';
+import { TimestampText } from '@content-killer/shared';
 import { ElevenLabsClient } from 'elevenlabs';
 import * as path from 'path';
 import * as fs from 'fs/promises';

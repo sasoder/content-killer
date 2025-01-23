@@ -1,5 +1,5 @@
-import { Project } from '@shared/types/api/schema';
-import { Template } from '@shared/types/options/template';
+import { Project } from '@content-killer/shared/api/schema';
+import { Template } from '@content-killer/shared/options/template';
 
 export const createDefaultProject = (id: string, template: Template): Project => {
 	return {

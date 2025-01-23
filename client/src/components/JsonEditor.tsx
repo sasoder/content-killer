@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { TimestampText } from '@shared/types/api/schema';
+import { TimestampText } from '@content-killer/shared';
 import { Icons } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
 

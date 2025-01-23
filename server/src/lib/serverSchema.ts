@@ -1,5 +1,5 @@
 import { SchemaType } from '@google/generative-ai';
-import { CommentaryOptions, DescriptionOptions, VideoOptions } from '@shared/types/options';
+import { CommentaryOptions, DescriptionOptions, VideoOptions } from '@content-killer/shared';
 import { z } from 'zod';
 
 export const timestampTextSchema = {

@@ -3,7 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
 import { fetchTemplates, createTemplate, updateTemplate, deleteTemplate, uploadPauseSound } from '@/api/honoClient';
-import { Template } from '@shared/types/options/template';
+import { Template } from '@content-killer/shared';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/layout/Header';
 import { TemplateCard } from '@/components/TemplateCard';

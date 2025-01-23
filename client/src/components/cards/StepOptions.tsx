@@ -6,10 +6,10 @@ import { OptionDefinition } from '@/lib/options/optionDefinitions';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
-interface StepOptionsProps<T> {
+interface StepOptionsProps<T extends Record<string, any>> {
 	options: T;
 	onOptionChange: (options: T) => void;
-	optionDefinitions: Record<keyof T, OptionDefinition>;
+	optionDefinitions: { [K in keyof T]: OptionDefinition };
 	type: string;
 }
 

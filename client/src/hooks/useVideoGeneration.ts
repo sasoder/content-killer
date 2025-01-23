@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { generateVideo, getVideoGenerationStatus } from '@/api/honoClient';
-import type { VideoOptions } from '@shared/types/options';
-import { VideoGenerationStep, VideoGenerationState } from '@shared/types/api/schema';
+import type { VideoOptions } from '@content-killer/shared';
+import { VideoGenerationStep, VideoGenerationState } from '@content-killer/shared';
 
 const ACTIVE_STEPS = [
 	VideoGenerationStep.PREPARING,

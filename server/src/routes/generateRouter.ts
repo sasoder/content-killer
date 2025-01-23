@@ -3,12 +3,12 @@ import { generateDescription, getDescriptionGenerationProgress } from '@/lib/gen
 import { generateMetadata } from '@/lib/generateMetadata';
 import { generateCommentary } from '@/lib/generateCommentary';
 import { generateVideo, getVideoGenerationProgress } from '@/lib/generateVideo';
-import { VideoGenerationStep, DescriptionGenerationStep, DescriptionGenerationState } from '@shared/types/api/schema';
+import { VideoGenerationStep, DescriptionGenerationStep, DescriptionGenerationState } from '@content-killer/shared';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { projectStorage } from '@/db/storage';
 import { generateProjectId } from '@/lib/util';
-import { defaultTemplate } from '@shared/types/options/defaultTemplates';
+import { defaultTemplate } from '@content-killer/shared';
 import { streamSSE } from 'hono/streaming';
 import type { SSEStreamingApi } from 'hono/streaming';
 import {

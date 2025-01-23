@@ -3,11 +3,9 @@
 	"compilerOptions": {
 		"composite": true,
 		"outDir": "./dist",
-		"rootDir": ".",
-		"baseUrl": ".",
-		"paths": {
-			"@/*": ["./*"]
-		}
+		"rootDir": "./src",
+		"baseUrl": "./src"
 	},
-	"include": ["./**/*"]
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist"]
 }

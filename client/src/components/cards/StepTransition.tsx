@@ -1,6 +1,6 @@
 import { Icons } from '@/components/icons';
 import JsonEditor from '@/components/JsonEditor';
-import { TimestampText } from '@shared/types/api/schema';
+import { TimestampText } from '@content-killer/shared';
 
 type StepTransitionProps = {
 	data: TimestampText[];

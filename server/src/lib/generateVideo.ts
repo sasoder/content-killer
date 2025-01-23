@@ -3,8 +3,9 @@ import fs from 'fs/promises';
 import path from 'path';
 import OpenAI from 'openai';
 import { ffprobe, type FfprobeData } from 'fluent-ffmpeg';
-import { VideoOptions } from '@shared/types/options';
-import { VideoGenerationStep, TimestampText, VideoGenerationState } from '@shared/types/api/schema';
+import { VideoOptions } from '@content-killer/shared';
+import { VideoGenerationStep, VideoGenerationState } from '@content-killer/shared';
+import { TimestampText } from '@content-killer/shared';
 import { downloadVideo } from './downloadVideo';
 import dotenv from 'dotenv';
 import { projectStorage } from '@/db/storage';
@@ -118,11 +119,8 @@ async function generateSubtitles(videoPath: string, srtPath: string): Promise<st
 		file: file,
 		model: process.env.OPENAI_TRANSCRIBE_MODEL || 'whisper-1',
 		language: 'en',
-		timestamp_granularities: ['segment', 'word'],
-		response_format: 'verbose_json',
+		response_format: 'srt',
 	});
-
-	// todo: convert to srt
 
 	await fs.writeFile(srtPath, transcript);
 

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useProject } from '@/context/ProjectContext';
 import { Icons } from '@/components/icons';
-import { VideoGenerationStep } from '@shared/types/api/schema';
+import { VideoGenerationStep } from '@content-killer/shared';
 import { downloadFile } from '@/api/honoClient';
 import { toast } from '@/hooks/use-toast';
 import { useVideoGeneration } from '@/hooks/useVideoGeneration';

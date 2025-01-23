@@ -1,5 +1,5 @@
 import youtubedl, { create } from 'youtube-dl-exec';
-import { Metadata } from '@shared/types/api/schema';
+import { Metadata } from '@content-killer/shared';
 import dotenv from 'dotenv';
 import path from 'path';
 import { spawn } from 'child_process';

@@ -1,3 +1,5 @@
+import { Voice } from '../common';
+
 export type DescriptionOptions = {
 	temperature: number;
 };
@@ -7,12 +9,6 @@ export type CommentaryOptions = {
 	outro: boolean;
 	temperature: number;
 	videoType: 'police' | 'sports' | 'interrogation' | 'poker';
-};
-
-export type Voice = {
-	id: string;
-	name: string;
-	previewUrl?: string;
 };
 
 export type VideoOptions = {
@@ -29,3 +25,5 @@ export type VideoOptions = {
 		size: '720p' | '1080p' | '4k' | 'source';
 	};
 };
+
+export type { Voice };

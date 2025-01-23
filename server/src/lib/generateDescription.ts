@@ -1,5 +1,5 @@
-import { DescriptionOptions } from '@shared/types/options';
-import { DescriptionGenerationStep, DescriptionGenerationState } from '@shared/types/api/schema';
+import { DescriptionOptions } from '@content-killer/shared';
+import { DescriptionGenerationStep, DescriptionGenerationState } from '@content-killer/shared';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GoogleAIFileManager, FileState } from '@google/generative-ai/server';
 import { downloadVideo } from './downloadVideo';

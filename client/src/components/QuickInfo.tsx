@@ -1,4 +1,4 @@
-import { TimestampText } from '@shared/types/api/schema';
+import { TimestampText } from '@content-killer/shared';
 
 interface QuickInfoProps {
 	data: TimestampText[];

@@ -5,13 +5,15 @@
 		"outDir": "./dist",
 		"rootDir": "./src",
 		"jsx": "react-jsx",
-		"baseUrl": ".",
+		"baseUrl": "./src",
 		"paths": {
-			"@/*": ["./src/*"],
-			"@shared/*": ["../shared/*"],
-			"@server/*": ["../server/src/*"]
+			"@/*": ["./*"],
+			"@content-killer/shared/*": ["../../shared/src/*"],
+			"@content-killer/shared": ["../../shared/src"],
+			"@content-killer/server": ["../../server/src"]
 		}
 	},
 	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist"],
 	"references": [{ "path": "../shared" }, { "path": "../server" }]
 }

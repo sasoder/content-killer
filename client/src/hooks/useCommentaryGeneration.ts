@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { generateCommentary } from '@/api/honoClient';
-import type { CommentaryOptions } from '@shared/types/options';
+import type { CommentaryOptions } from '@content-killer/shared';
 
 export function useCommentaryGeneration(id: string) {
 	const queryClient = useQueryClient();

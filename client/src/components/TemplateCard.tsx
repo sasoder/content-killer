@@ -6,7 +6,7 @@ import {
 	descriptionOptionDefinitions,
 	videoOptionDefinitions,
 } from '@/lib/options/optionDefinitions';
-import { Template } from '@shared/types/options/template';
+import { Template } from '@content-killer/shared';
 import StepOptions from '@/components/cards/StepOptions';
 import VoiceSelector from '@/components/VoiceSelector';
 import SoundUpload from '@/components/ui/SoundUpload';

@@ -10,7 +10,7 @@ import { useParams } from 'react-router-dom';
 import { HTTPError } from '@/components/HTTPError';
 import { Header } from '@/components/layout/Header';
 import { useVideoGeneration } from '@/hooks/useVideoGeneration';
-import { VideoGenerationStep } from '@shared/types/api/schema';
+import { VideoGenerationStep } from '@content-killer/shared';
 
 const ProjectPageContent = () => {
 	const { description, commentary, updateDescription, updateCommentary, metadata, isLoading, error, id, audio, video } =

@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { projectStorage } from '@/db/storage';
-import { Project } from '@shared/types/api/schema';
-import { Voice } from '@shared/types/options';
+import { Project } from '@content-killer/shared/api/schema';
+import { Voice } from '@content-killer/shared/options';
 import { ElevenLabsClient } from 'elevenlabs';
 
 const client = new ElevenLabsClient();

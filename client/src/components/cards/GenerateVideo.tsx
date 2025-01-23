@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useProject } from '@/context/ProjectContext';
-import { VideoOptions } from '@shared/types/options';
+import { VideoOptions } from '@content-killer/shared';
 import { Icons } from '@/components/icons';
 import { toast } from '@/hooks/use-toast';
 import { videoOptionDefinitions } from '@/lib/options/optionDefinitions';

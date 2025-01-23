@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { Template } from '@shared/types/options/template';
+import type { Template } from '@content-killer/shared';
 
 // Request schemas
 export const UpdateTemplateSchema = z.custom<Template>();

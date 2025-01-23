@@ -1,22 +1,5 @@
 import { DescriptionOptions, CommentaryOptions, VideoOptions } from '../options';
-
-export type Voice = {
-	id: string;
-	name: string;
-	previewUrl?: string;
-};
-
-export type TimestampText = {
-	timestamp: string;
-	text: string;
-};
-
-export type Metadata = {
-	url?: string;
-	title?: string;
-	duration?: number;
-	createdAt: string;
-};
+import { TimestampText, Metadata } from '../common';
 
 export enum VideoGenerationStep {
 	IDLE = 'IDLE',

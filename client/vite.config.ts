@@ -7,8 +7,11 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@': path.resolve(__dirname, './src'),
-			'@shared': path.resolve(__dirname, '../shared'),
-			'@shared/server': path.resolve(__dirname, '../server/src'),
+			'@content-killer/shared': path.resolve(__dirname, '../shared/src'),
 		},
+	},
+	server: {
+		port: 5173,
+		strictPort: true,
 	},
 });
