@@ -65,7 +65,7 @@ export const videoOptionDefinitions: VideoOptionDefinitions = {
 			type: 'number',
 			min: 0,
 			max: 1,
-			step: 0.5,
+			step: 0.01,
 		},
 		voiceId: {
 			label: 'Voice',
@@ -78,7 +78,7 @@ export const videoOptionDefinitions: VideoOptionDefinitions = {
 			type: 'number',
 			min: 0.75,
 			max: 1.75,
-			step: 0.05,
+			step: 0.01,
 		},
 	},
 	video: {
