@@ -6,19 +6,19 @@ import App from '@/App';
 import ProjectPage from '@/pages/Project';
 import TemplatePage from '@/pages/Templates';
 import SelectProjectPage from '@/pages/SelectProject';
-import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeProvider } from '@/components/common/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import '@fontsource/nunito';
 import './index.css';
-import { HTTPError } from '@/components/HTTPError';
+import { HTTPError } from '@/components/common/HTTPError';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
-			staleTime: 1000 * 60 * 5,
+			// staleTime: 1000 * 60 * 5,
 			refetchOnWindowFocus: false,
 			refetchOnReconnect: false,
-			retry: false,
+			retry: 3,
 		},
 	},
 });

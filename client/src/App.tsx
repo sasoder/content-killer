@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
-import { Icons } from '@/components/icons';
-import { ModeToggle } from '@/components/mode-toggle';
+import { Icons } from '@/components/common/icons';
+import { ModeToggle } from '@/components/common/mode-toggle';
 import { Link } from 'react-router-dom';
 
 export default function Home() {

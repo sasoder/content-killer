@@ -3,9 +3,9 @@ import { useProject } from '@/context/ProjectContext';
 import { Button } from '@/components/ui/button';
 import StepOptions from '@/components/cards/StepOptions';
 import { commentaryOptionDefinitions } from '@/lib/options/optionDefinitions';
-import { Icons } from '@/components/icons';
+import { Icons } from '@/components/common/icons';
 import { toast } from '@/hooks/use-toast';
-import QuickInfo from '@/components/QuickInfo';
+import QuickInfo from '@/components/common/QuickInfo';
 import { useCommentaryGeneration } from '@/hooks/useCommentaryGeneration';
 
 const GenerateCommentary = () => {

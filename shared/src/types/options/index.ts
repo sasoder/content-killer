@@ -8,7 +8,7 @@ export type CommentaryOptions = {
 	intro: boolean;
 	outro: boolean;
 	temperature: number;
-	videoType: 'police' | 'sports' | 'interrogation' | 'poker';
+	videoType: 'police bodycam' | 'sports' | 'interrogation' | 'poker';
 };
 
 export type VideoOptions = {

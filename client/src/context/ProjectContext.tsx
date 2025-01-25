@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { TimestampText, Metadata, Project } from '@content-killer/shared/api/schema';
-import type { CommentaryOptions, DescriptionOptions, VideoOptions } from '@content-killer/shared/options';
+import type { TimestampText, Metadata, Project } from '@content-killer/shared';
+import type { CommentaryOptions, DescriptionOptions, VideoOptions } from '@content-killer/shared';
 import { fetchProject, updateProjectDescription, updateProjectCommentary, generateMetadata } from '@/api/honoClient';
 
 interface ProjectContext {

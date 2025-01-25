@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useProject } from '@/context/ProjectContext';
-import { Icons } from '@/components/icons';
+import { Icons } from '@/components/common/icons';
 import { VideoGenerationStep } from '@content-killer/shared';
 import { downloadFile } from '@/api/honoClient';
 import { toast } from '@/hooks/use-toast';

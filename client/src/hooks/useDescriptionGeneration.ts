@@ -3,6 +3,7 @@ import { startDescriptionGeneration, createSSEConnection, getDescriptionGenerati
 import type { DescriptionOptions } from '@content-killer/shared';
 import { DescriptionGenerationState, DescriptionGenerationStep } from '@content-killer/shared';
 import { useEffect } from 'react';
+import { getApiBaseUrl } from '@/lib/utils';
 
 const inactiveStates = [
 	DescriptionGenerationStep.IDLE,
@@ -46,7 +47,7 @@ export function useDescriptionGeneration(id: string) {
 			return;
 		}
 
-		const connection = createSSEConnection(`${import.meta.env.VITE_APP_API_BASE}/generate/description/${id}/status`, {
+		const connection = createSSEConnection(`${getApiBaseUrl()}/generate/description/${id}/status`, {
 			onMessage: data => {
 				queryClient.setQueryData(['descriptionGeneration', id], (prev: DescriptionGenerationState) => ({
 					...prev,

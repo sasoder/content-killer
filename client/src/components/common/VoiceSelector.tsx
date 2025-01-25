@@ -2,9 +2,9 @@ import React from 'react';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Icons } from '@/components/icons';
+import { Icons } from '@/components/common/icons';
 import { fetchVoices } from '@/api/honoClient';
-import { Voice } from '@content-killer/shared/options';
+import { Voice } from '@content-killer/shared';
 
 interface VoiceSelectorProps {
 	value: string;

@@ -5,6 +5,9 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import { PROJECTS_DIR } from '@/db/storage';
 import ffmpeg from 'fluent-ffmpeg';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const client = new ElevenLabsClient({
 	apiKey: process.env.ELEVENLABS_API_KEY,
@@ -14,7 +17,7 @@ const generateSingleAudio = async (text: string, options: VideoOptions['audio'])
 	try {
 		const audio = await client.generate({
 			voice: options.voiceId,
-			model_id: 'eleven_turbo_v2',
+			model_id: process.env.ELEVENLABS_VOICE_MODEL,
 			text,
 			voice_settings: {
 				stability: options.stability,
@@ -54,6 +57,31 @@ const adjustAudioTempo = (inputPath: string, outputPath: string, tempo: number):
 	});
 };
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const generateSingleAudioWithRetry = async (
+	text: string,
+	options: VideoOptions['audio'],
+	retries = 3,
+	backoffMs = 1000,
+): Promise<Buffer> => {
+	for (let i = 0; i < retries; i++) {
+		try {
+			return await generateSingleAudio(text, options);
+		} catch (error: any) {
+			if (error?.statusCode === 429) {
+				console.log(`Rate limited, attempt ${i + 1}/${retries}. Waiting ${backoffMs}ms...`);
+				await delay(backoffMs);
+				// Exponential backoff
+				backoffMs *= 2;
+				continue;
+			}
+			throw error;
+		}
+	}
+	throw new Error(`Failed to generate audio after ${retries} retries`);
+};
+
 export const generateAudio = async (
 	id: string,
 	commentary: TimestampText[],
@@ -64,13 +92,14 @@ export const generateAudio = async (
 		const audioDir = path.join(projectDir, 'audio');
 		await fs.mkdir(audioDir, { recursive: true });
 
-		const audioPromises = commentary.map(async entry => {
+		// Process sequentially instead of in parallel
+		for (const entry of commentary) {
 			const timestamp = entry.timestamp.replace(':', '');
 			const filename = `${timestamp}.mp3`;
 			const tempPath = path.join(audioDir, `temp_${filename}`);
 			const finalPath = path.join(audioDir, filename);
 
-			const buffer = await generateSingleAudio(entry.text, options);
+			const buffer = await generateSingleAudioWithRetry(entry.text, options);
 			await fs.writeFile(tempPath, buffer);
 
 			if (options.speedMultiplier !== 1) {
@@ -80,10 +109,9 @@ export const generateAudio = async (
 				await fs.rename(tempPath, finalPath);
 			}
 
-			return filename;
-		});
-
-		await Promise.all(audioPromises);
+			// Add a small delay between requests to avoid rate limiting
+			await delay(200);
+		}
 	} catch (error) {
 		console.error('Error generating audio files:', error);
 		throw error;

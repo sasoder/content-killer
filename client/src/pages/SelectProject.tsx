@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { createProjectWithTemplate, fetchProjects, fetchTemplates } from '@/api/honoClient';
 import { Header } from '@/components/layout/Header';
 import { formatDate } from '@/lib/utils';
-import { Icons } from '@/components/icons';
+import { Icons } from '@/components/common/icons';
 import { useQuery } from '@tanstack/react-query';
 
 const SelectProject = () => {

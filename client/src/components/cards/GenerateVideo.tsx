@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useProject } from '@/context/ProjectContext';
 import { VideoOptions } from '@content-killer/shared';
-import { Icons } from '@/components/icons';
+import { Icons } from '@/components/common/icons';
 import { toast } from '@/hooks/use-toast';
 import { videoOptionDefinitions } from '@/lib/options/optionDefinitions';
 import { useVideoGeneration } from '@/hooks/useVideoGeneration';
 import StepOptions from '@/components/cards/StepOptions';
-import QuickInfo from '@/components/QuickInfo';
-import VoiceSelector from '@/components/VoiceSelector';
+import QuickInfo from '@/components/common/QuickInfo';
+import VoiceSelector from '@/components/common/VoiceSelector';
 
 const GenerateVideo = () => {
 	const { commentary, id, options } = useProject();

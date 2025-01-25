@@ -1,5 +1,5 @@
-import { Icons } from '@/components/icons';
-import JsonEditor from '@/components/JsonEditor';
+import { Icons } from '@/components/common/icons';
+import JsonEditor from '@/components/common/JsonEditor';
 import { TimestampText } from '@content-killer/shared';
 
 type StepTransitionProps = {

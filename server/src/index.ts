@@ -30,6 +30,7 @@ const initServer = async () => {
 
 initServer();
 
+export type { RouterType };
 export type AppType = RouterType;
 export default {
 	port: 3000,

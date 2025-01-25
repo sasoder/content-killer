@@ -1,4 +1,4 @@
-import { Icons } from '@/components/icons';
+import { Icons } from '@/components/common/icons';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 

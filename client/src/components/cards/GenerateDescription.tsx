@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import StepOptions from '@/components/cards/StepOptions';
 import { descriptionOptionDefinitions } from '@/lib/options/optionDefinitions';
-import { Icons } from '@/components/icons';
+import { Icons } from '@/components/common/icons';
 import { useDescriptionGeneration } from '@/hooks/useDescriptionGeneration';
 import { DescriptionGenerationStep } from '@content-killer/shared';
 import StepProgress from '@/components/cards/StepProgress';

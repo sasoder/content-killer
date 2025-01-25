@@ -1,23 +1,15 @@
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs/promises';
 import path from 'path';
-import OpenAI from 'openai';
 import { ffprobe, type FfprobeData } from 'fluent-ffmpeg';
 import { VideoOptions } from '@content-killer/shared';
 import { VideoGenerationStep, VideoGenerationState } from '@content-killer/shared';
 import { TimestampText } from '@content-killer/shared';
 import { downloadVideo } from './downloadVideo';
-import dotenv from 'dotenv';
 import { projectStorage } from '@/db/storage';
 import { generateAudio } from './generateAudio';
 import { PROJECTS_DIR } from '@/db/storage';
-
-dotenv.config();
-
-const openai = new OpenAI({
-	apiKey: process.env.OPENAI_API_KEY,
-});
-
+import { generateSubtitles, addSubtitles } from './generateSubtitles';
 interface AudioOverlay {
 	timestamp: string;
 	timestampSeconds: number;
@@ -88,49 +80,6 @@ async function scaleVideo(inputPath: string, outputPath: string, size: string): 
 		ffmpeg(inputPath)
 			.videoFilters([scaleFilter.substring(1)])
 			.outputOptions(['-c:v', 'libx264', '-c:a', 'copy'])
-			.output(outputPath)
-			.on('end', () => resolve(outputPath))
-			.on('error', err => reject(err))
-			.run();
-	});
-}
-
-async function extractAudio(videoPath: string, outputPath: string): Promise<string> {
-	return new Promise((resolve, reject) => {
-		ffmpeg(videoPath)
-			.toFormat('mp3')
-			.output(outputPath)
-			.on('end', () => resolve(outputPath))
-			.on('error', err => reject(err))
-			.run();
-	});
-}
-
-async function generateSubtitles(videoPath: string, srtPath: string): Promise<string> {
-	console.log('Generating subtitles...');
-	const audioPath = videoPath.replace(/\.[^/.]+$/, '.mp3');
-	await extractAudio(videoPath, audioPath);
-
-	const audioFile = await fs.readFile(audioPath);
-	const audioBlob = new Blob([audioFile], { type: 'audio/mp3' });
-	const file = new File([audioBlob], 'audio.mp3', { type: 'audio/mp3' });
-
-	const transcript = await openai.audio.transcriptions.create({
-		file: file,
-		model: process.env.OPENAI_TRANSCRIBE_MODEL || 'whisper-1',
-		language: 'en',
-		response_format: 'srt',
-	});
-
-	await fs.writeFile(srtPath, transcript);
-
-	return srtPath;
-}
-
-async function addSubtitles(videoPath: string, srtPath: string, outputPath: string, size: number): Promise<string> {
-	return new Promise((resolve, reject) => {
-		ffmpeg(videoPath)
-			.videoFilters([`subtitles=${srtPath}:force_style='FontSize=${size}'`])
 			.output(outputPath)
 			.on('end', () => resolve(outputPath))
 			.on('error', err => reject(err))
@@ -288,10 +237,6 @@ export async function generateVideo(id: string, commentary: TimestampText[], opt
 		const videoDir = path.join(projectDir, 'video');
 		const miscDir = path.join(projectDir, 'misc');
 		const audioDir = path.join(projectDir, 'audio');
-		console.log('projectDir', projectDir);
-		console.log('videoDir', videoDir);
-		console.log('miscDir', miscDir);
-		console.log('audioDir', audioDir);
 
 		await fs.mkdir(videoDir, { recursive: true });
 		await fs.mkdir(miscDir, { recursive: true });
@@ -312,6 +257,8 @@ export async function generateVideo(id: string, commentary: TimestampText[], opt
 		// Remove existing audio files
 		await projectStorage.deleteProjectAudio(id);
 		await generateAudio(id, commentary, options.audio);
+
+		await projectStorage.deleteProjectVideo(id);
 
 		// Scale video if needed
 		let videoToProcess = sourceVideoPath;

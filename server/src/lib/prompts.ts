@@ -1,85 +1,92 @@
-export const DESCRIPTION_PROMPT = `Provide a detailed behavioral analysis description of the scene/interaction. The description should capture both micro-behaviors and broader patterns to enable insightful analysis and narrative commentary.
+export const DESCRIPTION_PROMPT = `Provide a detailed behavioral analysis and descriptive narrative of the scene, breaking down observations into atomic, timestamped events. Capture all dialogue verbatim with clear speaker attribution, and describe actions in sufficient detail that the scene can be understood without visuals.
 
-**Guidelines**:
-- **Pivotal Moments**: Identify key turning points occurring every 30-60 seconds, focusing on significant decisions, behavioral shifts, or notable interactions that change the dynamics of the situation.
+**Core Requirements**:
+- Transcribe ALL dialogue exactly as spoken
+- Identify speakers by name when known/visible (e.g., "John Smith: "), otherwise by clear role/position/descriptor (e.g., "Tall man in blue:", "Officer 1:", "Interviewer:")
+- Describe positioning and movement of all participants ALONG with the dialogue
+- Note entries, exits, and position changes ALONG WITH THE DIALOGUE
+- Capture environmental sounds and notable silence ALONG WITH ANY DIALOGUE
+- Describe relevant visual elements clearly
+- There can be NO DUPLICATE TIMESTAMPS - if two events happen at the same time, they should be in a single timestamp text entry
 
-- **Interactions**: Include all relevant verbal AND non-verbal communication exactly as expressed. Capture tone, delivery, body language, and contextual cues. For each interaction, describe:
-  - The physical/verbal expression
-  - The surrounding context
-  - Any apparent emotional/psychological subtext
+**Timestamp Guidelines**:
+- Create a new timestamp for each:
+  - Line of dialogue
+  - Physical action or movement
+  - Position change
+  - Notable reaction
+  - Strategic decision
+  - Environmental change
+- Keep descriptions atomic and focused
+- Include both speaker identification and behavioral context
+- Break longer sequences into separate timestamped moments
 
-- **Actor Identification**: For every action and interaction, provide clear identification of participants:
-  - Attribute each action and statement to specific individuals/roles
-  - Use consistent identifiers throughout (names, roles, positions)
-  - Note when new participants enter or exit the scene
-  - Track relationships and dynamics between participants
-  - Describe relative positions and movements when relevant
-  - Make attribution clear enough that scene can be understood without visuals
+**Analysis Components**:
 
-- **Behavioral Indicators**: Document actions and body language that reveal:
-  - Mental/emotional state
-  - Strategic thinking
-  - Deception or authenticity
-  - Power dynamics
-  - Stress levels
-  - Decision-making patterns
+1. **Dialogue & Communication**:
+- Exact words spoken with speaker identification
+- Tone and delivery style
+- Pauses and timing
+- Non-verbal sounds (sighs, laughs, etc.)
+- Volume and emphasis changes
 
-- **Notable Responses**: Highlight reactions to:
-  - Pressure points 
-  - Strategic moves
-  - Environmental changes
-  - Other participants' actions
+2. **Physical Description**:
+- Participant positions and movements
+- Gestures and actions
+- Spatial relationships
+- Physical interactions
+- Environmental engagement
 
-- **Pattern Recognition**: 
-  - Mark changes in behavior or strategy
-  - Note recurring themes/tactics
-  - Identify inconsistencies
-  - Track evolving dynamics
+3. **Behavioral Indicators**:
+- Confidence/uncertainty signals
+- Stress responses
+- Focus/attention shifts
+- Energy changes
+- Comfort/discomfort displays
 
-- **Key Incidents**: Document:
-  - Entry of new participants
-  - Major strategic decisions
-  - Significant environmental changes
-  - Power dynamic shifts
-
-- **Psychological Elements**: Note moments that:
-  - Signal internal conflict
-  - Reveal cognitive biases
-  - Show strategic thinking
-  - Indicate emotional responses
-
-- **Behavioral Tells**: Track specific indicators like:
-  - Micro-expressions
-  - Changes in body posture/movement
-  - Voice modulation
-  - Eye movement/focus
-  - Timing/pacing of actions
-
-- **Strategic Elements**: Analyze:
-  - Decision points
-  - Risk assessment
-  - Resource management
-  - Position/advantage shifts
-
-- **Narrative Markers**: Flag moments of:
-  - Heightened tension
-  - Strategic revelation
-  - Character insight
-  - Pattern disruption
+4. **Pattern Recognition**:
+- Recurring behaviors
+- Tactical patterns
+- Breaking patterns
+- Behavioral tells
+- Strategic adjustments
 
 **Format**:
 {
     timestamp: "MM:SS",
-    text: "Description of the event, including exact communication (verbal/non-verbal) and behavioral context and actor identification"
+    text: "Clear description including WHO + WHAT + HOW. For dialogue: 'Speaker Name: Exact words spoken (tone/delivery note)'"
 }
 
-For extended dialogue or complex interactions, indicate completion time using [completes at MM:SS] at the end of the relevant description.
-
-Example:
+For continuous actions:
 {
-    timestamp: "00:30",
-    text: "Subject A begins lengthy monologue about project challenges, voice showing increasing frustration as they detail multiple setbacks. Body language becomes more tense, with frequent hand gestures and pacing. [completes at 01:45]"
+    timestamp: "00:10",
+    text: "Initial action begins"
 }
+{
+    timestamp: "00:11",
+    text: "Action develops or changes"
+}
+{
+    timestamp: "00:12",
+    text: "Action concludes with clear result"
+}
+
+**Essential Elements**:
+- WHO: Clear identification of all participants
+- WHAT: Exact dialogue or specific action
+- WHERE: Spatial relationships and positioning
+- HOW: Manner of delivery or execution
+- CONTEXT: Relevant environmental or situational details
+
+**Quality Checks**:
+- Is every speaker clearly identified?
+- Is all dialogue captured verbatim?
+- Could someone follow the scene without visuals?
+- Are positions and movements clear?
+- Are behavioral patterns identifiable?
+- Is the sequence of events coherent?
+
+Remember: Provide enough detail that someone could reconstruct the scene from the description alone. Every action, word, and behavioral shift should be documented with clear attribution and context.
 
 Focus on capturing both immediate actions and deeper psychological/strategic elements that reveal character, motivation, and decision-making processes.`;
 
@@ -102,8 +109,7 @@ Structure the commentary to:
 **Timestamp Guidelines**:
 - Timestamps must be in the format **mm:ss** (e.g., "01:15").
 - Commentary should be timed **intelligently**:
-    - Place commentary **before** an event when it sets up the action (prelude).
-    - Place commentary **after** an action when analyzing behavior that has already occurred.
+    - Place commentary **after** an action ALWAYS, analyzing behavior that has already occurred, ALWAYS 5 seconds after the action.
     - Avoid timestamp ranges like "0:14-0:16"; use a **precise moment** instead.
 
 **Quality Over Quantity**:
@@ -136,8 +142,7 @@ Structure the commentary to:
 **Timestamp Guidelines**: 
 - Timestamps must be in the format **mm:ss** (e.g., "01:15").
 - Commentary should be timed **intelligently**:
-    - Place commentary **before** an event when it sets up a new interrogation phase or tactic.
-    - Place commentary **after** an event when analyzing responses and behavior.
+    - Place commentary **after** an event ALWAYS, analyzing behavior that has already occurred, ALWAYS 5 seconds after the event.
     - Avoid timestamp ranges like "0:14-0:16"; use a **precise moment** instead.
 
 **Quality Over Quantity**:
@@ -194,8 +199,7 @@ Structure the commentary to:
 **Timestamp Guidelines**:
 - Timestamps must be in the format **mm:ss** (e.g., "01:15")
 - Commentary should be timed **intelligently**:
-    - Place commentary **before** an action when setting up key decision points
-    - Place commentary **after** an action when analyzing the impact of decisions
+    - Place commentary **after** an action when analyzing the impact of decisions, ALWAYS 5 seconds after the action.
     - Avoid timestamp ranges; use a **precise moment** instead
     - Note both action timestamps and observable reaction times
 
@@ -216,10 +220,11 @@ export const generateCommentaryPrompt = (
 	includeIntro: boolean,
 	includeOutro: boolean,
 	videoType: string,
+	maxDuration: string | undefined,
 ) => {
 	let videoTypeString = '';
 	switch (videoType) {
-		case 'police':
+		case 'police bodycam':
 			videoTypeString = 'police bodycam footage';
 			break;
 		case 'sports':
@@ -234,19 +239,22 @@ export const generateCommentaryPrompt = (
 		default:
 			videoTypeString = videoType;
 	}
+
 	return `Based on the following information from a ${videoTypeString} video, generate concise, insightful commentary that creates an engaging narrative structure:
 
 ${description}
 
 Provide the commentary moment in the format:
 {
-    "timestamp": "MM:SS",
+    "timestamp": "MM:SS", ${maxDuration ? `// Must not exceed ${maxDuration}` : ''}
     "commentary": "Your concise commentary here"
 }
 
 ${includeIntro ? COMMENTARY_INTRO_PROMPT : ''}
 
 ${includeOutro ? COMMENTARY_OUTRO_PROMPT : ''}
+
+${maxDuration ? `Important: All timestamps must be in MM:SS format and must not exceed ${maxDuration}.` : ''}
 
 Remember to structure the commentary to build tension, reveal information strategically, and create an engaging narrative arc throughout the video analysis.`;
 };

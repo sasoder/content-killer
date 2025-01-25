@@ -21,6 +21,7 @@
 		"hono": "^4.6.18",
 		"openai": "^4.80.0",
 		"youtube-dl-exec": "^3.0.13",
+		"yt-dlp-wrap": "^2.3.12",
 		"zod": "^3.24.1"
 	},
 	"devDependencies": {

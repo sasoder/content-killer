@@ -320,6 +320,18 @@ export class ProjectStorage {
 		}
 	}
 
+	async deleteProjectVideo(id: string): Promise<void> {
+		const videoDir = path.join(this.projectsDir, id, 'video');
+		if (fs.existsSync(videoDir)) {
+			const files = await fs.promises.readdir(videoDir);
+			for (const file of files) {
+				if (file !== 'source.mkv') {
+					await fs.promises.unlink(path.join(videoDir, file));
+				}
+			}
+		}
+	}
+
 	async ensureDefaultTemplateExists(): Promise<void> {
 		const template = await this.getTemplate(DEFAULT_TEMPLATE_ID);
 		if (!template) {

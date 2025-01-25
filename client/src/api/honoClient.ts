@@ -1,5 +1,5 @@
 import { hc } from 'hono/client';
-import type { RouterType } from '@content-killer/server';
+import type { AppType } from '@content-killer/server';
 import type {
 	DescriptionGenerationStep,
 	Project,
@@ -11,9 +11,11 @@ import type {
 } from '@content-killer/shared';
 import type { Template } from '@content-killer/shared';
 import type { CommentaryOptions, DescriptionOptions, VideoOptions } from '@content-killer/shared';
+import { getApiBaseUrl } from '@/lib/utils';
 
-const API_BASE = import.meta.env.VITE_APP_API_BASE;
-export const client = hc<RouterType>(API_BASE);
+const API_BASE = getApiBaseUrl();
+
+export const client = hc<AppType>(API_BASE);
 
 async function handleResponse<T>(response: Response): Promise<T> {
 	const data = await response.json();

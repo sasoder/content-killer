@@ -25,3 +25,7 @@ export function formatDate(isoString: string): string {
 	const formattedMinutes = String(minutes).padStart(2, '0'); // Ensure two digits
 	return `${datePart} ${formattedHours}:${formattedMinutes} ${ampm}`;
 }
+
+export function getApiBaseUrl(): string {
+	return import.meta.env.VITE_APP_API_BASE ?? 'http://localhost:3000/api';
+}

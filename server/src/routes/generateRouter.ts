@@ -87,7 +87,7 @@ const generateRouter = new Hono()
 			}
 
 			// Wait for the commentary to be generated
-			const commentary = await generateCommentary(id, description, options);
+			const commentary = await generateCommentary(id, description, options, project.metadata?.duration);
 			return c.json({ commentary });
 		} catch (error) {
 			console.error('Error generating commentary:', error);

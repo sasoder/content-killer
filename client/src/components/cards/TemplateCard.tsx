@@ -8,7 +8,7 @@ import {
 } from '@/lib/options/optionDefinitions';
 import { Template } from '@content-killer/shared';
 import StepOptions from '@/components/cards/StepOptions';
-import VoiceSelector from '@/components/VoiceSelector';
+import VoiceSelector from '@/components/common/VoiceSelector';
 import SoundUpload from '@/components/ui/SoundUpload';
 
 interface TemplateCardProps {

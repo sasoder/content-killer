@@ -5,6 +5,7 @@ import { zodResponseFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
 import { projectStorage } from '@/db/storage';
 import { TimestampTextSchema } from '@/lib/serverSchema';
+import dotenv from 'dotenv';
 import {
 	COMMENTARY_INTERROGATION_PROMPT,
 	COMMENTARY_POKER_PROMPT,
@@ -12,6 +13,9 @@ import {
 	COMMENTARY_SPORTS_PROMPT,
 	generateCommentaryPrompt,
 } from '@/lib/prompts';
+import { formatDuration } from './util';
+
+dotenv.config();
 
 const openai = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
@@ -21,16 +25,27 @@ const CommentarySchema = z.object({
 	data: TimestampTextSchema,
 });
 
-export const generateCommentary = async (id: string, description: TimestampText[], options: CommentaryOptions) => {
+export const generateCommentary = async (
+	id: string,
+	description: TimestampText[],
+	options: CommentaryOptions,
+	videoDuration: number | undefined,
+) => {
 	const project = await projectStorage.getProject(id);
 	if (!project) {
 		throw new Error('Project not found');
 	}
 
-	const prompt = generateCommentaryPrompt(JSON.stringify(description), options.intro, options.outro, options.videoType);
+	const prompt = generateCommentaryPrompt(
+		JSON.stringify(description),
+		options.intro,
+		options.outro,
+		options.videoType,
+		videoDuration ? formatDuration(videoDuration - 1) : undefined,
+	);
 	let commentaryPrompt = '';
 	switch (options.videoType) {
-		case 'police':
+		case 'police bodycam':
 			commentaryPrompt = COMMENTARY_POLICE_PROMPT;
 			break;
 		case 'sports':
@@ -47,7 +62,7 @@ export const generateCommentary = async (id: string, description: TimestampText[
 	}
 
 	const completion = await openai.beta.chat.completions.parse({
-		model: process.env.OPENAI_COMMENTARY_MODEL || 'gpt-4o-mini',
+		model: process.env.OPENAI_COMMENTARY_MODEL || '',
 		messages: [
 			{ role: 'system', content: commentaryPrompt },
 			{ role: 'user', content: prompt },

@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { TimestampText } from '@content-killer/shared';
-import { Icons } from '@/components/icons';
+import { Icons } from '@/components/common/icons';
 import { useToast } from '@/hooks/use-toast';
 
 interface JsonEditorProps {

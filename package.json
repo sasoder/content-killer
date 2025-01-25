@@ -8,10 +8,10 @@
 		"shared"
 	],
 	"scripts": {
-		"dev": "concurrently \"npm:dev:*\"",
+		"dev": "concurrently \"bun:dev:*\"",
 		"dev:client": "cd client && bun run dev",
 		"dev:server": "cd server && bun run dev",
-		"build": "npm run build:shared && npm run build:client && npm run build:server",
+		"build": "bun run build:shared && bun run build:client && bun run build:server",
 		"build:client": "cd client && bun run build",
 		"build:server": "cd server && bun run build",
 		"build:shared": "cd shared && bun run build",

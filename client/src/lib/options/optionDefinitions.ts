@@ -53,7 +53,7 @@ export const commentaryOptionDefinitions: OptionsDefinitionMap<CommentaryOptions
 		label: 'Video Type',
 		description: 'The type of video to generate',
 		type: 'string',
-		options: ['police', 'sports', 'interrogation', 'poker'],
+		options: ['police bodycam', 'sports', 'interrogation', 'poker'],
 	},
 };
 
