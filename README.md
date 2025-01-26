@@ -72,8 +72,6 @@ bun run dev
 - Local project storage for both projects and templates
 - Custom pause sounds & generation settings
 
-<img src="./img/project-select.png" alt="Project Selector" width="80%" style="border-radius: 10px; margin: 20px 0; display: block; margin-left: auto; margin-right: auto;" />
-
 ### Manual editing
 
 <img src="./img/edit-commentary.png" alt="Commentary Editor" width="100%" style="border-radius: 10px; margin: 20px 0; display: block; margin-left: auto; margin-right: auto;" />
