@@ -9,13 +9,12 @@ import SelectProjectPage from '@/pages/SelectProject';
 import { ThemeProvider } from '@/components/common/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import '@fontsource/nunito';
-import './index.css';
+import './globals.css';
 import { HTTPError } from '@/components/common/HTTPError';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
-			// staleTime: 1000 * 60 * 5,
 			refetchOnWindowFocus: false,
 			refetchOnReconnect: false,
 			retry: 3,
