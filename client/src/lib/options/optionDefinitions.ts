@@ -32,12 +32,12 @@ export const descriptionOptionDefinitions: OptionsDefinitionMap<DescriptionOptio
 
 export const commentaryOptionDefinitions: OptionsDefinitionMap<CommentaryOptions> = {
 	intro: {
-		label: 'Include Intro',
+		label: 'Intro Commentary',
 		description: 'Add an introduction to the commentary',
 		type: 'boolean',
 	},
 	outro: {
-		label: 'Include Outro',
+		label: 'Outro Commentary',
 		description: 'Add a conclusion to the commentary',
 		type: 'boolean',
 	},

@@ -1,15 +1,12 @@
 {
-  "name": "@content-killer/shared",
-  "private": true,
-  "version": "1.0.0",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "type-check": "tsc --noEmit"
-  },
-  "dependencies": {
-    "zod": "^3.24.1"
-  }
+	"name": "@content-killer/shared",
+	"private": true,
+	"version": "1.0.0",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "tsc",
+		"type-check": "tsc --noEmit"
+	}
 }
