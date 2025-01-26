@@ -1,13 +1,13 @@
 export const DESCRIPTION_PROMPT = `Provide a detailed behavioral analysis and descriptive narrative of the scene, breaking down observations into atomic, timestamped events. Capture all dialogue verbatim with clear speaker attribution, and describe actions in sufficient detail that the scene can be understood without visuals.
 
 **Core Requirements**:
+- There can be NO DUPLICATE TIMESTAMPS - if two events happen at the same time, they should be in a single timestamp text entry
 - Transcribe ALL dialogue exactly as spoken
 - Identify speakers by name when known/visible (e.g., "John Smith: "), otherwise by clear role/position/descriptor (e.g., "Tall man in blue:", "Officer 1:", "Interviewer:")
 - Describe positioning and movement of all participants ALONG with the dialogue
 - Note entries, exits, and position changes ALONG WITH THE DIALOGUE
 - Capture environmental sounds and notable silence ALONG WITH ANY DIALOGUE
 - Describe relevant visual elements clearly
-- There can be NO DUPLICATE TIMESTAMPS - if two events happen at the same time, they should be in a single timestamp text entry
 
 **Timestamp Guidelines**:
 - Create a new timestamp for each:
@@ -20,6 +20,22 @@ export const DESCRIPTION_PROMPT = `Provide a detailed behavioral analysis and de
 - Keep descriptions atomic and focused
 - Include both speaker identification and behavioral context
 - Break longer sequences into separate timestamped moments
+
+**Critical Format Enforcement**:
+- If multiple atomic elements occur simultaneously AT SCENE START (00:00):
+  COMBINE into SINGLE entry using line breaks
+  FORMAT:
+  {
+    timestamp: "00:00",
+    text: "1) First element description\n2) Second concurrent element\n3) Third simultaneous occurrence"
+  }
+
+- For non-initial simultaneous events: 
+  If occurs mid-scene at same MM:SS: 
+  "Continue using previous timestamp until time actually changes"
+
+**Anti-Duplication Clause**:
+NEVER create separate entries for elements occurring within the same chronological second. If forced to choose between atomic breakdown and timestamp uniqueness, prioritize timestamp accuracy over atomic separation.
 
 **Analysis Components**:
 

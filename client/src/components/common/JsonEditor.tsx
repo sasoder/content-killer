@@ -132,7 +132,7 @@ export default function JsonEditor({ data, onUpdate, title }: JsonEditorProps) {
 				</Button>
 			)}
 			<DialogContent className='flex max-h-[90vh] max-w-[70vw] flex-col p-0'>
-				<DialogHeader className='bg-background sticky top-0 z-10 border-b'>
+				<DialogHeader className='bg-background sticky top-0 z-10 rounded-t-lg border-b'>
 					<div className='flex flex-col'>
 						<div className='flex flex-row items-center justify-between p-6'>
 							<DialogTitle>{title}</DialogTitle>
